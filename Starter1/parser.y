@@ -58,8 +58,62 @@ extern int yyline;        /* variable holding current line number   */
   int num;
 }
 // TODO:Replace myToken with your tokens, you can use these tokens in flex
-%token           myToken1 myToken2  
+%token         BOOL_V_1
+BOOL_V_2
+        BOOL_V_3
+BOOL_V_4
 
+        INT_V_1
+INT_V_2
+        INT_V_3
+INT_V_4
+
+        FL_V_1
+FL_V_2
+        FL_V_3
+FL_V_4
+
+        COLLON
+
+OPEN_CURLY_BRACKET
+        CLOSE_CURLY_BRACKET
+
+OPEN_COMMENT
+        CLOSE_COMMENT
+
+OPEN_SQUARE_BRACKET
+        CLOSE_SQUARE_BRACKET
+
+OPERATOR_ASSIGNMENT
+        OPERATOR_MULTIPLY
+OPERATOR_MINUS
+        OPERATOR_PLUS
+OPERATOR_DIVIDE
+        OPERATOR_POWER
+OPERATOR_NOT
+        OPERATOR_AND
+OPERATOR_OR
+        OPERATOR_EQ
+OPERATOR_NEQ
+        OPERATOR_LT
+OPERATOR_LTE
+        OPERATOR_GT
+OPERATOR_GTE
+
+        FUNCTION_DP3
+FUNCTION_LIT
+        FUNCTION_RSQ
+
+QUALIFIER_CONST
+
+        SYMBOL_WHILE
+SYMBOL_IF
+        SYMBOL_ELSE
+SYMBOL_TRUE
+        SYMBOL_FALSE
+SYMBOL_QUOTES
+
+        IDENTIFIER
 
 %start    program
 
@@ -78,13 +132,13 @@ program
   :   tokens       
   ;
 tokens
-  :  tokens token  
+  :  tokens token
   |      
   ;
 // TODO: replace myToken with the token the you defined.
 token
-  :     myToken1 
-  |     myToken2                     
+  :
+  |
   ;
 
 
