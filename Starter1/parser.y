@@ -56,64 +56,65 @@ extern int yyline;        /* variable holding current line number   */
 
 %union {
   int num;
+  float FP;
 }
 // TODO:Replace myToken with your tokens, you can use these tokens in flex
-%token         BOOL_V_1
-BOOL_V_2
-        BOOL_V_3
-BOOL_V_4
-
-        INT_V_1
-INT_V_2
-        INT_V_3
-INT_V_4
-
-        FL_V_1
-FL_V_2
-        FL_V_3
-FL_V_4
-
-        COLLON
-
-OPEN_CURLY_BRACKET
+%token         
+        BOOL
+        BVEC2
+        BVEC3
+        BVEC4
+        INT
+        IVEC2
+        IVEC3
+        IVEC4
+        FLOAT
+        FVEC2
+        FVEC3
+        FVEC4
+        SEMICOLON
+        COMMA
+        OPEN_CURLY_BRACKET
         CLOSE_CURLY_BRACKET
-
-OPEN_COMMENT
-        CLOSE_COMMENT
-
-OPEN_SQUARE_BRACKET
-        CLOSE_SQUARE_BRACKET
-
-OPERATOR_ASSIGNMENT
-        OPERATOR_MULTIPLY
-OPERATOR_MINUS
-        OPERATOR_PLUS
-OPERATOR_DIVIDE
-        OPERATOR_POWER
-OPERATOR_NOT
-        OPERATOR_AND
-OPERATOR_OR
-        OPERATOR_EQ
-OPERATOR_NEQ
-        OPERATOR_LT
-OPERATOR_LTE
-        OPERATOR_GT
-OPERATOR_GTE
-
+        OPEN_ROUND_BRACKET
+        CLOSE_ROUND_BRACKET
+        //OPEN_COMMENT
+        //CLOSE_COMMENT
+        COMMENT
+        //OPEN_SQUARE_BRACKET
+        //CLOSE_SQUARE_BRACKET
+        OP_ASSIGN
+        OP_MULT
+        OP_MINUS
+        OP_PLUS
+        //UNARY_MINUS
+        //BINARY_MINUS
+        OP_DIV
+        LOGIC_NOT
+        LOGIC_AND
+        LOGIC_OR
+        OP_XOR
+        OP_EQ
+        OP_NEQ
+        OP_LT
+        OP_LTE
+        OP_GT
+        OP_GTE
+        OP_QST
         FUNCTION_DP3
-FUNCTION_LIT
+        FUNCTION_LIT
         FUNCTION_RSQ
-
-QUALIFIER_CONST
-
-        SYMBOL_WHILE
-SYMBOL_IF
-        SYMBOL_ELSE
-SYMBOL_TRUE
-        SYMBOL_FALSE
-SYMBOL_QUOTES
-
+        QUALIFIER_CONST
+        STMT_WHILE
+        STMT_IF
+        STMT_ELSE
+        //SYMBOL_QUOTES
+        //COLON
         IDENTIFIER
+        CONST_INT
+        CONST_FLOAT
+        CONST_TRUE//SYMBOL_TRUE
+        CONST_FALSE//SYMBOL_FALSE
 
 %start    program
 
@@ -132,13 +133,13 @@ program
   :   tokens       
   ;
 tokens
-  :  tokens token
+  :  tokens token  
   |      
   ;
 // TODO: replace myToken with the token the you defined.
 token
-  :
-  |
+  :      
+  |                         
   ;
 
 
