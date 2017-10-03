@@ -81,8 +81,8 @@ extern int yyline;        /* variable holding current line number   */
         //OPEN_COMMENT
         //CLOSE_COMMENT
         COMMENT
-        //OPEN_SQUARE_BRACKET
-        //CLOSE_SQUARE_BRACKET
+        OPEN_SQUARE_BRACKET
+        CLOSE_SQUARE_BRACKET
         OP_ASSIGN
         OP_MULT
         OP_MINUS
@@ -101,9 +101,9 @@ extern int yyline;        /* variable holding current line number   */
         OP_GT
         OP_GTE
         OP_QST
-        FUNCTION_DP3
-        FUNCTION_LIT
-        FUNCTION_RSQ
+        FUNC_DP3
+        FUNC_LIT
+        FUNC_RSQ
         QUALIFIER_CONST
         STMT_WHILE
         STMT_IF
@@ -139,7 +139,59 @@ tokens
 // TODO: replace myToken with the token the you defined.
 token
   :      
-  |                         
+  |          BOOL
+  |          BVEC2
+  |          BVEC3
+  |          BVEC4
+  |          INT
+  |          IVEC2
+  |          IVEC3
+  |          IVEC4
+  |          FLOAT
+  |          FVEC2
+  |          FVEC3
+  |          FVEC4
+  |          SEMICOLON
+  |          COMMA
+  |          OPEN_CURLY_BRACKET
+  |          CLOSE_CURLY_BRACKET
+  |          OPEN_ROUND_BRACKET
+  |          CLOSE_ROUND_BRACKET
+  |          COMMENT
+  |          OPEN_SQUARE_BRACKET
+  |          CLOSE_SQUARE_BRACKET
+  |          OP_ASSIGN
+  |          OP_MULT
+  |          OP_MINUS
+  |          OP_PLUS
+  |          //UNARY_MINUS
+  |          //BINARY_MINUS
+  |          OP_DIV
+  |          LOGIC_NOT
+  |          LOGIC_AND
+  |          LOGIC_OR
+  |          OP_XOR
+  |          OP_EQ
+  |          OP_NEQ
+  |          OP_LT
+  |          OP_LTE
+  |          OP_GT
+  |          OP_GTE
+  |          OP_QST
+  |          FUNC_DP3
+  |          FUNC_LIT
+  |          FUNC_RSQ
+  |          QUALIFIER_CONST
+  |          STMT_WHILE
+  |          STMT_IF
+  |          STMT_ELSE
+  |          //SYMBOL_QUOTES
+  |          //COLON
+  |          IDENTIFIER
+  |          CONST_INT
+  |          CONST_FLOAT
+  |          CONST_TRUE//SYMBOL_TRUE
+  |          CONST_FALSE//SYMBOL_FALSE
   ;
 
 

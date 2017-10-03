@@ -44,6 +44,11 @@ WORD        [A-Za-z0-9_]
 "vec3"        { yTRACE(FVEC3); return(FVEC3);}
 "vec4"        { yTRACE(FVEC4); return(FVEC4);}
 
+    /*******************FUNCTION******************************/
+"dp3"         { yTRACE(FUNC_DP3);return(FUNC_DP3);}
+"lit"         { yTRACE(FUNC_LIT);return(FUNC_LIT);}
+"rsq"         { yTRACE(FUNC_RSQ);return(FUNC_RSQ);}
+
     /*******************KEYWORD--STATEMENT********************/
 
 "if"          { yTRACE(STMT_IF);     return(STMT_IF);}
@@ -56,8 +61,8 @@ WORD        [A-Za-z0-9_]
     
     /************************CONSTANT*************************/
 
-{DIGIT}+              {yTRACE(CONST_INT);   yylval.num = atoi(yytext); return(CONST_INT);}
-{DIGIT}+"."{DIGIT}*   {yTRACE(CONST_FLOAT); yylval.FP = atof(yytext);  return(CONST_FLOAT);}
+-?+{DIGIT}+              {yTRACE(CONST_INT);   yylval.num = atoi(yytext); return(CONST_INT);}
+-?+{DIGIT}+"."{DIGIT}*   {yTRACE(CONST_FLOAT); yylval.FP = atof(yytext);  return(CONST_FLOAT);}
 "true"                {yTRACE(CONST_TRUE);  yylval.num = 1;            return(CONST_TRUE);}
 "false"               {yTRACE(CONST_FALSE); yylval.num = 0;            return(CONST_FALSE);}    
     
@@ -88,6 +93,9 @@ WORD        [A-Za-z0-9_]
 "}"           { yTRACE(CLOSE_CURLY_BRACKET);return(CLOSE_CURLY_BRACKET);}
 "("           { yTRACE(OPEN_ROUND_BRACKET); return(OPEN_ROUND_BRACKET);}
 ")"           { yTRACE(CLOSE_ROUND_BRACKET);return(CLOSE_ROUND_BRACKET);}
+"["           { yTRACE(OPEN_SQUARE_BRACKET);return(OPEN_SQUARE_BRACKET);}
+"]"           { yTRACE(CLOSE_SQUARE_BRACKET);return(CLOSE_SQUARE_BRACKET);}
+
 
 
     /***********************IDENTIFIER************************/
