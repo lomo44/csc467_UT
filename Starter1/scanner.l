@@ -11,7 +11,9 @@
 #include "parser.tab.h"
 #include "string.h"
 #include "math.h"
-
+#include <stdint.h>
+#include <float.h>
+#include <math.h>
 #define YY_USER_INIT { yyin = inputFile; }
 #define	yyinput      input
 #define yTRACE(x)    { if (traceScanner) fprintf(traceFile, "TOKEN %3d : %s\n", x, yytext); }
@@ -61,8 +63,30 @@ WORD        [A-Za-z0-9_]
     
     /************************CONSTANT*************************/
 
--?+{DIGIT}+              {yTRACE(CONST_INT);   yylval.num = atoi(yytext); return(CONST_INT);}
--?+{DIGIT}+"."{DIGIT}*   {yTRACE(CONST_FLOAT); yylval.FP = atof(yytext);  return(CONST_FLOAT);}
+-?+{DIGIT}+   {
+                    long num = atol(yytext);
+                    if(num > INT32_MAX || num < INT32_MIN){
+                        yERROR("Exceeding Integer Limits");
+                    }
+                    else{
+                        yTRACE(CONST_INT);
+                        yylval.num = atoi(yytext); return(CONST_INT);
+                    }
+
+              }
+-?+{DIGIT}+"."{DIGIT}*   {
+                            double num = atof(yytext);
+                            double range = abs(num);
+                            if((FLT_MAX-range)>=FLT_EPSILON){
+                                yTRACE(CONST_FLOAT);
+                                yylval.FP = num;
+                                return(CONST_FLOAT);
+                            }
+                            else{
+                                yERROR("Exceeding Float Limits");
+                            }
+
+                         }
 "true"                {yTRACE(CONST_TRUE);  yylval.num = 1;            return(CONST_TRUE);}
 "false"               {yTRACE(CONST_FALSE); yylval.num = 0;            return(CONST_FALSE);}    
     
