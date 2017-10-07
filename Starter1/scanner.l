@@ -63,7 +63,19 @@ WORD        [A-Za-z0-9_]
     
     /************************CONSTANT*************************/
 
--?+{DIGIT}+   {
+0[x|X][A-Fa-f0-9]+ {
+                        long num = strtol(yytext,NULL,0);
+                        if(num > INT32_MAX || num < INT32_MIN){
+                            yERROR("Exceeding Integer Limits");
+                        }
+                        else{
+                            yTRACE(CONST_INT);
+                            yylval.num = atoi(yytext); return(CONST_INT);
+                        }
+
+                    }
+
+{DIGIT}+   {
                     long num = atol(yytext);
                     if(num > INT32_MAX || num < INT32_MIN){
                         yERROR("Exceeding Integer Limits");
@@ -73,8 +85,8 @@ WORD        [A-Za-z0-9_]
                         yylval.num = atoi(yytext); return(CONST_INT);
                     }
 
-              }
--?+{DIGIT}+"."{DIGIT}*   {
+            }
+{DIGIT}+"."{DIGIT}*   {
                             double num = atof(yytext);
                             double range = abs(num);
                             if((FLT_MAX-range)>=FLT_EPSILON){
