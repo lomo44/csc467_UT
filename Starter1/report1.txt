@@ -1,0 +1,8 @@
+
+
+Challenge Faced:
+
+- Starter code did not build when we got it, we have to debug it to make it work
+- Makefile is confusing
+- Not sure if we covered all of the cases that mentioned in the handout
+- Minimum support of flex is presented
