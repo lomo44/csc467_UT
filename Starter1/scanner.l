@@ -28,7 +28,7 @@ int yyline = 1;
 WS          [ \t]
 DIGIT       [0-9]
 WORD        [A-Za-z0-9_]
-
+NONE_ZERO   [1-9]
 %%
 
     /*******************KEYWORD--DATATYPE*********************/
@@ -62,20 +62,13 @@ WORD        [A-Za-z0-9_]
 "const"       { yTRACE(QUALIFIER_CONST); return(QUALIFIER_CONST);}
     
     /************************CONSTANT*************************/
+0{DIGIT}+                          {yERROR("Unknown Token");}
+{DIGIT}+{WORD}+                    {yERROR("Unknown Token");}
+{DIGIT}+"."{DIGIT}+{WORD}+         {yERROR("Unknown Token");}
+{DIGIT}+{WORD}+"."{DIGIT}+{WORD}+  {yERROR("Unknown Token");}
+{DIGIT}+{WORD}+"."{DIGIT}          {yERROR("Unknown Token");}
 
-0[x|X][A-Fa-f0-9]+ {
-                        long num = strtol(yytext,NULL,0);
-                        if(num > INT32_MAX || num < INT32_MIN){
-                            yERROR("Exceeding Integer Limits");
-                        }
-                        else{
-                            yTRACE(CONST_INT);
-                            yylval.num = atoi(yytext); return(CONST_INT);
-                        }
-
-                    }
-
-{DIGIT}+   {
+0|{NONE_ZERO}{DIGIT}*   {
                     long num = atol(yytext);
                     if(num > INT32_MAX || num < INT32_MIN){
                         yERROR("Exceeding Integer Limits");
@@ -86,7 +79,7 @@ WORD        [A-Za-z0-9_]
                     }
 
             }
-{DIGIT}+"."{DIGIT}*   {
+{DIGIT}*+"."{DIGIT}*   {
                             double num = atof(yytext);
                             double range = abs(num);
                             if((FLT_MAX-range)>=FLT_EPSILON){
@@ -167,6 +160,7 @@ WORD        [A-Za-z0-9_]
               return(COMMENT);
             }
 
-.           { yERROR("Unknown token"); }
+
+.           {yERROR("Unknown token"); }
 
 %%
