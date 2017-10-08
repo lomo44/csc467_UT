@@ -28,6 +28,7 @@ int yyline = 1;
 WS          [ \t]
 DIGIT       [0-9]
 WORD        [A-Za-z0-9_]
+ALPHABET    [A-Za-z_]
 NONE_ZERO   [1-9]
 %%
 
@@ -63,10 +64,11 @@ NONE_ZERO   [1-9]
     
     /************************CONSTANT*************************/
 0{DIGIT}+                          {yERROR("Unknown Token");}
-{DIGIT}+{WORD}+                    {yERROR("Unknown Token");}
-{DIGIT}+"."{DIGIT}+{WORD}+         {yERROR("Unknown Token");}
-{DIGIT}+{WORD}+"."{DIGIT}+{WORD}+  {yERROR("Unknown Token");}
-{DIGIT}+{WORD}+"."{DIGIT}          {yERROR("Unknown Token");}
+{DIGIT}+{ALPHABET}+                    {yERROR("Unknown Token");}
+{DIGIT}+"."{DIGIT}*{ALPHABET}+         {yERROR("Unknown Token");}
+{DIGIT}+"."{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
+{DIGIT}*{ALPHABET}+"."({DIGIT}|{ALPHABET})+  {yERROR("Unknown Token");}
+{ALPHABET}+{DIGIT}*"."({DIGIT}|{ALPHABET})+   {yERROR("Unknown Token");}
 
 0|{NONE_ZERO}{DIGIT}*   {
                     long num = atol(yytext);
