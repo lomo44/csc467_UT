@@ -1,8 +1,21 @@
-
+Scanner: readme
 
 Challenge Faced:
 
 - Starter code did not build when we got it, we have to debug it to make it work
-- Makefile is confusing
-- Not sure if we covered all of the cases that mentioned in the handout
+- Makefile removed some of the source files, making debugger hard to reference
+- Handout was vague, has to reference some of the rules according to C.
 - Minimum support of flex is presented
+
+Corner cases:
+-comments are skipped by scanner and a token "COMMENT" will be returned 
+-If integer exceeds it maximum range, report lexical error.
+-If floating point exceeds it maximum range, report lexical error.
+-If char follows a digit immediatley, report lexical error.
+-If constant with more than one digits starting with 0, report lexical error.
+        INT:([1-9][0-9]*)|0
+        FLOAT:([1-9][0-9]*)|0)"."[0-9]*)|("."[0-9]+)
+
+
+
+
