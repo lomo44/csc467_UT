@@ -65,7 +65,7 @@ NONE_ZERO   [1-9]
     /************************CONSTANT*************************/
 0{DIGIT}+                               {yERROR("Unknown Token");}
 {DIGIT}+{ALPHABET}+                    {yERROR("Unknown Token");}
-{DIGIT}+"."{DIGIT}*{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
+"."{DIGIT}*{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
 {DIGIT}*{ALPHABET}+{DIGIT}*"."          {yERROR("Unknown Token");}
 
 0|{NONE_ZERO}{DIGIT}*   {
