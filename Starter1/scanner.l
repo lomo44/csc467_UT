@@ -81,7 +81,7 @@ NONE_ZERO   [1-9]
                     }
 
             }
-{DIGIT}*+"."{DIGIT}*   {
+((([1-9][0-9]*)|0)"."[0-9]*)|("."[0-9]+)  {
                             double num = atof(yytext);
                             double range = abs(num);
                             if((FLT_MAX-range)>=FLT_EPSILON){
@@ -115,8 +115,6 @@ NONE_ZERO   [1-9]
 ">"           { yTRACE(OP_GT);     return(OP_GT);}
 "<"           { yTRACE(OP_LT);     return(OP_LT);}
 "?"           { yTRACE(OP_QST);    return(OP_QST);}
-"~"           { yERROR("Unknown Token"); }
-"&"           { yERROR("Unknown Token"); }
 
     /*************************SYMBOLS*************************/
 
