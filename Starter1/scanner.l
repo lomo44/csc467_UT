@@ -67,8 +67,8 @@ NONE_ZERO   [1-9]
 {DIGIT}+{ALPHABET}+                    {yERROR("Unknown Token");}
 {DIGIT}+"."{DIGIT}*{ALPHABET}+         {yERROR("Unknown Token");}
 {DIGIT}+"."{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
-{DIGIT}*{ALPHABET}+"."({DIGIT}|{ALPHABET})+  {yERROR("Unknown Token");}
-{ALPHABET}+{DIGIT}*"."({DIGIT}|{ALPHABET})+   {yERROR("Unknown Token");}
+{DIGIT}*{ALPHABET}+"."({DIGIT}|{ALPHABET})*  {yERROR("Unknown Token");}
+{ALPHABET}+{DIGIT}*"."({DIGIT}|{ALPHABET})*   {yERROR("Unknown Token");}
 
 0|{NONE_ZERO}{DIGIT}*   {
                     long num = atol(yytext);
@@ -115,6 +115,8 @@ NONE_ZERO   [1-9]
 ">"           { yTRACE(OP_GT);     return(OP_GT);}
 "<"           { yTRACE(OP_LT);     return(OP_LT);}
 "?"           { yTRACE(OP_QST);    return(OP_QST);}
+"~"           { yERROR("Unknown Token"); }
+"&"           { yERROR("Unknown Token"); }
 
     /*************************SYMBOLS*************************/
 
