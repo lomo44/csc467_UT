@@ -63,12 +63,10 @@ NONE_ZERO   [1-9]
 "const"       { yTRACE(QUALIFIER_CONST); return(QUALIFIER_CONST);}
     
     /************************CONSTANT*************************/
-0{DIGIT}+                          {yERROR("Unknown Token");}
+0{DIGIT}+                               {yERROR("Unknown Token");}
 {DIGIT}+{ALPHABET}+                    {yERROR("Unknown Token");}
-{DIGIT}+"."{DIGIT}*{ALPHABET}+         {yERROR("Unknown Token");}
-{DIGIT}+"."{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
-{DIGIT}*{ALPHABET}+"."({DIGIT}|{ALPHABET})*  {yERROR("Unknown Token");}
-{ALPHABET}+{DIGIT}*"."({DIGIT}|{ALPHABET})*   {yERROR("Unknown Token");}
+{DIGIT}+"."{DIGIT}*{ALPHABET}+{DIGIT}*         {yERROR("Unknown Token");}
+{DIGIT}*{ALPHABET}+{DIGIT}*"."          {yERROR("Unknown Token");}
 
 0|{NONE_ZERO}{DIGIT}*   {
                     long num = atol(yytext);
