@@ -149,17 +149,17 @@ scope
   ;
 declarations
   : declarations declaration
-  | epsilon
+  | declaration
   ;
 statements
   : statements statement
-  | epsilon
+  | statement
   ;
 declaration
   : type IDENTIFIER SEMICOLON
   | type IDENTIFIER OP_ASSIGN expression SEMICOLON
   | QUALIFIER_CONST type IDENTIFIER OP_EQ expression SEMICOLON
-  | epsilon
+  | %empty
   ;
 statement
   : variable OP_ASSIGN expression SEMICOLON
@@ -170,7 +170,7 @@ statement
   ;
 else_statement
   : STMT_ELSE statement
-  | epsilon
+  | %empty
   ;
 type
   : INT
@@ -234,13 +234,12 @@ function_name
   ;
 arguments_opt
   : arguments
-  | epsilon
+  | %empty
   ;
 arguments
   : arguments COMMA expression
   | expression
   ;
-epsilon:
 %%
 
 /***********************************************************************ol
