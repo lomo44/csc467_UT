@@ -118,6 +118,18 @@ extern int yyline;        /* variable holding current line number   */
 
 %start    program
 
+
+%left LOGIC_OR
+%left LOGIC_AND
+%left OP_EQ OP_NEQ OP_LTE OP_LT OP_GT OP_GTE
+%left OP_PLUS OP_MINUS
+%left OP_MULT OP_DIV
+%right OP_XOR
+%left LOGIC_NOT UMINUS
+%left OPEN_SQUARE_BRACKET
+      CLOSE_SQUARE_BRACKET
+      OPEN_ROUND_BRACKET
+      CLOSE_ROUND_BRACKET
 %%
 
 /***********************************************************************
@@ -130,71 +142,105 @@ extern int yyline;        /* variable holding current line number   */
  *    1. Add code to rules for construction of AST.
  ***********************************************************************/
 program
-  :   tokens       
+  : scope
   ;
-tokens
-  :  tokens token  
-  |      
+scope
+  : OPEN_CURLY_BRACKET declarations statements CLOSE_CURLY_BRACKET
   ;
-// TODO: replace myToken with the token the you defined.
-token
-  :      
-  |          BOOL
-  |          BVEC2
-  |          BVEC3
-  |          BVEC4
-  |          INT
-  |          IVEC2
-  |          IVEC3
-  |          IVEC4
-  |          FLOAT
-  |          FVEC2
-  |          FVEC3
-  |          FVEC4
-  |          SEMICOLON
-  |          COMMA
-  |          OPEN_CURLY_BRACKET
-  |          CLOSE_CURLY_BRACKET
-  |          OPEN_ROUND_BRACKET
-  |          CLOSE_ROUND_BRACKET
-  |          COMMENT
-  |          OPEN_SQUARE_BRACKET
-  |          CLOSE_SQUARE_BRACKET
-  |          OP_ASSIGN
-  |          OP_MULT
-  |          OP_MINUS
-  |          OP_PLUS
-  |          //UNARY_MINUS
-  |          //BINARY_MINUS
-  |          OP_DIV
-  |          LOGIC_NOT
-  |          LOGIC_AND
-  |          LOGIC_OR
-  |          OP_XOR
-  |          OP_EQ
-  |          OP_NEQ
-  |          OP_LT
-  |          OP_LTE
-  |          OP_GT
-  |          OP_GTE
-  |          OP_QST
-  |          FUNC_DP3
-  |          FUNC_LIT
-  |          FUNC_RSQ
-  |          QUALIFIER_CONST
-  |          STMT_WHILE
-  |          STMT_IF
-  |          STMT_ELSE
-  |          //SYMBOL_QUOTES
-  |          //COLON
-  |          IDENTIFIER
-  |          CONST_INT
-  |          CONST_FLOAT
-  |          CONST_TRUE//SYMBOL_TRUE
-  |          CONST_FALSE//SYMBOL_FALSE
+declarations
+  : declarations declaration
+  | epsilon
   ;
-
-
+statements
+  : statements statement
+  | epsilon
+  ;
+declaration
+  : type IDENTIFIER SEMICOLON
+  | type IDENTIFIER OP_ASSIGN expression SEMICOLON
+  | QUALIFIER_CONST type IDENTIFIER OP_EQ expression SEMICOLON
+  | epsilon
+  ;
+statement
+  : variable OP_ASSIGN expression SEMICOLON
+  | STMT_IF OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET statement else_statement
+  | STMT_WHILE OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET statement
+  | SEMICOLON
+  | scope
+  ;
+else_statement
+  : STMT_ELSE statement
+  | epsilon
+  ;
+type
+  : INT
+  | IVEC2
+  | IVEC3
+  | IVEC4
+  | BOOL
+  | BVEC2
+  | BVEC3
+  | BVEC4
+  | FLOAT
+  | FVEC2
+  | FVEC3
+  | FVEC4
+  ;
+expression
+  : constructor
+  | function
+  | CONST_INT
+  | CONST_FLOAT
+  | variable
+  | unary_op expression %prec UMINUS
+  | expression binary_op expression
+  | CONST_TRUE
+  | CONST_FALSE
+  | OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET
+  ;
+variable
+  : IDENTIFIER
+  | IDENTIFIER OPEN_SQUARE_BRACKET CONST_INT CLOSE_SQUARE_BRACKET
+  ;
+unary_op
+  : LOGIC_NOT
+  | OP_MINUS
+  ;
+binary_op
+  : LOGIC_AND
+  | LOGIC_OR
+  | OP_EQ
+  | OP_NEQ
+  | OP_LT
+  | OP_LTE
+  | OP_GT
+  | OP_GTE
+  | OP_PLUS
+  | OP_MINUS
+  | OP_MULT
+  | OP_DIV
+  | OP_XOR
+  ;
+constructor
+  : type OPEN_ROUND_BRACKET arguments CLOSE_ROUND_BRACKET
+  ;
+function
+  : function_name OPEN_ROUND_BRACKET arguments_opt CLOSE_ROUND_BRACKET
+  ;
+function_name
+  : FUNC_DP3
+  | FUNC_LIT
+  | FUNC_RSQ
+  ;
+arguments_opt
+  : arguments
+  | epsilon
+  ;
+arguments
+  : arguments COMMA expression
+  | expression
+  ;
+epsilon:
 %%
 
 /***********************************************************************ol
