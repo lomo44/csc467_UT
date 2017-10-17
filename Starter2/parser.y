@@ -82,9 +82,12 @@ enum {
 %token <as_int>   INT_C
 %token <as_str>   ID
 
+
+
+%left AND OR
 %left     '|'
 %left     '&'
-%nonassoc '=' NEQ '<' LEQ '>' GEQ
+%nonassoc '=' NEQ '<' LEQ '>' GEQ EQ
 %left     '+' '-'
 %left     '*' '/'
 %right    '^'
@@ -119,12 +122,11 @@ declaration
 : type ID';'
 | type ID'='expression';'
 | CONST type ID EQ expression';'
-| %empty
 ;
 statement
-: variable '=' expression ';'
-| IF '('expression')'statement ELSE statement
-| WHILE '(' expression ')'statement
+: variable '=' expressions ';'
+| IF '('expressions')'statement ELSE statement
+| WHILE '(' expressions ')'statement
 | ';'
 | scope
 ;
@@ -136,6 +138,12 @@ type
 | FLOAT_T
 | VEC_T
 ;
+
+expressions
+: expressions binary_op expression
+| expression
+;
+
 expression
 : constructor
 | function
@@ -143,11 +151,12 @@ expression
 | FLOAT_C
 | variable
 | unary_op expression %prec UMINUS
-| expression binary_op expression
 | TRUE_C
 | FALSE_C
 | '('expression')'
 ;
+
+
 variable
 : ID
 | ID '[' INT_C ']'
@@ -157,7 +166,9 @@ unary_op
 | '-'
 ;
 binary_op
-: AND
+: '&'
+| '|'
+| AND
 | OR
 | EQ
 | NEQ
