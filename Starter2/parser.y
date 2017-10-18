@@ -23,7 +23,7 @@
 //#include "semantic.h"
 #define YYERROR_VERBOSE
 #define yTRACE(x)    { if (traceParser) fprintf(traceFile, "%s\n", x); }
-
+#define TRACE_PARSER(x) {yTRACE("[TP]"#x)}
 void yyerror(const char* s);    /* what to do in case of error            */
 int yylex();              /* procedure for calling lexical analyzer */
 extern int yyline;        /* variable holding current line number   */
@@ -121,7 +121,7 @@ statements
 declaration
 : type ID';'
 | type ID'='expression';'
-| CONST type ID EQ expression';'
+| CONST type ID'='expression';'
 ;
 statement
 : variable '=' expressions ';'
