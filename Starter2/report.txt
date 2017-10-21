@@ -1,0 +1,18 @@
+Lab2 Report
+
+Breakdown of Work
+
+Challenges Faced
+1. Starter files given by the course cannot built, seems like it persists the problem that lab1 starter has.
+2. Difficult to debug the parser since the code is generated using bison
+3. Resolve reduce/reduce error and shift/reduce error by reorganizing context-free grammar.
+
+Overall Approach Taken
+1. Built the starter
+2. Implement context free grammer according to the grammer given in the lab instruction
+3. Resolve any conflicts
+4. Tests with some miniGLSL shader code
+
+Verification
+1. Compiler testing shader file with -Tp option
+2. Compare the trace output with the source file
