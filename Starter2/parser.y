@@ -108,35 +108,35 @@ program
 :scope
 ;
 scope
-:'{'declarations statements'}'
+:'{'declarations statements'}'                                {yTRACE("scope")}
 ;
 declarations
-: declarations declaration
-| declaration
+: declarations declaration                                    {yTRACE("declarations")}
+| %empty
 ;
 statements
-: statements statement
-| statement
+: statements statement                                        {yTRACE("statements")}
+| %empty
 ;
 declaration
-: type ID';'
-| type ID'='expression';'
-| CONST type ID'='expression';'
+: type ID';'                                                  {yTRACE("declare")}
+| type ID'='expression';'                                     {yTRACE("declare =")}
+| CONST type ID'='expression';'                               {yTRACE("const declare =")}
 ;
 statement
-: variable '=' expressions ';'
-| IF '('expressions')'statement ELSE statement
-| WHILE '(' expressions ')'statement
-| ';'
+: variable '=' expressions ';'                                {yTRACE("var = expression")}
+| IF '('expressions')'statement ELSE statement                {yTRACE("If")};
+| WHILE '(' expressions ')'statement                          {yTRACE("while")}
+| ';'                                                         {yTRACE("comma")}
 | scope
 ;
 type
-: INT_T
-| IVEC_T
-| BOOL_T
-| BVEC_T
-| FLOAT_T
-| VEC_T
+: INT_T                                                       {yTRACE("int")}
+| IVEC_T                                                      {yTRACE("ivec")}
+| BOOL_T                                                      {yTRACE("bool")}
+| BVEC_T                                                      {yTRACE("bvec")}
+| FLOAT_T                                                     {yTRACE("float")}
+| VEC_T                                                       {yTRACE("fvec")}
 ;
 
 expressions
@@ -147,50 +147,50 @@ expressions
 expression
 : constructor
 | function
-| INT_C
-| FLOAT_C
+| INT_C                                                       {yTRACE("int constant")}
+| FLOAT_C                                                     {yTRACE("float constant")}
 | variable
 | unary_op expression %prec UMINUS
-| TRUE_C
-| FALSE_C
+| TRUE_C                                                      {yTRACE("true")}
+| FALSE_C                                                     {yTRACE("false")}
 | '('expression')'
 ;
 
 
 variable
-: ID
-| ID '[' INT_C ']'
+: ID                                                          {yTRACE("ID")}
+| ID '[' INT_C ']'                                            {yTRACE("ID[]")}
 ;
 unary_op
-: '!'
-| '-'
+: '!'                                                         {yTRACE("!")}
+| '-'                                                         {yTRACE("-")}
 ;
 binary_op
-: '&'
-| '|'
-| AND
-| OR
-| EQ
-| NEQ
-| '<'
+: '&'                                                         {yTRACE("&")}
+| '|'                                                         {yTRACE("|")}
+| AND                                                         {yTRACE("&&")}
+| OR                                                          {yTRACE("||")}
+| EQ                                                          {yTRACE("==")}
+| NEQ                                                         {yTRACE("!=")}
+| '<'                                                         {yTRACE("<")}
 | LEQ
-| '>'
-| GEQ
-| '+'
-| '-'
-| '*'
-| '/'
-| '^'
+| '>'                                                         {yTRACE(">")}
+| GEQ                                                         {yTRACE(">=")}
+| '+'                                                         {yTRACE("+")}
+| '-'                                                         {yTRACE("-")}
+| '*'                                                         {yTRACE("*")}
+| '/'                                                         {yTRACE("/")}
+| '^'                                                         {yTRACE("^")}
 ;
 constructor
-: type '('arguments')'
+: type '('arguments')'                                        {yTRACE("constructor")}
 ;
 function
-: FUNC '('arguments_opt')'
+: FUNC '('arguments_opt')'                                    {yTRACE("func")}
 ;
 
 arguments_opt
-: arguments
+: arguments                                                   {yTRACE("arguments")}
 | %empty
 ;
 arguments
