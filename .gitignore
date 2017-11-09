@@ -1,0 +1,9 @@
+# git ignorefile
+
+*.o
+.idea/
+
+compiler467
+y.output
+parser.tab.h
+parser.c

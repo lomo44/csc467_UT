@@ -1,6 +1,11 @@
 Lab2 Report
 
+Li Zhuang: 1000311628
+Gao Chen: 999922972
+
 Breakdown of Work
+Gao Chen: Testing and verification
+Li Zhuang: Implementation
 
 Challenges Faced
 1. Starter files given by the course cannot built, seems like it persists the problem that lab1 starter has.

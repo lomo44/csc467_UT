@@ -163,14 +163,10 @@ declaration
   ;
 statement
   : variable OP_ASSIGN expression SEMICOLON
-  | STMT_IF OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET statement else_statement
+  | STMT_IF OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET statement STMT_ELSE statement
   | STMT_WHILE OPEN_ROUND_BRACKET expression CLOSE_ROUND_BRACKET statement
   | SEMICOLON
   | scope
-  ;
-else_statement
-  : STMT_ELSE statement
-  | %empty
   ;
 type
   : INT
