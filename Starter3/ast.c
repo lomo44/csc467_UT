@@ -48,3 +48,49 @@ void ast_free(node *ast) {
 void ast_print(node * ast) {
 
 }
+
+void cpNormalNode::initChildNodes(int in_iNumOfNodes){
+  if(in_iNumOfNodes > 0 && m_pChildNodes==NULL){
+    m_iNumOfChildNodes = in_iNumOfNodes;
+    m_pChildNodes = new cpBaseNode*[in_iNumOfNodes];
+    // Initialize child nodes ptr
+    for(int i = 0; i < in_iNumOfNodes; i++){
+      m_pChildNodes[i] = NULL;
+    }
+  }
+}
+
+cpNormalNode::~cpNormalNode(){
+  if(m_iNumOfChildNodes > 0 && m_pChildNodes!=NULL){
+    // Starting calling constructor of the child nodes
+    for(int i = 0; i < m_iNumOfChildNodes; i++){
+      delete m_pChildNodes[i];
+    }
+    delete []m_pChildNodes;
+  }
+}
+
+cpBaseNode* cpNormalNode::getChildNode(int in_iNodeIndex){
+  if(m_pChildNodes!=NULL && in_iNodeIndex >= 0){
+    return m_pChildNodes[in_iNodeIndex];
+  }
+  return NULL;
+}
+
+void cpNormalNode::print(){
+  // In order print
+  printSelf();
+  if(m_iNumOfChildNodes > 0 && m_pChildNodes != NULL){
+    for(int i = 0; i < m_iNumOfChildNodes; i ++){
+      m_pChildNodes[i]->print();
+    }
+  }
+}
+
+void print_cpNode(cpNormalNode* in_pNode){
+  in_pNode->print();
+}
+
+void free_cpNode(cpBaseNode* in_pNode){
+  delete in_pNode;
+}

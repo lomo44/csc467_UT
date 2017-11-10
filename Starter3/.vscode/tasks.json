@@ -6,7 +6,17 @@
         {
             "label": "Build Compiler",
             "type": "shell",
-            "command": "make all"
+            "command": "make all",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn":["Clean Compiler"]
+        },
+        {
+            "label": "Clean Compiler",
+            "type":"shell",
+            "command": "make clean"
         }
     ]
 }
