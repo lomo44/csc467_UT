@@ -97,7 +97,7 @@ public:
   /** Interfaces that we need to implements **/
   // Initialize a node, this node could be a leaf node or a non-leaf node, 
   // But they should share the same interface
-  virtual void initialize(int in_iArgumentsCount, va_list in_pArguments) = 0;
+  virtual void initialize(va_list in_pArguments) = 0;
   // Print function for each node
   // For non-leaf node, we need to implement the printSelf() function to print
   // its functionality. For leaf node, overwrite this to print the value or type
@@ -122,7 +122,7 @@ public:
   // Self-print for any non-leaf node
   virtual void printSelf() = 0;
   // Initialization function for any non-leaf node
-  virtual void initialize(int in_iArgumentsCount, va_list in_pArguments) = 0;
+  virtual void initialize(va_list in_pArguments) = 0;
 protected:
   int           m_Operand = -1;
   node_kind     m_NodeKind;
@@ -140,7 +140,7 @@ class __node_name : public cpBaseNode{\
 public:\
   __node_name(){};\
   virtual ~__node_name(){};\
-  virtual void initialize(int in_iArgumentsCount, va_list in_pArguments);\
+  virtual void initialize(va_list in_pArguments);\
   __node_value_type m_value;\
 }
 
@@ -149,12 +149,13 @@ class __node_name : public cpNormalNode{\
 public:\
   __node_name():cpNormalNode(__node_kind){};\
   virtual ~__node_name(){};\
-  virtual void initialize(int in_iArgumentsCount, va_list in_pArguments);\
+  virtual void initialize(va_list in_pArguments);\
+  virtual void printSelf();\
 }
 
 DEFINE_CPNORMAL_NODE(cpStatementNode,STATEMENT_NODE);
 DEFINE_CPNORMAL_NODE(cpExpressionNode,EXPRESSION_NODE);
-DEFINE_CPNORMAL_NODE(cpUnaryExpresionNode,UNARY_EXPRESION_NODE);
+DEFINE_CPNORMAL_NODE(cpUnaryExpressionNode,UNARY_EXPRESION_NODE);
 DEFINE_CPNORMAL_NODE(cpBinaryExpressionNode,BINARY_EXPRESSION_NODE);
 DEFINE_CPNORMAL_NODE(cpFunctionNode,FUNCTION_NODE);
 DEFINE_CPNORMAL_NODE(cpDeclarationNode,DECLARATION_NODE);
@@ -169,6 +170,7 @@ DEFINE_CPLEAFNODE(cpFloatNode,float);
 DEFINE_CPLEAFNODE(cpIdentifierNode,std::string);
 DEFINE_CPLEAFNODE(cpIntNode,int);
 
+/** Factory function to create different kind of nodes**/
 cpBaseNode* allocate_cpNode(node_kind in_nodeKind, ...);
 void free_cpNode(cpBaseNode* in_pNode);
 void print_cpNode(cpBaseNode* in_pNode);

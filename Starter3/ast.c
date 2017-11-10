@@ -94,3 +94,40 @@ void print_cpNode(cpNormalNode* in_pNode){
 void free_cpNode(cpBaseNode* in_pNode){
   delete in_pNode;
 }
+
+
+void cpBinaryExpressionNode::printSelf(){
+  printf("Binary Expresion Node, Operand %d\n",m_Operand);
+}
+void cpBinaryExpressionNode::initialize(va_list in_pArguments){
+  // TODO:Inplement initialize function for binary expression node
+}
+
+void cpUnaryExpressionNode::printSelf(){
+  printf("Unary Expression Node, Operand %d\n",m_Operand);
+}
+void cpUnaryExpressionNode::initialize(va_list in_pArguments){
+  // TODO:Inplement initialize function for UnaryExpressionNode
+}
+
+#define CHECK_AND_ALLOCATE(__kind, __node_class)\
+case __kind:{\
+  retNode = new __node_class();\
+  break;\
+}
+
+cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
+  va_list args;
+  va_start(args, in_nodekind);
+  cpBaseNode* retNode = NULL;
+  switch(in_nodekind){
+    CHECK_AND_ALLOCATE(BINARY_EXPRESSION_NODE,cpBinaryExpressionNode);
+    CHECK_AND_ALLOCATE(UNARY_EXPRESION_NODE,cpUnaryExpressionNode);
+    //TODO: Add more under here, for each node, please implement the printSelf and Initialize interface
+    default:{
+    }
+  }
+  retNode->initialize(args);
+  va_end(args);
+  return retNode;
+}
