@@ -3,3 +3,7 @@
 #include <stdio.h>
 
 #include "symbol.h"
+
+
+
+cpNodeTable gNodeTable;
