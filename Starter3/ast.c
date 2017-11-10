@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string.h>
-
+#include <assert.h>
 #include "ast.h"
 #include "common.h"
 #include "parser.tab.h"
+
 
 #define DEBUG_PRINT_TREE 0
 
@@ -102,12 +103,25 @@ void cpBinaryExpressionNode::printSelf(){
 void cpBinaryExpressionNode::initialize(va_list in_pArguments){
   // TODO:Inplement initialize function for binary expression node
 }
+bool cpBinaryExpressionNode::isTerminalType(node_kind in_kind){
+}
+
 
 void cpUnaryExpressionNode::printSelf(){
   printf("Unary Expression Node, Operand %d\n",m_Operand);
 }
 void cpUnaryExpressionNode::initialize(va_list in_pArguments){
   // TODO:Inplement initialize function for UnaryExpressionNode
+}
+bool cpUnaryExpressionNode::isTerminalType(node_kind in_kind){
+  if(m_iNumOfChildNodes == 1 && m_pChildNodes!=NULL){
+    return m_pChildNodes[0]->isTerminalType(in_kind);
+  }
+  else{
+    assert(0);
+    return false;
+    // Construction of the unary expression node is invalid
+  }
 }
 
 #define CHECK_AND_ALLOCATE(__kind, __node_class)\
