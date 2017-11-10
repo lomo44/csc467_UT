@@ -123,7 +123,7 @@ public:
   virtual ~cpNormalNode();
   void    initChildNodes(int in_iNumOfNodes);
   int     getNumOfChildNodes(){return m_iNumOfChildNodes;};
-  void    setChildNodes(cpNormalNode* in_pNode, int in_iNodeIndex);
+  void    setChildNodes(cpBaseNode* in_pNode, int in_iNodeIndex);
   cpBaseNode* getChildNode(int in_iNodeIndex);
   cpBaseNode** getChildNodes(){return m_pChildNodes;};
   virtual void print();
@@ -157,17 +157,15 @@ public:\
   virtual void printSelf();\
 }
 
-DEFINE_CPNORMAL_NODE(cpStatementNode,STATEMENT_NODE);
-DEFINE_CPNORMAL_NODE(cpExpressionNode,EXPRESSION_NODE);
-DEFINE_CPNORMAL_NODE(cpUnaryExpressionNode,UNARY_EXPRESION_NODE);
+DEFINE_CPNORMAL_NODE(cpUnaryExpressionNode,UNARY_EXPRESION_NODE); 
 DEFINE_CPNORMAL_NODE(cpBinaryExpressionNode,BINARY_EXPRESSION_NODE);
-DEFINE_CPNORMAL_NODE(cpFunctionNode,FUNCTION_NODE);
+DEFINE_CPNORMAL_NODE(cpFunctionNode,FUNCTION_NODE); 
 DEFINE_CPNORMAL_NODE(cpDeclarationNode,DECLARATION_NODE);
 DEFINE_CPNORMAL_NODE(cpIfStatementNode,IF_STATEMENT_NODE);
 DEFINE_CPNORMAL_NODE(cpWhileStatmentNode,WHILE_STATEMENT_NODE);
 DEFINE_CPNORMAL_NODE(cpConstructorNode,CONSTRUCTOR_NODE);
-DEFINE_CPNORMAL_NODE(cpScopeNode,SCOPE_NODE);
-DEFINE_CPNORMAL_NODE(cpVariableNode,VAR_NODE);
+DEFINE_CPNORMAL_NODE(cpScopeNode,SCOPE_NODE); 
+DEFINE_CPNORMAL_NODE(cpVariableNode,VAR_NODE); 
 DEFINE_CPNORMAL_NODE(cpAssignmentNode,ASSIGNMENT_NODE);
 
 DEFINE_CPLEAFNODE(cpFloatNode,FLOAT_NODE,float);

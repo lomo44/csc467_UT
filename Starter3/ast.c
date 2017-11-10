@@ -78,6 +78,12 @@ cpBaseNode* cpNormalNode::getChildNode(int in_iNodeIndex){
   return NULL;
 }
 
+void cpNormalNode::setChildNodes(cpBaseNode* in_pNode, int in_iNodeIndex){
+  if(m_pChildNodes!=NULL && in_iNodeIndex >= 0){
+    m_pChildNodes[in_iNodeIndex] = in_pNode;
+  }
+}
+
 void cpNormalNode::print(){
   // In order print
   printSelf();
@@ -88,27 +94,100 @@ void cpNormalNode::print(){
   }
 }
 
+void cpFunctionNode::printSelf(){
+    printf("Function \n");
+}
+
+void cpFunctionNode::initialize(va_list in_pArguments){
+    m_Operand = va_arg(in_pArguments,int);
+    initChildNodes(1);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+}
+
+void cpConstructorNode::printSelf(){
+    printf("Constructor \n");
+}
+
+void cpConstructorNode::initialize(va_list in_pArguments){
+    m_Operand = va_arg(in_pArguments,int);
+    initChildNodes(1);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+}
 
 
 void cpBinaryExpressionNode::printSelf(){
-  printf("Binary Expresion Node, Operand %d\n",m_Operand);
+    printf("Binary Expresion Node, Operand %d\n",m_Operand);
 }
 void cpBinaryExpressionNode::initialize(va_list in_pArguments){
-  // TODO:Inplement initialize function for binary expression node
+    initChildNodes(2);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),1);
+}
+
+void cpScopeNode::printSelf(){
+    printf("Scope Node\n");
+}
+void cpScopeNode::initialize(va_list in_pArguments){
+    initChildNodes(2);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),1);
+}
+
+void cpWhileStatmentNode::printSelf(){
+    printf("While Node\n");
+}
+void cpWhileStatmentNode::initialize(va_list in_pArguments){
+    initChildNodes(2);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),1);
+}
+
+void cpIfStatementNode::printSelf(){
+    printf("If Node\n");
+}
+void cpIfStatementNode::initialize(va_list in_pArguments){
+    initChildNodes(3);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),1);
+    setChildNodes(va_arg(in_pArguments,cpBaseNode*),2);
+}
+
+void cpDeclarationNode::printSelf(){
+  printf("Declaration Node\n",m_Operand);
+}
+void cpDeclarationNode::initialize(va_list in_pArguments){
+  initChildNodes(1);
+  setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
 }
 
 void cpUnaryExpressionNode::printSelf(){
   printf("Unary Expression Node, Operand %d\n",m_Operand);
 }
 void cpUnaryExpressionNode::initialize(va_list in_pArguments){
-  // TODO:Inplement initialize function for UnaryExpressionNode
+  initChildNodes(1);
+  setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
 }
 
-#define CHECK_AND_ALLOCATE(__kind, __node_class)\
-case __kind:{\
-  retNode = new __node_class();\
-  break;\
+void cpAssignmentNode::printSelf(){
+  printf("Assignment Node\n");
 }
+
+void cpAssignmentNode::initialize(va_list in_pArguments){
+  initChildNodes(1);
+  setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+}
+
+void cpVariableNode::printSelf(){
+  printf("Variable Node, index %d\n",m_Operand);
+}
+
+void cpVariableNode::initialize(va_list in_pArguments){
+  initChildNodes(1);
+  m_Operand = va_arg(in_pArguments,int);
+  setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
+}
+
+
 
 /** Leaf nodes **/
 void cpFloatNode::print(){
@@ -119,7 +198,7 @@ void cpFloatNode::initialize(va_list in_pArguments){
 }
 
 void cpIdentifierNode::print(){
-  printf("ID : %s\n",m_value);
+  printf("ID : %s\n",m_value.c_str());
 }
 void cpIdentifierNode::initialize(va_list in_pArguments){
   m_value = va_arg(in_pArguments, std::string);
@@ -136,10 +215,15 @@ void cpBoolNode::print(){
   printf("ID : %d\n",m_value);
 }
 void cpBoolNode::initialize(va_list in_pArguments){
-  m_value = va_arg(in_pArguments, bool);
+  m_value = va_arg(in_pArguments, int);
 }
 
 
+#define CHECK_AND_ALLOCATE(__kind, __node_class)\
+case __kind:{\
+  retNode = new __node_class();\
+  break;\
+}
 
 
 cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
@@ -149,11 +233,20 @@ cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
   switch(in_nodekind){
     CHECK_AND_ALLOCATE(BINARY_EXPRESSION_NODE,cpBinaryExpressionNode);
     CHECK_AND_ALLOCATE(UNARY_EXPRESION_NODE,cpUnaryExpressionNode);
-    //TODO: Add more under here, for each node, please implement the printSelf and Initialize interface
+    CHECK_AND_ALLOCATE(ASSIGNMENT_NODE, cpAssignmentNode);
+    CHECK_AND_ALLOCATE(FUNCTION_NODE, cpFunctionNode);
+    CHECK_AND_ALLOCATE(VAR_NODE, cpVariableNode);
+    CHECK_AND_ALLOCATE(SCOPE_NODE, cpScopeNode);
+    CHECK_AND_ALLOCATE(CONSTRUCTOR_NODE, cpConstructorNode);
+    CHECK_AND_ALLOCATE(WHILE_STATEMENT_NODE,cpWhileStatmentNode);
+    CHECK_AND_ALLOCATE(IF_STATEMENT_NODE, cpIfStatementNode);
+    CHECK_AND_ALLOCATE(DECLARATION_NODE, cpDeclarationNode);
+    // Leaf ndoes
     CHECK_AND_ALLOCATE(FLOAT_NODE, cpFloatNode);
     CHECK_AND_ALLOCATE(IDENT_NODE, cpIdentifierNode);
     CHECK_AND_ALLOCATE(INT_NODE, cpIntNode);
     CHECK_AND_ALLOCATE(BOOL_NODE, cpBoolNode);
+    //TODO: Add more under here, for each node, please implement the printSelf and Initialize interface
     default:{
     }
   }
