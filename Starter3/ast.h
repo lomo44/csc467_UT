@@ -20,6 +20,7 @@ typedef struct node_ node;
 extern node *ast;
 
 typedef enum {
+  INVALID = -1,
   UNKNOWN = 0,
 
   SCOPE_NODE = (1 << 0),
@@ -105,8 +106,9 @@ public:
   // its functionality. For leaf node, overwrite this to print the value or type
   virtual void print() = 0;
 
-  virtual bool isTerminalType(node_kind in_Kind) = 0;
-  virtual node_kind getTerminalType() = 0;
+  virtual bool isTerminalType(node_kind in_Kind){return m_TerminalKind == in_Kind;};
+  virtual void setTerminalType(node_kind in_Kind){m_TerminalKind = in_Kind;};
+  virtual node_kind getTerminalType(){return m_TerminalKind;};
 protected:
   node_kind     m_TerminalKind = UNKNOWN;
   node_kind     m_NodeKind;
@@ -130,9 +132,6 @@ public:
   virtual void printSelf() = 0;
   // Initialization function for any non-leaf node
   virtual void initialize(va_list in_pArguments) = 0;
-  // Check if current node represent a type
-  virtual bool isTerminalType(node_kind in_Kind) = 0;
-  virtual node_kind getTerminalType() = 0;
 protected:
   int           m_Operand = -1;
   int           m_iNumOfChildNodes = -1;
@@ -146,8 +145,6 @@ public:\
   virtual ~__node_name(){};\
   virtual void print();\
   virtual void initialize(va_list in_pArguments);\
-  virtual bool isTerminalType(node_kind in_Kind) = 0;\
-  virtual node_kind getTerminalType() = 0;\
   __node_value_type m_value;\
 }
 
@@ -157,8 +154,6 @@ public:\
   __node_name():cpNormalNode(__node_kind){};\
   virtual ~__node_name(){};\
   virtual void initialize(va_list in_pArguments);\
-  virtual bool isTerminalType(node_kind in_Kind) = 0;\
-  virtual node_kind getTerminalType() = 0;\
   virtual void printSelf();\
 }
 

@@ -88,13 +88,6 @@ void cpNormalNode::print(){
   }
 }
 
-void print_cpNode(cpNormalNode* in_pNode){
-  in_pNode->print();
-}
-
-void free_cpNode(cpBaseNode* in_pNode){
-  delete in_pNode;
-}
 
 
 void cpBinaryExpressionNode::printSelf(){
@@ -103,9 +96,6 @@ void cpBinaryExpressionNode::printSelf(){
 void cpBinaryExpressionNode::initialize(va_list in_pArguments){
   // TODO:Inplement initialize function for binary expression node
 }
-bool cpBinaryExpressionNode::isTerminalType(node_kind in_kind){
-}
-
 
 void cpUnaryExpressionNode::printSelf(){
   printf("Unary Expression Node, Operand %d\n",m_Operand);
@@ -113,22 +103,44 @@ void cpUnaryExpressionNode::printSelf(){
 void cpUnaryExpressionNode::initialize(va_list in_pArguments){
   // TODO:Inplement initialize function for UnaryExpressionNode
 }
-bool cpUnaryExpressionNode::isTerminalType(node_kind in_kind){
-  if(m_iNumOfChildNodes == 1 && m_pChildNodes!=NULL){
-    return m_pChildNodes[0]->isTerminalType(in_kind);
-  }
-  else{
-    assert(0);
-    return false;
-    // Construction of the unary expression node is invalid
-  }
-}
 
 #define CHECK_AND_ALLOCATE(__kind, __node_class)\
 case __kind:{\
   retNode = new __node_class();\
   break;\
 }
+
+/** Leaf nodes **/
+void cpFloatNode::print(){
+  printf("Float Value: %f\n",m_value);
+}
+void cpFloatNode::initialize(va_list in_pArguments){
+  m_value = va_arg(in_pArguments, double);
+}
+
+void cpIdentifierNode::print(){
+  printf("ID : %s\n",m_value);
+}
+void cpIdentifierNode::initialize(va_list in_pArguments){
+  m_value = va_arg(in_pArguments, std::string);
+}
+
+void cpIntNode::print(){
+  printf("Int Value : %d\n",m_value);
+}
+void cpIntNode::initialize(va_list in_pArguments){
+  m_value = va_arg(in_pArguments, int);
+}
+
+void cpBoolNode::print(){
+  printf("ID : %d\n",m_value);
+}
+void cpBoolNode::initialize(va_list in_pArguments){
+  m_value = va_arg(in_pArguments, bool);
+}
+
+
+
 
 cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
   va_list args;
@@ -138,10 +150,22 @@ cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
     CHECK_AND_ALLOCATE(BINARY_EXPRESSION_NODE,cpBinaryExpressionNode);
     CHECK_AND_ALLOCATE(UNARY_EXPRESION_NODE,cpUnaryExpressionNode);
     //TODO: Add more under here, for each node, please implement the printSelf and Initialize interface
+    CHECK_AND_ALLOCATE(FLOAT_NODE, cpFloatNode);
+    CHECK_AND_ALLOCATE(IDENT_NODE, cpIdentifierNode);
+    CHECK_AND_ALLOCATE(INT_NODE, cpIntNode);
+    CHECK_AND_ALLOCATE(BOOL_NODE, cpBoolNode);
     default:{
     }
   }
   retNode->initialize(args);
   va_end(args);
   return retNode;
+}
+
+void print_cpNode(cpNormalNode* in_pNode){
+  in_pNode->print();
+}
+
+void free_cpNode(cpBaseNode* in_pNode){
+  delete in_pNode;
 }
