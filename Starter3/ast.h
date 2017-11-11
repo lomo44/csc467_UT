@@ -84,6 +84,23 @@ enum ecpBaseNodeType{
   ecpBaseNodeType_Leaf
 };
 
+enum ecpTerminalType{
+  ecpTerminalType_Invalid,
+  ecpTerminalType_Unknown,
+  ecpTerminalType_int1,
+  ecpTerminalType_int2,
+  ecpTerminalType_int3,
+  ecpTerminalType_int4,
+  ecpTerminalType_bool1,
+  ecpTerminalType_bool2,
+  ecpTerminalType_bool3,
+  ecpTerminalType_bool4,
+  ecpTerminalType_float1,
+  ecpTerminalType_float2,
+  ecpTerminalType_float3,
+  ecpTerminalType_float4,
+};
+
 class cpBaseNode;
 
 typedef std::vector<cpBaseNode*> cpNodeList;
@@ -106,16 +123,16 @@ public:
   // For non-leaf node, we need to implement the printSelf() function to print
   // its functionality. For leaf node, overwrite this to print the value or type
   virtual void print() = 0;
-  void updateTerminalType(int in_Kind){if(m_TerminalKind==UNKNOWN) m_TerminalKind = in_Kind;}
-  bool isTerminalType(int in_Kind){return m_TerminalKind == in_Kind;};
-  void setTerminalType(int in_Kind){m_TerminalKind = in_Kind;};
-  int getTerminalType(){return m_TerminalKind;};
+  void updateTerminalType(ecpTerminalType in_Kind){if(m_TerminalKind==ecpTerminalType_Unknown) m_TerminalKind = in_Kind;}
+  bool isTerminalType(ecpTerminalType in_Kind){return m_TerminalKind == in_Kind;};
+  void setTerminalType(ecpTerminalType in_Kind){m_TerminalKind = in_Kind;};
+  ecpTerminalType getTerminalType(){return m_TerminalKind;};
   
   cpBaseNode* getParentNode(){return m_pParentNode;}
   void setParentNode(cpBaseNode* in_pParentNode){m_pParentNode = in_pParentNode;}
   void pushNodeList(){gGlobalNodeList[m_NodeKind].push_back(this);}
 protected:
-  int             m_TerminalKind = UNKNOWN;
+  ecpTerminalType m_TerminalKind = ecpTerminalType_Unknown;
   eNodeKind       m_NodeKind;
   cpBaseNode*     m_pParentNode = NULL;
   ecpBaseNodeType m_eNodeType;
