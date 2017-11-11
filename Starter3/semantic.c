@@ -62,9 +62,7 @@ ecpTerminalType getExpresstionTerminalType(cpBinaryExpressionNode* in_pNode, cpS
         cpBaseNode* leftNode = in_pNode->getChildNode(0);
         cpBaseNode* rightNode = in_pNode->getChildNode(1);
         ecpTerminalType leftNodeKind = getExpresstionTerminalType(leftNode, in_pTable);
-        ecpTerminalType rightNodeKind = getExpresstionTerminalType(leftNode, in_pTable);
-        leftNode->updateTerminalType(leftNodeKind);
-        rightNode->updateTerminalType(rightNodeKind);
+        ecpTerminalType rightNodeKind = getExpresstionTerminalType(rightNode, in_pTable);
         int operand = in_pNode->getOperand();
         switch(operand){
             case '<':
@@ -107,9 +105,65 @@ ecpTerminalType getExpresstionTerminalType(cpBinaryExpressionNode* in_pNode, cpS
         }
     }
     in_pNode->updateTerminalType(currentNodeType);
-    return ecpTerminalType_Unknown;
+    return currentNodeType;
 }
 ecpTerminalType getExpresstionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode in_pTable){
+    ecpTerminalType currentNodeType = in_pNode->getTerminalType(); 
+    if(currentNodeType!=ecpTerminalType_Unknown){
+        return currentNodeType;
+    }
+    else{
+        int operand = in_pNode->getOperand();
+        switch(operand){
+            case 0:{
+                // dp3
+                cpBaseNode* first_param = in_pNode->getChildNode(0);
+                cpBaseNode* second_param = in_pNode->getChildNode(1);
+                ecpTerminalType leftNodeKind = getExpresstionTerminalType(first_param, in_pTable);
+                ecpTerminalType rightNodeKind = getExpresstionTerminalType(second_param, in_pTable);
+                if(IS_VV_A(leftNodeKind, rightNodeKind)){
+                    if(leftNodeKind == ecpTerminalType_float3 || leftNodeKind == ecpTerminalType_float4){
+                        currentNodeType = ecpTerminalType_float1;
+                    }
+                    else if(leftNodeKind == ecpTerminalType_int3 || leftNodeKind == ecpTerminalType_int4){
+                        currentNodeType = ecpTerminalType_int1;
+                    }
+                    else{
+                        currentNodeType = ecpTerminalType_Invalid;
+                    }
+                }
+                else{
+                    currentNodeType = ecpTerminalType_Invalid;
+                }
+                break;
+            }
+            case 1:{
+                //lit
+                cpBaseNode* first_param = in_pNode->getChildNode(0);
+                ecpTerminalType leftNodeKind = getExpresstionTerminalType(first_param, in_pTable);
+                if(leftNodeKind == ecpTerminalType_float4){
+                    currentNodeType = ecpTerminalType_float4;
+                }
+                else{
+                    currentNodeType = ecpTerminalType_Invalid;
+                }
+                break;
+            }
+            case 2:{
+                //rsq
+                cpBaseNode* first_param = in_pNode->getChildNode(0);
+                ecpTerminalType leftNodeKind = getExpresstionTerminalType(first_param, in_pTable);
+                if(leftNodeKind == ecpTerminalType_float1 || leftNodeKind == ecpTerminalType_int1){
+                    currentNodeType = ecpTerminalType_float1;
+                }
+                else{
+                    currentNodeType = ecpTerminalType_Invalid;
+                }
+                break;
+            }
+        }
+    }
+    in_pNode->updateTerminalType(currentNodeType);
     return ecpTerminalType_Unknown;
 }
 ecpTerminalType getExpresstionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode in_pTable){
