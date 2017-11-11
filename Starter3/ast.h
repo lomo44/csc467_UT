@@ -37,7 +37,7 @@ enum eNodeKind{
   DECLARATION_NODE,
   NUM_OF_KIND,
   INVALID = -1,
-  UNKNOWN = -2,
+  UNKNOWN = -2
 };
 
 struct node_
@@ -97,6 +97,7 @@ public:
   virtual ~cpBaseNode(){};
   void setNodeType(ecpBaseNodeType in_eNodeType){m_eNodeType = in_eNodeType;};
   ecpBaseNodeType getNodeType(){return m_eNodeType;};
+  eNodeKind getNodeKind(){return m_NodeKind;}
   /** Interfaces that we need to implements **/
   // Initialize a node, this node could be a leaf node or a non-leaf node, 
   // But they should share the same interface
@@ -105,17 +106,18 @@ public:
   // For non-leaf node, we need to implement the printSelf() function to print
   // its functionality. For leaf node, overwrite this to print the value or type
   virtual void print() = 0;
-
-  virtual bool isTerminalType(eNodeKind in_Kind){return m_TerminalKind == in_Kind;};
-  virtual void setTerminalType(eNodeKind in_Kind){m_TerminalKind = in_Kind;};
-  virtual eNodeKind getTerminalType(){return m_TerminalKind;};
+  void updateTerminalType(int in_Kind){if(m_TerminalKind==UNKNOWN) m_TerminalKind = in_Kind;}
+  bool isTerminalType(int in_Kind){return m_TerminalKind == in_Kind;};
+  void setTerminalType(int in_Kind){m_TerminalKind = in_Kind;};
+  int getTerminalType(){return m_TerminalKind;};
+  
   cpBaseNode* getParentNode(){return m_pParentNode;}
   void setParentNode(cpBaseNode* in_pParentNode){m_pParentNode = in_pParentNode;}
   void pushNodeList(){gGlobalNodeList[m_NodeKind].push_back(this);}
 protected:
-  eNodeKind     m_TerminalKind = UNKNOWN;
-  eNodeKind     m_NodeKind;
-  cpBaseNode*    m_pParentNode = NULL;
+  int             m_TerminalKind = UNKNOWN;
+  eNodeKind       m_NodeKind;
+  cpBaseNode*     m_pParentNode = NULL;
   ecpBaseNodeType m_eNodeType;
 };
 
@@ -130,6 +132,7 @@ public:
   void    setChildNodes(cpBaseNode* in_pNode, int in_iNodeIndex);
   cpBaseNode* getChildNode(int in_iNodeIndex);
   cpBaseNode** getChildNodes(){return m_pChildNodes;};
+  int     getOperand(){return m_Operand;}
   virtual void print();
   /** These are some of the interfaces that we need to implements **/
   // Self-print for any non-leaf node
