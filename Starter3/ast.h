@@ -4,7 +4,7 @@
 
 #include <stdarg.h>
 #include <string>
-
+#include <vector>
 // Dummy node just so everything compiles, create your own node/nodes
 //
 // The code provided below is an example ONLY. You can use/modify it,
@@ -18,38 +18,32 @@
 struct node_;
 typedef struct node_ node;
 extern node *ast;
-
-typedef enum {
+enum eNodeKind{
+  SCOPE_NODE=0,
+  UNARY_EXPRESION_NODE,
+  BINARY_EXPRESSION_NODE,
+  INT_NODE,
+  FLOAT_NODE,
+  IDENT_NODE,
+  VAR_NODE,
+  FUNCTION_NODE,
+  CONSTRUCTOR_NODE,
+  BOOL_NODE,
+  STATEMENT_NODE,
+  IF_STATEMENT_NODE,
+  WHILE_STATEMENT_NODE,
+  ASSIGNMENT_NODE,
+  NESTED_SCOPE_NODE,
+  DECLARATION_NODE,
+  NUM_OF_KIND,
   INVALID = -1,
-  UNKNOWN = 0,
-
-  SCOPE_NODE = (1 << 0),
-
-  EXPRESSION_NODE = (1 << 2),
-  UNARY_EXPRESION_NODE = (1 << 2) | (1 << 3),
-  BINARY_EXPRESSION_NODE = (1 << 2) | (1 << 4),
-  INT_NODE = (1 << 2) | (1 << 5),
-  FLOAT_NODE = (1 << 2) | (1 << 6),
-  IDENT_NODE = (1 << 2) | (1 << 7),
-  VAR_NODE = (1 << 2) | (1 << 8),
-  FUNCTION_NODE = (1 << 2) | (1 << 9),
-  CONSTRUCTOR_NODE = (1 << 2) | (1 << 10),
-  BOOL_NODE = (1<<2) | (1<<11),
-
-  STATEMENT_NODE = (1 << 1),
-  IF_STATEMENT_NODE = (1 << 1) | (1 << 11),
-  WHILE_STATEMENT_NODE = (1 << 1) | (1 << 12),
-  ASSIGNMENT_NODE = (1 << 1) | (1 << 13),
-  NESTED_SCOPE_NODE = (1 << 1) | (1 << 14),
-
-  DECLARATION_NODE = (1 << 15)
-} node_kind;
+  UNKNOWN = -2,
+};
 
 struct node_
 {
-
   // an example of tagging each node with a type
-  node_kind kind;
+  eNodeKind kind;
 
   union {
     struct
@@ -75,9 +69,9 @@ struct node_
   };
 };
 
-node *ast_allocate(node_kind type, ...);
-void ast_free(node *ast);
-void ast_print(node *ast);
+// node *ast_allocate(eNodeKind type, ...);
+// void ast_free(node *ast);
+// void ast_print(node *ast);
 
 
 enum ecpVisitorTraversalType{
@@ -90,10 +84,16 @@ enum ecpBaseNodeType{
   ecpBaseNodeType_Leaf
 };
 
+class cpBaseNode;
+
+typedef std::vector<cpBaseNode*> cpNodeList;
+extern cpNodeList gGlobalNodeList[NUM_OF_KIND];
+
+
 class cpBaseNode{
 public:
   cpBaseNode(){};
-  cpBaseNode(node_kind in_NodeKind):m_NodeKind(in_NodeKind){};
+  cpBaseNode(eNodeKind in_NodeKind):m_NodeKind(in_NodeKind){pushNodeList();};
   virtual ~cpBaseNode(){};
   void setNodeType(ecpBaseNodeType in_eNodeType){m_eNodeType = in_eNodeType;};
   ecpBaseNodeType getNodeType(){return m_eNodeType;};
@@ -106,12 +106,16 @@ public:
   // its functionality. For leaf node, overwrite this to print the value or type
   virtual void print() = 0;
 
-  virtual bool isTerminalType(node_kind in_Kind){return m_TerminalKind == in_Kind;};
-  virtual void setTerminalType(node_kind in_Kind){m_TerminalKind = in_Kind;};
-  virtual node_kind getTerminalType(){return m_TerminalKind;};
+  virtual bool isTerminalType(eNodeKind in_Kind){return m_TerminalKind == in_Kind;};
+  virtual void setTerminalType(eNodeKind in_Kind){m_TerminalKind = in_Kind;};
+  virtual eNodeKind getTerminalType(){return m_TerminalKind;};
+  cpBaseNode* getParentNode(){return m_pParentNode;}
+  void setParentNode(cpBaseNode* in_pParentNode){m_pParentNode = in_pParentNode;}
+  void pushNodeList(){gGlobalNodeList[m_NodeKind].push_back(this);}
 protected:
-  node_kind     m_TerminalKind = UNKNOWN;
-  node_kind     m_NodeKind;
+  eNodeKind     m_TerminalKind = UNKNOWN;
+  eNodeKind     m_NodeKind;
+  cpBaseNode*    m_pParentNode = NULL;
   ecpBaseNodeType m_eNodeType;
 };
 
@@ -119,7 +123,7 @@ class cpNormalNode : public cpBaseNode
 {
 public:
   cpNormalNode(){};
-  cpNormalNode(node_kind in_NodeKind):cpBaseNode(in_NodeKind){};
+  cpNormalNode(eNodeKind in_NodeKind):cpBaseNode(in_NodeKind){};
   virtual ~cpNormalNode();
   void    initChildNodes(int in_iNumOfNodes);
   int     getNumOfChildNodes(){return m_iNumOfChildNodes;};
@@ -138,20 +142,20 @@ protected:
   cpBaseNode**  m_pChildNodes = NULL;
 };
 
-#define DEFINE_CPLEAFNODE(__node_name,__node_kind, __node_value_type)\
+#define DEFINE_CPLEAFNODE(__node_name,__eNodeKind, __node_value_type)\
 class __node_name : public cpBaseNode{\
 public:\
-  __node_name():cpBaseNode(__node_kind){};\
+  __node_name():cpBaseNode(__eNodeKind){};\
   virtual ~__node_name(){};\
   virtual void print();\
   virtual void initialize(va_list in_pArguments);\
   __node_value_type m_value;\
 }
 
-#define DEFINE_CPNORMAL_NODE(__node_name, __node_kind)\
+#define DEFINE_CPNORMAL_NODE(__node_name, __eNodeKind)\
 class __node_name : public cpNormalNode{\
 public:\
-  __node_name():cpNormalNode(__node_kind){};\
+  __node_name():cpNormalNode(__eNodeKind){};\
   virtual ~__node_name(){};\
   virtual void initialize(va_list in_pArguments);\
   virtual void printSelf();\
@@ -174,8 +178,9 @@ DEFINE_CPLEAFNODE(cpIntNode,INT_NODE,int);
 DEFINE_CPLEAFNODE(cpBoolNode,BOOL_NODE, bool);
 
 /** Factory function to create different kind of nodes**/
-cpBaseNode* allocate_cpNode(node_kind in_nodeKind, ...);
+cpBaseNode* allocate_cpNode(eNodeKind in_nodeKind, ...);
 void free_cpNode(cpBaseNode* in_pNode);
 void print_cpNode(cpBaseNode* in_pNode);
+
 
 #endif /* AST_H_ */

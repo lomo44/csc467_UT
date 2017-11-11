@@ -12,43 +12,44 @@
 
 node *ast = NULL;
 
-node *ast_allocate(node_kind kind, ...) {
-  va_list args;
+// node *ast_allocate(node_kind kind, ...) {
+//   va_list args;
 
-  // make the node
-  node *ast = (node *) malloc(sizeof(node));
-  memset(ast, 0, sizeof *ast);
-  ast->kind = kind;
+//   // make the node
+//   node *ast = (node *) malloc(sizeof(node));
+//   memset(ast, 0, sizeof *ast);
+//   ast->kind = kind;
 
-  va_start(args, kind); 
+//   va_start(args, kind); 
 
-  switch(kind) {
+//   switch(kind) {
   
-  // ...
+//   // ...
 
-  case BINARY_EXPRESSION_NODE:
-    ast->binary_expr.op = va_arg(args, int);
-    ast->binary_expr.left = va_arg(args, node *);
-    ast->binary_expr.right = va_arg(args, node *);
-    break;
+//   case BINARY_EXPRESSION_NODE:
+//     ast->binary_expr.op = va_arg(args, int);
+//     ast->binary_expr.left = va_arg(args, node *);
+//     ast->binary_expr.right = va_arg(args, node *);
+//     break;
 
-  // ...
+//   // ...
 
-  default: break;
-  }
+//   default: break;
+//   }
 
-  va_end(args);
+//   va_end(args);
 
-  return ast;
-}
+//   return ast;
+// }
 
-void ast_free(node *ast) {
+// void ast_free(node *ast) {
 
-}
+// }
 
-void ast_print(node * ast) {
+// void ast_print(node * ast) {
 
-}
+// }
+cpNodeList gGlobalNodeList[NUM_OF_KIND];
 
 void cpNormalNode::initChildNodes(int in_iNumOfNodes){
   if(in_iNumOfNodes > 0 && m_pChildNodes==NULL){
@@ -226,7 +227,7 @@ case __kind:{\
 }
 
 
-cpBaseNode* allocate_cpNode(node_kind in_nodekind, ...){
+cpBaseNode* allocate_cpNode(eNodeKind in_nodekind, ...){
   va_list args;
   va_start(args, in_nodekind);
   cpBaseNode* retNode = NULL;

@@ -1,9 +1,17 @@
 #ifndef _SEMANTIC_H
 #define _SEMANTIC_H
 
+#include <stack>
+
 #include "ast.h"
 #include "symbol.h"
+#include "parser.tab.h"
 
+typedef std::stack<cpBaseNode*> cpNodeStack;
+
+#define IS_LOGICAL_OPERATOR(x) ((x)==AND || (x)==OR || (x)==EQ || \
+                                (x)==NEQ || (x)=='<'|| (x)==LEQ|| \
+                                (x)=='>' || (x)==GEQ||)
 
 int semantic_check( node *ast);
 
