@@ -24,7 +24,7 @@ typedef std::stack<cpBaseNode*> cpNodeStack;
 #define IS_VV_L(x,y) (((x)==(y)) && IS_V_L(x))
 #define IS_SS_L(x,y) (((x)==(y)) && IS_S_L(x))
 
-int semantic_check( node *ast);
+int semantic_check(node *ast);
 
 int semantic_check(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 

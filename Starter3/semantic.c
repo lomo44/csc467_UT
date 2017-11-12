@@ -167,5 +167,33 @@ ecpTerminalType getExpresstionTerminalType(cpFunctionNode* in_pNode, cpSymbolTab
     return ecpTerminalType_Unknown;
 }
 ecpTerminalType getExpresstionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode in_pTable){
-    return ecpTerminalType_Unknown;
+    ecpTerminalType currentNodeType = in_pNode->getTerminalType(); 
+    if(currentNodeType!=ecpTerminalType_Unknown){
+        return currentNodeType;
+    }
+    else{
+        int operand = in_pNode->getOperand();
+        cpBaseNode* first_param = in_pNode->getChildNode(0);
+        ecpTerminalType leftNodeKind = getExpresstionTerminalType(first_param, in_pTable);        
+        switch(operand){
+            case '!':{
+                if(leftNodeKind==ecpTerminalType_bool1){
+                    currentNodeType = ecpTerminalType_bool1;
+                }
+                break;
+            }
+            case '-':{
+                if(leftNodeKind==ecpTerminalType_bool1){
+                    currentNodeType = leftNodeKind;
+                }
+                break;
+            }
+            default:{
+                currentNodeType = ecpTerminalType_Invalid;
+            }
+        }
+        in_pNode->updateTerminalType(currentNodeType);
+        return ecpTerminalType_Unknown;
+    }
+    
 }
