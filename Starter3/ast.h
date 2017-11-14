@@ -2,7 +2,8 @@
 #ifndef AST_H_
 #define AST_H_ 1
 
-#include <stdarg.h>
+#include <cstdarg>
+//#include <stdarg.h>
 #include <string>
 #include <vector>
 // Dummy node just so everything compiles, create your own node/nodes

@@ -10,6 +10,7 @@
 #define _COMMON_H_ 
 
 #include <stdio.h> /* for FILE */
+#include <stddef.h>
 
  
 /**********************************************************************
