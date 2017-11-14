@@ -14,20 +14,30 @@ struct cpSymbolAttribute{
 
 typedef std::vector<cpSymbolAttribute*> cpSymbolTable;
 
-
-struct cpSymbolTableNode{
+struct cpSymbolTableNode {
     cpSymbolTableNode* m_pParentScope = NULL;
     int m_iNumOfChildScopes = -1;
-    cpSymbolTableNode** m_pChileScopes = NULL;
+    std::vector<cpSymbolTableNode*> m_pChildScopes;
     cpSymbolTable m_vSymbolTable;
+
 };
-typedef std::unordered_map<cpBaseNode*,cpSymbolTableNode*> cpNodeTable;
+
+struct FindInsideTable:std::unary_function<cpSymbolAttribute*, bool>
+{
+   std::string id;
+   FindInsideTable(std::string Identifier): id(Identifier){ } 
+   bool operator ()(cpSymbolAttribute* const  &attr) const
+    {
+        return id==attr->m_sIdentifierName;
+    }
+
+};
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode);
-cpSymbolAttribute* getSymbolAttributes(std::string in_sIdentifier, cpScopeNode* in_pNode);
+cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode);
+cpSymbolAttribute* lookupCurrentSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode);
 
 
-extern cpNodeTable gNodeTable;
 
 #endif
 
