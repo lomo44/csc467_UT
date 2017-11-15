@@ -94,7 +94,7 @@ cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_
     cpSymbolLookUpTableItor current = cp_ST_NodeTable.find(in_pNode);
     if(current!=cp_ST_NodeTable.end()){
         // Current node exist, try search throught the scope
-        return SearchInScope(in_sIdentifier,current->second);
+        return SearchInTable(in_sIdentifier,current->second);
     }
     else{
         return NULL;
@@ -105,7 +105,7 @@ cpSymbolAttribute* SearchInTable(const std::string& in_sIdentifier, cpSymbolTabl
     cpSymbolTableNode* current_node = in_pTableNode;
     cpSymbolAttribute* ret = NULL;
     while(current_node != NULL){
-        ret = SearchInTable(in_sIdentifier, in_pTableNode);
+        ret = SearchInScope(in_sIdentifier, in_pTableNode);
         if(ret!=NULL){
             break;
         }

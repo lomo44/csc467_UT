@@ -24,8 +24,10 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
         cpNormalNode *normal_node = (cpNormalNode *)in_pNode;
         for (i = 0; i < normal_node->getNumOfChildNodes(); i++)
         {
-            if (!semantic_check(normal_node->getChildNode(i), in_pSymbolTable))
-                return false;
+            if(normal_node->getChildNode(i)!=NULL){
+                if (!semantic_check(normal_node->getChildNode(i), in_pSymbolTable))
+                    return false;
+            }
         }
         if (getExpressionTerminalType(normal_node, in_pSymbolTable) == ecpTerminalType_Invalid)
             return false;
