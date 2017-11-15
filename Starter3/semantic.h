@@ -7,8 +7,14 @@
 typedef std::stack<cpBaseNode*> cpNodeStack;
 #define IS_S_Int(x)((x)==ecpTerminalType_int1)
 #define IS_S_Flt(x)((x) == ecpTerminalType_float1)
+
+#define IS_Int(x)(((x) >= ecpTerminalType_int1) && ((x) <= ecpTerminalType_int4))
+#define IS_Flt(x)(((x) >= ecpTerminalType_float1) && ((x) <= ecpTerminalType_float4))
+#define IS_Bool(x)(((x) >= ecpTerminalType_bool1) && ((x) <= ecpTerminalType_bool4))
+
 #define IS_V_Int(x)(((x) >= ecpTerminalType_int2) && ((x) <= ecpTerminalType_int4))
 #define IS_V_Flt(x)(((x) >= ecpTerminalType_float2) && ((x) <= ecpTerminalType_float4))
+#define IS_V_Bool(x)(((x) >= ecpTerminalType_bool2) && ((x) <= ecpTerminalType_bool4))
 #define IS_S_A(x) (IS_S_Int(x) || IS_S_Flt(x))
 #define IS_V_A(x) (IS_V_Int(x) || IS_V_Flt(x))
 #define IS_S_L(x) ((x)==ecpTerminalType_bool1)
@@ -23,22 +29,26 @@ typedef std::stack<cpBaseNode*> cpNodeStack;
 
 // int semantic_check( node *ast);
 
-bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+bool semanettic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
-bool semantic_check_function_call(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pSymbolTable);
-bool semantic_check_operator(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_condition(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_constructor_call(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_vector_index(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_initialization(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_assignment(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-bool semantic_check_predifined_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_function_call(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pSymbolTable);
+// bool semantic_check_operator(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_condition(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_constructor_call(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_vector_index(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_initialization(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_assignment(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+// bool semantic_check_predifined_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
 ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpConstructorNode* in_pNode,cpSymbolTableNode* in_pTable);
+
+ecpTerminalType getExpressionTerminalType(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable);
+ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable); 
+ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable);
 
 #endif

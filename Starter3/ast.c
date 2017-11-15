@@ -74,6 +74,15 @@ void cpConstructorNode::initialize(va_list in_pArguments){
     setChildNodes(va_arg(in_pArguments,cpBaseNode*),0);
 }
 
+void cpArgumentsNode::initialize(va_list in_pArguments){
+    initChildNodes(2);
+    setChildNodes(va_arg(in_pArguments,cpArgumentsNode*),0);
+    setChildNodes(va_arg(in_pArguments,cpNormalNode*),0);
+}
+
+void cpArgumentsNode::printSelf(){
+    printf("Arguments Node: ");
+}
 
 void cpBinaryExpressionNode::printSelf(){
     printf("Binary Expresion Node, Operand %d\n",m_Operand);

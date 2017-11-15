@@ -13,7 +13,6 @@
 
 bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
 {
-
     int i;
     if (in_pNode == NULL || in_pNode->getNodeType() == ecpBaseNodeType_Leaf)
     {
@@ -33,93 +32,6 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
             return false;
         return true;
     }
-}
-
-bool semantic_check_function_call(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    // Check if function call is semantically correct
-    ecpFunctionType function_type = in_pNode->m_eFunctionType;
-    int child_node_count = in_pNode->getNumOfChildNodes();
-    switch(function_type){
-        case ecpFunctionType_dp3:{
-            // Check the argument count
-            if(child_node_count==2){
-                // Correct number of argument count, check the corresponding type for each argumnet
-                cpBaseNode* argument1 = in_pNode->getChildNode(0);
-                cpBaseNode* argument2 = in_pNode->getChildNode(1);
-                ecpTerminalType argument1_type = argument1->getTerminalType();
-                ecpTerminalType argument2_type = argument2->getTerminalType();
-                if((argument1_type == argument2_type) && (
-                    argument1_type == ecpTerminalType_float3||
-                    argument1_type == ecpTerminalType_float4||
-                    argument1_type == ecpTerminalType_int3||
-                    argument1_type == ecpTerminalType_int4))
-                    {
-                        return true;
-                }
-            }
-            break;
-        }
-        case ecpFunctionType_lit:{
-            // Check he argument count
-            if(child_node_count == 1){
-                cpBaseNode* argument1 = in_pNode->getChildNode(0);
-                ecpTerminalType argument1_type = argument1->getTerminalType();
-                if(argument1_type == ecpTerminalType_float4){
-                    return true;
-                }
-            }
-            break;
-        }
-        case ecpFunctionType_rsq:{
-            if(child_node_count == 1){
-                cpBaseNode* argument1 = in_pNode->getChildNode(0);
-                ecpTerminalType argument1_type = argument1->getTerminalType();
-                if(argument1_type == ecpTerminalType_float1 ||
-                argument1_type == ecpTerminalType_int1){
-                    return true;
-                }
-            }
-            break;
-        }
-        default:{
-            return false;
-        }
-    }
-    return false;
-}
-bool semantic_check_operator(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_condition(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-
-    return 0;
-}
-bool semantic_check_constructor_call(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_vector_index(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_initialization(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_assignment(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_variable(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
-}
-bool semantic_check_predifined_variable(cpScopeNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
-{
-    return 0;
 }
 
 ecpTerminalType getExpressionTerminalType(cpBaseNode *in_pNode, cpSymbolTableNode *in_pTable)
@@ -283,7 +195,7 @@ ecpTerminalType getExpressionTerminalType(cpFunctionNode *in_pNode, cpSymbolTabl
         }
     }
     in_pNode->updateTerminalType(currentNodeType);
-    return ecpTerminalType_Unknown; //why unknown?should be currentNodeType
+    return currentNodeType;
 }
 
 ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable)
@@ -316,6 +228,7 @@ ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode *in_pNode, cpSym
     return currentNodeType;
 }
 
+//TODO: Added arguments node, need to modify
 ecpTerminalType getExpressionTerminalType(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable)
 {
     ecpTerminalType currentNodeType = in_pNode->getTerminalType();
@@ -410,4 +323,62 @@ ecpTerminalType getExpressionTerminalType(cpConstructorNode *in_pNode, cpSymbolT
         in_pNode->updateTerminalType(currentNodeType);
         return currentNodeType;
     }
+}
+
+ecpTerminalType getExpressionTerminalType(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable){
+    // Based on the type of the in_pNode, check different things
+    ecpTerminalType type = in_pNode->getTerminalType();
+    int access_index = in_pNode->getAccessIndex();
+    if(access_index>=0 && access_index <4){
+        if(!(IS_Int(type) && access_index <= (type-ecpTerminalType_int1)) ||
+        !(IS_Flt(type) && access_index <= (type-ecpTerminalType_float1)) ||
+        !(IS_Bool(type) && access_index <= (type-ecpTerminalType_bool1))){
+            in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
+        }
+        else{
+            in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+        }
+    }
+    else{
+        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+    }
+    return in_pNode->getTerminalType();
+}
+ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable){
+    cpIdentifierNode* variable = in_pNode->getVariable();
+    cpNormalNode* expression = in_pNode->getExpression();
+    
+    ecpTerminalType expression_type = variable->getTerminalType();
+    ecpTerminalType variable_type = expression->getTerminalType();
+
+    if((expression_type!=ecpTerminalType_Invalid) && (variable_type!=ecpTerminalType_Invalid)){
+        // Check matching      
+        if(variable_type >= expression_type){
+            if((IS_Int(variable_type) && IS_Int(variable_type)) ||
+            (IS_Flt(variable_type) && IS_Flt(variable_type)) ||
+            (IS_Bool(variable_type) && IS_Bool(variable_type))){
+                in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
+            }
+            else{
+                in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
+            }
+        }
+        else{
+            in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
+        }
+    }
+    else{
+        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+    }
+    return in_pNode->getTerminalType(); 
+}
+ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable){
+    ecpTerminalType expression_type = getExpressionTerminalType(in_pNode->getExpression(),in_pTable);
+    if(expression_type!=ecpTerminalType_bool1){
+        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+    }
+    else{
+        in_pNode->updateTerminalType(ecpTerminalType_Unknown);
+    }
+    return in_pNode->getTerminalType();
 }

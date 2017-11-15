@@ -55,8 +55,7 @@ enum ecpBaseNodeType
 
 enum ecpTerminalType
 {
-    ecpTerminalType_Invalid,
-    ecpTerminalType_Unknown,
+
     ecpTerminalType_int1,
     ecpTerminalType_int2,
     ecpTerminalType_int3,
@@ -68,8 +67,20 @@ enum ecpTerminalType
     ecpTerminalType_float1,
     ecpTerminalType_float2,
     ecpTerminalType_float3,
-    ecpTerminalType_float4
+    ecpTerminalType_float4,
+    ecpTerminalType_Invalid,
+    ecpTerminalType_Unknown
 };
+
+enum ecpFunctionQualifier{
+    ecpFunctionQualifier_Const,
+    ecpFunctionQualifier_Attribute,
+    ecpFunctionQualifier_Result,
+    ecpFunctionQualifier_Uniform
+};
+
+#define IS_WRITE_ONLY(x) ((x)==ecpFunctionQualifier_Result)
+#define IS_READ_ONLY(x) ((x)==ecpFunctionQualifier_Attribute || (x)==ecpFunctionQualifier_Uniform)
 
 enum ecpFunctionType
 {
@@ -165,6 +176,10 @@ class cpIdentifierNode : public cpLeafNode
     virtual void print();
     virtual void initialize(va_list in_pArguments);
     std::string m_value;
+    int getAccessIndex(){return m_iAccessIndex;}
+    void setAccessIndex(int in_iAccessIndex){m_iAccessIndex = in_iAccessIndex;}
+  private:
+    int m_iAccessIndex;
 };
 
 class cpNormalNode : public cpBaseNode
@@ -214,6 +229,15 @@ class cpVariableNode : public cpNormalNode
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
 };
+class cpStatementsNode : public cpNormalNode{
+  public:
+    cpStatementsNode() : cpNormalNode(STATEMENTS_NODE){};
+    virtual ~cpStatementsNode(){};
+    virtual void initialize(va_list in_pArguments);
+    virtual void printSelf();
+    virtual cpStatementsNode* getNextStatementsNode(){return (cpStatementsNode*)m_pChildNodes[0];}
+    virtual cpBaseNode* getCurrentStatementNode(){return m_pChildNodes[1];}
+};
 
 class cpAssignmentNode : public cpNormalNode
 {
@@ -222,6 +246,8 @@ class cpAssignmentNode : public cpNormalNode
     virtual ~cpAssignmentNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    cpIdentifierNode* getVariable(){return (cpIdentifierNode*)m_pChildNodes[0];}
+    cpNormalNode* getExpression(){return (cpNormalNode*)m_pChildNodes[1]; }
 };
 
 class cpConstructorNode : public cpNormalNode
@@ -249,6 +275,10 @@ class cpIfStatementNode : public cpNormalNode
     virtual ~cpIfStatementNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    cpBaseNode* getExpression(){return m_pChildNodes[0];}
+    cpStatementsNode* getIfStatements(){return (cpStatementsNode*)m_pChildNodes[1];}
+    cpStatementsNode* getElseStatements(){return (cpStatementsNode*)m_pChildNodes[2];}
+
 };
 
 class cpDeclarationNode : public cpNormalNode
@@ -258,7 +288,7 @@ class cpDeclarationNode : public cpNormalNode
     virtual ~cpDeclarationNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
-    bool m_bIsConst;
+    ecpFunctionQualifier m_eQualifier;
     int m_iVariableSize;
     std::string m_sIdentifierName;
 };
@@ -273,15 +303,6 @@ class cpDeclarationsNode : public cpNormalNode{
     virtual cpDeclarationNode* getCurrentDeclarationNode(){return (cpDeclarationNode*)m_pChildNodes[1];}
 };
 
-class cpStatementsNode : public cpNormalNode{
-  public:
-    cpStatementsNode() : cpNormalNode(STATEMENTS_NODE){};
-    virtual ~cpStatementsNode(){};
-    virtual void initialize(va_list in_pArguments);
-    virtual void printSelf();
-    virtual cpStatementsNode* getNextStatementsNode(){return (cpStatementsNode*)m_pChildNodes[0];}
-    virtual cpBaseNode* getCurrentStatementNode(){return m_pChildNodes[1];}
-};
 
 class cpUnaryExpressionNode : public cpNormalNode
 {
@@ -299,6 +320,17 @@ class cpBinaryExpressionNode : public cpNormalNode
     virtual ~cpBinaryExpressionNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+};
+
+class cpArgumentsNode : public cpNormalNode
+{
+    public:
+    cpArgumentsNode() : cpNormalNode(BINARY_EXPRESSION_NODE){};
+    virtual ~cpArgumentsNode(){};
+    virtual void initialize(va_list in_pArguments);
+    virtual void printSelf();
+    cpArgumentsNode* getNextArguments(){return (cpArgumentsNode*)m_pChildNodes[0];}
+    cpNormalNode* getCurrentArgument(){return (cpArgumentsNode*)m_pChildNodes[1];}
 };
 
 class cpFunctionNode : public cpNormalNode
