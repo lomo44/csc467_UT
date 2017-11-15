@@ -27,80 +27,100 @@
 ************************************************************/
 
 
-std::unordered_map<cpBaseNode*,cpSymbolTableNode*> cp_ST_NodeTable;
+cpSymbolLookUpTable cp_ST_NodeTable;
 
+void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
+    in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
+    in_pAttribute->m_iType = in_pNode->getTerminalType();
+    in_pAttribute->m_iVariableSize = in_pNode->m_iVariableSize;
+    in_pAttribute->m_bIsConst = in_pNode->m_bIsConst;
+}
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table){
     
-    //create a scope node whenver enters to a new scope
-    if (in_pNode->getNodeKind()==SCOPE_NODE)
-    {
-    cpSymbolTableNode* node= new cpSymbolTableNode();
-    node->m_pParentScope=table;
-    table=node;
+    if(in_pNode->getNodeType() == ecpBaseNodeType_Leaf){
+        return NULL;
     }
-    
-    cp_ST_NodeTable[in_pNode]=table;
-    
-    //insert into symbol table if current node is declaration node
-    if (in_pNode->getNodeKind()==ASSIGNMENT_NODE)
-    {
-        cpBaseNode* parent = in_pNode->getParentNode();
-        if (parent->getNodeKind()==DECLARATION_NODE)
+    else{
+        
+        //create a scope node whenver enters to a new scope
+        if (in_pNode->getNodeKind()==SCOPE_NODE)
+        {
+            cpSymbolTableNode* node= new cpSymbolTableNode();
+            node->m_pParentScope=table;
+            table=node;
+        }
+        cp_ST_NodeTable[in_pNode]=table;   
+        //insert into symbol table if current node is declaration node
+        if (in_pNode->getNodeKind()==DECLARATION_NODE)
         {
             //check if there are duplicate declarations in current scope
-            if(lookupSymbolTable((cpIdentifierNode*)in_pNode->m_value, cpScopeNode* in_pNode)==NULL)
-            return NULL;
-            //insert identifier and type
-            table->m_vSymbolTable.push_back(new cpSymbolAttribute());
-            if ((cpNormalNode*)in_pNode->getNumOfChildNodes()<4)
-            { 
-                table->back()->m_iType=(cpNormalNode*)in_pNode->getChildNode(0)->getNodeKind();//substitute with type node value later
-                table->back()->m_sIdentifierName=(cpIdentifierNode*)((cpNormalNode*)in_pNode->getChildNode(1))->m_value;
+            if(lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode)!=NULL){
+                return NULL;
             }
-            //we need to initialize 'const' child node for declaration
-            //if ((cpNormalNode*)in_pNode->getNumOfChildNodes()=4)
+            else{
+                cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
+                initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
+                table->m_vSymbolTable.push_back(new_attribute);
+            }
+        }    
+
+        if (in_pNode->getNodeKind() == IDENT_NODE)
+        {
+            //check if id is already defined, if null means did not find assignment in scope
+            cpSymbolAttribute* attr = lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode);
+            if ( attr == NULL){
+                return NULL;
+            }
+            else{
+                // Node exists, marking the terminal type of this node
+                in_pNode->setTerminalType(attr->m_iType);
+            } 
         }
         
-    }
-
-    if (in_pNode->getNodeKind() == IDENT_NODE)
-    {
-        //check if id is already defined, if null means did not find assignment in scope
-        cpSymbolAttribute* attr=lookupSymbolTable((cpIdentifierNode*)in_pNode->m_value, cpScopeNode* in_pNode)
-        if ( attr == NULL) return NULL;
-        else in_pNode->setTerminalType(attr->m_iType);
-    }
-    
-    //traverse tree, connect child scope table to current scope table
-    for (int i=0;i<in_pNode->getNumOfChildNodes();i++)
-    {
-        cpSymbolTableNode* temp = constructSymbolTable(in_pNode->getChildNode(i),table);
-        if (temp!=table) table->m_pChildScopes.push_back(temp);
-    } 
-    return table;  
+        //traverse tree, connect child scope table to current scope table
+        int num_of_child_nodes = ((cpNormalNode*)in_pNode)->getNumOfChildNodes();
+        for (int i=0;i<num_of_child_nodes;i++)
+        {
+            cpSymbolTableNode* temp = constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
+            if (temp!=table) table->m_pChildScopes.push_back(temp);
+        } 
+        return table;  
+    }    
 }
 
-cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode)
+cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_pNode)
 {
-    cpSymbolTableNode* current = cp_ST_NodeTable.find(in_pNode);
-    cpSymbolTable table = current->m_vSymbolTable;
-    while(current!=NULL)
-    {   
-        cpSymbolTable it=std::find_if(table.begin(), table.end(), FindInsideTable(in_sIdentifier))
-        if (it != table.end()) return *it;
-        else current = current->m_pParentScope;
+    cpSymbolLookUpTableItor current = cp_ST_NodeTable.find(in_pNode);
+    if(current!=cp_ST_NodeTable.end()){
+        // Current node exist, try search throught the scope
+        return SearchInScope(in_sIdentifier,current->second);
+    }
+    else{
+        return NULL;
+    }
+}
+
+cpSymbolAttribute* SearchInTable(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode){
+    cpSymbolTableNode* current_node = in_pTableNode;
+    cpSymbolAttribute* ret = NULL;
+    while(current_node != NULL){
+        ret = SearchInTable(in_sIdentifier, in_pTableNode);
+        if(ret!=NULL){
+            break;
+        }
+        else{
+            current_node = current_node->m_pParentScope;
+        }
+    }
+    return ret;
+} 
+cpSymbolAttribute* SearchInScope(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode){
+    int vector_size = in_pTableNode->m_vSymbolTable.size();
+    for(int i = 0; i < vector_size; i++){
+        if(in_pTableNode->m_vSymbolTable[i]->m_sIdentifierName == in_sIdentifier){
+            return in_pTableNode->m_vSymbolTable[i];
+        }
     }
     return NULL;
-    
-}
-
-cpSymbolAttribute* lookupCurrentSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode){
-    
-    cpSymbolTableNode* current = cp_ST_NodeTable.find(in_pNode);
-    cpSymbolTable table = current->m_vSymbolTable;
-    cpSymbolTable it=std::find_if(table.begin(), table.end(), FindInsideTable(in_sIdentifier))
-    if (it != table.end()) return *it;
-    else return NULL;
-    
 }

@@ -3,14 +3,8 @@
 
 #include "ast.h"
 #include "symbol.h"
-#include "parser.tab.h"
 #include <stack>
 typedef std::stack<cpBaseNode*> cpNodeStack;
-
-#define IS_LOGICAL_OPERATOR(x) ((x)==AND || (x)==OR || (x)==EQ || \
-                                (x)==NEQ || (x)=='<'|| (x)==LEQ|| \
-                                (x)=='>' || (x)==GEQ||)
-
 #define IS_S_Int(x)((x)==ecpTerminalType_int1)
 #define IS_S_Flt(x)((x) == ecpTerminalType_float1)
 #define IS_V_Int(x)(((x) >= ecpTerminalType_int2) && ((x) <= ecpTerminalType_int4))
@@ -41,10 +35,10 @@ int semantic_check_assignment(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymb
 int semantic_check_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 int semantic_check_predifined_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
-ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode in_pTable);
-ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode in_pTable);
-ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode in_pTable);
-ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode in_pTable);
-ecpTerminalType getExpressionTerminalType(cpConstructorNode* in_pNode,cpSymbolTableNode in_pTable);
+ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable);
+ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
+ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable);
+ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
+ecpTerminalType getExpressionTerminalType(cpConstructorNode* in_pNode,cpSymbolTableNode* in_pTable);
 
 #endif

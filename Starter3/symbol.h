@@ -8,15 +8,16 @@
 
 struct cpSymbolAttribute{
     std::string m_sIdentifierName;
-    int m_iType;
-    int m_iAttribute;
+    ecpTerminalType m_iType;
+    bool m_bIsConst;
+    int m_iVariableSize;
 };
 
 typedef std::vector<cpSymbolAttribute*> cpSymbolTable;
 
 struct cpSymbolTableNode {
-    cpSymbolTableNode* m_pParentScope = NULL;
-    int m_iNumOfChildScopes = -1;
+    cpSymbolTableNode* m_pParentScope;
+    int m_iNumOfChildScopes;
     std::vector<cpSymbolTableNode*> m_pChildScopes;
     cpSymbolTable m_vSymbolTable;
 
@@ -34,10 +35,14 @@ struct FindInsideTable:std::unary_function<cpSymbolAttribute*, bool>
 };
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode);
-cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode);
-cpSymbolAttribute* lookupCurrentSymbolTable(std::string in_sIdentifier, cpScopeNode* in_pNode);
+cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_pNode);
 
+void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute);
+cpSymbolAttribute* SearchInTable(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode); 
+cpSymbolAttribute* SearchInScope(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode);
 
+typedef std::tr1::unordered_map<cpBaseNode*,cpSymbolTableNode*> cpSymbolLookUpTable;
+typedef std::tr1::unordered_map<cpBaseNode*,cpSymbolTableNode*>::iterator cpSymbolLookUpTableItor;
 
 #endif
 

@@ -42,34 +42,34 @@ enum eNodeKind{
   UNKNOWN = -2
 };
 
-struct node_
-{
-  // an example of tagging each node with a type
-  eNodeKind kind;
+// struct node_
+// {
+//   // an example of tagging each node with a type
+//   eNodeKind kind;
 
-  union {
-    struct
-    {
-      // declarations?
-      // statements?
-    } scope;
+//   union {
+//     struct
+//     {
+//       // declarations?
+//       // statements?
+//     } scope;
 
-    struct
-    {
-      int op;
-      node *right;
-    } unary_expr;
+//     struct
+//     {
+//       int op;
+//       node *right;
+//     } unary_expr;
 
-    struct
-    {
-      int op;
-      node *left;
-      node *right;
-    } binary_expr;
+//     struct
+//     {
+//       int op;
+//       node *left;
+//       node *right;
+//     } binary_expr;
 
-    // etc.
-  };
-};
+//     // etc.
+//   };
+// };
 
 // node *ast_allocate(eNodeKind type, ...);
 // void ast_free(node *ast);
@@ -103,48 +103,98 @@ enum ecpTerminalType{
   ecpTerminalType_float4,
 };
 
-class cpBaseNode;
-
-typedef std::vector<cpBaseNode*> cpNodeList;
-extern cpNodeList gGlobalNodeList[NUM_OF_KIND];
-
-
 class cpBaseNode{
 public:
-  cpBaseNode(){};
-  cpBaseNode(eNodeKind in_NodeKind):m_NodeKind(in_NodeKind){pushNodeList();};
-  virtual ~cpBaseNode(){};
-  void setNodeType(ecpBaseNodeType in_eNodeType){m_eNodeType = in_eNodeType;};
-  ecpBaseNodeType getNodeType(){return m_eNodeType;};
-  eNodeKind getNodeKind(){return m_NodeKind;}
-  /** Interfaces that we need to implements **/
-  // Initialize a node, this node could be a leaf node or a non-leaf node, 
-  // But they should share the same interface
-  virtual void initialize(va_list in_pArguments) = 0;
-  // Print function for each node
-  // For non-leaf node, we need to implement the printSelf() function to print
-  // its functionality. For leaf node, overwrite this to print the value or type
-  virtual void print() = 0;
-  void updateTerminalType(ecpTerminalType in_Kind){if(m_TerminalKind==ecpTerminalType_Unknown) m_TerminalKind = in_Kind;}
-  bool isTerminalType(ecpTerminalType in_Kind){return m_TerminalKind == in_Kind;};
-  void setTerminalType(ecpTerminalType in_Kind){m_TerminalKind = in_Kind;};
-  ecpTerminalType getTerminalType(){return m_TerminalKind;};
-  
-  cpBaseNode* getParentNode(){return m_pParentNode;}
-  void setParentNode(cpBaseNode* in_pParentNode){m_pParentNode = in_pParentNode;}
-  void pushNodeList(){gGlobalNodeList[m_NodeKind].push_back(this);}
-protected:
-  ecpTerminalType m_TerminalKind = ecpTerminalType_Unknown;
-  eNodeKind       m_NodeKind;
-  cpBaseNode*     m_pParentNode = NULL;
-  ecpBaseNodeType m_eNodeType;
+    cpBaseNode(){};
+    cpBaseNode(eNodeKind in_NodeKind):
+    m_TerminalKind(ecpTerminalType_Unknown),
+    m_NodeKind(in_NodeKind),
+    m_pParentNode(NULL),
+    m_eNodeType(ecpBaseNodeType_Normal){
+    };
+    virtual ~cpBaseNode(){};
+    void setNodeType(ecpBaseNodeType in_eNodeType){m_eNodeType = in_eNodeType;};
+    ecpBaseNodeType getNodeType(){return m_eNodeType;};
+    eNodeKind getNodeKind(){return m_NodeKind;}
+    /** Interfaces that we need to implements **/
+    // Initialize a node, this node could be a leaf node or a non-leaf node, 
+    // But they should share the same interface
+    virtual void initialize(va_list in_pArguments) = 0;
+    // Print function for each node
+    // For non-leaf node, we need to implement the printSelf() function to print
+    // its functionality. For leaf node, overwrite this to print the value or type
+    virtual void print() = 0;
+    void updateTerminalType(ecpTerminalType in_Kind){if(m_TerminalKind==ecpTerminalType_Unknown) m_TerminalKind = in_Kind;}
+    bool isTerminalType(ecpTerminalType in_Kind){return m_TerminalKind == in_Kind;};
+    void setTerminalType(ecpTerminalType in_Kind){m_TerminalKind = in_Kind;};
+    ecpTerminalType getTerminalType(){return m_TerminalKind;};
+
+    cpBaseNode* getParentNode(){return m_pParentNode;}
+    void setParentNode(cpBaseNode* in_pParentNode){m_pParentNode = in_pParentNode;}
+    protected:
+    ecpTerminalType m_TerminalKind;
+    eNodeKind       m_NodeKind;
+    cpBaseNode*     m_pParentNode;
+    ecpBaseNodeType m_eNodeType;
 };
+
+
+
+class cpLeafNode : public cpBaseNode{
+public:
+    cpLeafNode(){};
+    cpLeafNode(eNodeKind in_NodeKind):cpBaseNode(in_NodeKind){m_eNodeType = ecpBaseNodeType_Leaf;}
+    virtual ~cpLeafNode();
+    virtual void print() = 0;
+    virtual void initialize(va_list in_pArguments) = 0;
+};
+
+class cpIntNode : public cpLeafNode{
+public:
+    cpIntNode():cpLeafNode(INT_NODE){};
+    virtual ~cpIntNode();
+    virtual void print();
+    virtual void initialize(va_list in_pArguments);
+    int m_value;
+};
+
+class cpBoolNode : public cpLeafNode{
+public:
+    cpBoolNode():cpLeafNode(BOOL_NODE){};
+    virtual ~cpBoolNode();
+    virtual void print();
+    virtual void initialize(va_list in_pArguments);
+    bool m_value;
+};
+
+class cpFloatNode : public cpLeafNode{
+public:
+    cpFloatNode():cpLeafNode(FLOAT_NODE){};
+    virtual ~cpFloatNode();
+    virtual void print();
+    virtual void initialize(va_list in_pArguments);
+    float m_value;
+};
+
+class cpIdentifierNode : public cpLeafNode{
+public:
+    cpIdentifierNode():cpLeafNode(IDENT_NODE){};
+    virtual ~cpIdentifierNode();
+    virtual void print();
+    virtual void initialize(va_list in_pArguments);
+    std::string m_value;
+};
+
 
 class cpNormalNode : public cpBaseNode
 {
 public:
   cpNormalNode(){};
-  cpNormalNode(eNodeKind in_NodeKind):cpBaseNode(in_NodeKind){};
+  cpNormalNode(eNodeKind in_NodeKind):
+  cpBaseNode(in_NodeKind),
+  m_Operand(-1),
+  m_iNumOfChildNodes(-1),
+  m_pChildNodes(NULL){};
   virtual ~cpNormalNode();
   void    initChildNodes(int in_iNumOfNodes);
   int     getNumOfChildNodes(){return m_iNumOfChildNodes;};
@@ -159,45 +209,95 @@ public:
   // Initialization function for any non-leaf node
   virtual void initialize(va_list in_pArguments) = 0;
 protected:
-  int           m_Operand = -1;
-  int           m_iNumOfChildNodes = -1;
-  cpBaseNode**  m_pChildNodes = NULL;
+  int           m_Operand;
+  int           m_iNumOfChildNodes;
+  cpBaseNode**  m_pChildNodes;
 };
 
-#define DEFINE_CPLEAFNODE(__node_name,__eNodeKind, __node_value_type)\
-class __node_name : public cpBaseNode{\
-public:\
-  __node_name():cpBaseNode(__eNodeKind){};\
-  virtual ~__node_name(){};\
-  virtual void print();\
-  virtual void initialize(va_list in_pArguments);\
-  __node_value_type m_value;\
-}
+class cpScopeNode : public cpNormalNode{
+public:
+  cpScopeNode():cpNormalNode(SCOPE_NODE){};
+  virtual ~cpScopeNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
 
-#define DEFINE_CPNORMAL_NODE(__node_name, __eNodeKind)\
-class __node_name : public cpNormalNode{\
-public:\
-  __node_name():cpNormalNode(__eNodeKind){};\
-  virtual ~__node_name(){};\
-  virtual void initialize(va_list in_pArguments);\
-  virtual void printSelf();\
-}
+class cpVariableNode : public cpNormalNode{
+public:
+  cpVariableNode():cpNormalNode(WHILE_STATEMENT_NODE){};
+  virtual ~cpVariableNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
 
-DEFINE_CPNORMAL_NODE(cpUnaryExpressionNode,UNARY_EXPRESION_NODE); 
-DEFINE_CPNORMAL_NODE(cpBinaryExpressionNode,BINARY_EXPRESSION_NODE);
-DEFINE_CPNORMAL_NODE(cpFunctionNode,FUNCTION_NODE); 
-DEFINE_CPNORMAL_NODE(cpDeclarationNode,DECLARATION_NODE);
-DEFINE_CPNORMAL_NODE(cpIfStatementNode,IF_STATEMENT_NODE);
-DEFINE_CPNORMAL_NODE(cpWhileStatmentNode,WHILE_STATEMENT_NODE);
-DEFINE_CPNORMAL_NODE(cpConstructorNode,CONSTRUCTOR_NODE);
-DEFINE_CPNORMAL_NODE(cpScopeNode,SCOPE_NODE); 
-DEFINE_CPNORMAL_NODE(cpVariableNode,VAR_NODE); 
-DEFINE_CPNORMAL_NODE(cpAssignmentNode,ASSIGNMENT_NODE);
+class cpAssignmentNode : public cpNormalNode{
+public:
+  cpAssignmentNode():cpNormalNode(IF_STATEMENT_NODE){};
+  virtual ~cpAssignmentNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
 
-DEFINE_CPLEAFNODE(cpFloatNode,FLOAT_NODE,float);
-DEFINE_CPLEAFNODE(cpIdentifierNode,IDENT_NODE,std::string);
-DEFINE_CPLEAFNODE(cpIntNode,INT_NODE,int);
-DEFINE_CPLEAFNODE(cpBoolNode,BOOL_NODE, bool);
+class cpConstructorNode : public cpNormalNode{
+public:
+  cpConstructorNode():cpNormalNode(CONSTRUCTOR_NODE){};
+  virtual ~cpConstructorNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
+class cpWhileStatmentNode : public cpNormalNode{
+public:
+  cpWhileStatmentNode():cpNormalNode(WHILE_STATEMENT_NODE){};
+  virtual ~cpWhileStatmentNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
+class cpIfStatementNode : public cpNormalNode{
+public:
+  cpIfStatementNode():cpNormalNode(IF_STATEMENT_NODE){};
+  virtual ~cpIfStatementNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
+class cpDeclarationNode : public cpNormalNode{
+public:
+  cpDeclarationNode():cpNormalNode(DECLARATION_NODE){};
+  virtual ~cpDeclarationNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+  bool m_bIsConst;
+  int m_iVariableSize;
+  std::string m_sIdentifierName;
+};
+
+
+class cpUnaryExpressionNode : public cpNormalNode{
+public:
+  cpUnaryExpressionNode():cpNormalNode(UNARY_EXPRESION_NODE){};
+  virtual ~cpUnaryExpressionNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
+class cpBinaryExpressionNode : public cpNormalNode{
+public:
+  cpBinaryExpressionNode():cpNormalNode(BINARY_EXPRESSION_NODE){};
+  virtual ~cpBinaryExpressionNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
+class cpFunctionNode : public cpNormalNode{
+public:
+  cpFunctionNode():cpNormalNode(FUNCTION_NODE){};
+  virtual ~cpFunctionNode(){};
+  virtual void initialize(va_list in_pArguments);
+  virtual void printSelf();
+};
+
 
 /** Factory function to create different kind of nodes**/
 cpBaseNode* allocate_cpNode(eNodeKind in_nodeKind, ...);
