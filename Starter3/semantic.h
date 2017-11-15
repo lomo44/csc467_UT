@@ -25,7 +25,7 @@ typedef std::stack<cpBaseNode*> cpNodeStack;
 
 bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
-int semantic_check_function_call(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+bool semantic_check_function_call(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pSymbolTable);
 int semantic_check_operator(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 int semantic_check_condition(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 int semantic_check_constructor_call(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
