@@ -1,6 +1,6 @@
 
 #ifndef AST_H_
-#define AST_H_ 1
+#define AST_H_
 
 #include <cstdarg>
 //#include <stdarg.h>
@@ -15,10 +15,6 @@
 // of a descriminated union. If you choose to use C++, then I suggest looking
 // into inheritance.
 
-// forward declare
-struct node_;
-typedef struct node_ node;
-extern node *ast;
 enum eNodeKind{
   SCOPE_NODE=0,
   UNARY_EXPRESION_NODE,
@@ -41,40 +37,6 @@ enum eNodeKind{
   INVALID = -1,
   UNKNOWN = -2
 };
-
-// struct node_
-// {
-//   // an example of tagging each node with a type
-//   eNodeKind kind;
-
-//   union {
-//     struct
-//     {
-//       // declarations?
-//       // statements?
-//     } scope;
-
-//     struct
-//     {
-//       int op;
-//       node *right;
-//     } unary_expr;
-
-//     struct
-//     {
-//       int op;
-//       node *left;
-//       node *right;
-//     } binary_expr;
-
-//     // etc.
-//   };
-// };
-
-// node *ast_allocate(eNodeKind type, ...);
-// void ast_free(node *ast);
-// void ast_print(node *ast);
-
 
 enum ecpVisitorTraversalType{
   ecpVisitorTraversalType_InOrder,
@@ -144,7 +106,7 @@ class cpLeafNode : public cpBaseNode{
 public:
     cpLeafNode(){};
     cpLeafNode(eNodeKind in_NodeKind):cpBaseNode(in_NodeKind){m_eNodeType = ecpBaseNodeType_Leaf;}
-    virtual ~cpLeafNode();
+    virtual ~cpLeafNode(){};
     virtual void print() = 0;
     virtual void initialize(va_list in_pArguments) = 0;
 };
@@ -152,7 +114,7 @@ public:
 class cpIntNode : public cpLeafNode{
 public:
     cpIntNode():cpLeafNode(INT_NODE){};
-    virtual ~cpIntNode();
+    virtual ~cpIntNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
     int m_value;
@@ -161,7 +123,7 @@ public:
 class cpBoolNode : public cpLeafNode{
 public:
     cpBoolNode():cpLeafNode(BOOL_NODE){};
-    virtual ~cpBoolNode();
+    virtual ~cpBoolNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
     bool m_value;
@@ -170,7 +132,7 @@ public:
 class cpFloatNode : public cpLeafNode{
 public:
     cpFloatNode():cpLeafNode(FLOAT_NODE){};
-    virtual ~cpFloatNode();
+    virtual ~cpFloatNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
     float m_value;
@@ -179,7 +141,7 @@ public:
 class cpIdentifierNode : public cpLeafNode{
 public:
     cpIdentifierNode():cpLeafNode(IDENT_NODE){};
-    virtual ~cpIdentifierNode();
+    virtual ~cpIdentifierNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
     std::string m_value;

@@ -1,5 +1,5 @@
 #include "semantic.h"
-
+#include "parser.tab.h"
 // int semantic_check( node *ast) {
 //   return 0; // failed checks
 // }

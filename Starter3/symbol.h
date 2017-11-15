@@ -20,21 +20,9 @@ struct cpSymbolTableNode {
     int m_iNumOfChildScopes;
     std::vector<cpSymbolTableNode*> m_pChildScopes;
     cpSymbolTable m_vSymbolTable;
-
 };
 
-struct FindInsideTable:std::unary_function<cpSymbolAttribute*, bool>
-{
-   std::string id;
-   FindInsideTable(std::string Identifier): id(Identifier){ } 
-   bool operator ()(cpSymbolAttribute* const  &attr) const
-    {
-        return id==attr->m_sIdentifierName;
-    }
-
-};
-
-cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode);
+cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table);
 cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_pNode);
 
 void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute);
