@@ -1,6 +1,6 @@
 
-#ifndef AST_H_
-#define AST_H_
+#ifndef _AST_H_
+#define _AST_H_
 
 #include <cstdarg>
 //#include <stdarg.h>
@@ -33,6 +33,8 @@ enum eNodeKind
     ASSIGNMENT_NODE,
     NESTED_SCOPE_NODE,
     DECLARATION_NODE,
+    DECLARATIONS_NODE,
+    STATEMENTS_NODE,
     ARG_NODE,
     NUM_OF_KIND,
     INVALID = -1,
@@ -193,6 +195,8 @@ class cpNormalNode : public cpBaseNode
     cpBaseNode **m_pChildNodes;
 };
 
+
+
 class cpScopeNode : public cpNormalNode
 {
   public:
@@ -214,7 +218,7 @@ class cpVariableNode : public cpNormalNode
 class cpAssignmentNode : public cpNormalNode
 {
   public:
-    cpAssignmentNode() : cpNormalNode(IF_STATEMENT_NODE){};
+    cpAssignmentNode() : cpNormalNode(ASSIGNMENT_NODE){};
     virtual ~cpAssignmentNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
@@ -257,6 +261,26 @@ class cpDeclarationNode : public cpNormalNode
     bool m_bIsConst;
     int m_iVariableSize;
     std::string m_sIdentifierName;
+};
+
+class cpDeclarationsNode : public cpNormalNode{
+  public:
+    cpDeclarationsNode() : cpNormalNode(DECLARATIONS_NODE){};
+    virtual ~cpDeclarationsNode(){};
+    virtual void initialize(va_list in_pArguments);
+    virtual void printSelf();
+    virtual cpDeclarationsNode* getNextDeclarationsNode(){return (cpDeclarationsNode*)m_pChildNodes[0];}
+    virtual cpDeclarationNode* getCurrentDeclarationNode(){return (cpDeclarationNode*)m_pChildNodes[1];}
+};
+
+class cpStatementsNode : public cpNormalNode{
+  public:
+    cpStatementsNode() : cpNormalNode(STATEMENTS_NODE){};
+    virtual ~cpStatementsNode(){};
+    virtual void initialize(va_list in_pArguments);
+    virtual void printSelf();
+    virtual cpStatementsNode* getNextStatementsNode(){return (cpStatementsNode*)m_pChildNodes[0];}
+    virtual cpBaseNode* getCurrentStatementNode(){return m_pChildNodes[1];}
 };
 
 class cpUnaryExpressionNode : public cpNormalNode

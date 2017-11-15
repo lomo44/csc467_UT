@@ -113,7 +113,8 @@ void cpIfStatementNode::initialize(va_list in_pArguments){
 }
 
 void cpDeclarationNode::printSelf(){
-  printf("Declaration Node\n",m_Operand);
+  //printf("Declaration Node\n",m_Operand);
+  //TODO: reImplement this
 }
 void cpDeclarationNode::initialize(va_list in_pArguments){
   initChildNodes(1);
@@ -178,6 +179,27 @@ void cpBoolNode::initialize(va_list in_pArguments){
   m_value = va_arg(in_pArguments, int);
 }
 
+void cpStatementsNode::initialize(va_list in_pArguments){
+  // First element should be the next statements node,
+  // Second element should be the real statement node
+  initChildNodes(2);
+  setChildNodes(va_arg(in_pArguments,cpStatementsNode*),0);
+  setChildNodes(va_arg(in_pArguments,cpBaseNode*),1);
+}
+
+void cpStatementsNode::printSelf(){
+  printf("Statements: ");
+}
+
+void cpDeclarationsNode::printSelf(){
+  printf("Declarations: ");
+}
+
+void cpDeclarationsNode::initialize(va_list in_pArguments){
+  initChildNodes(2);
+  setChildNodes(va_arg(in_pArguments,cpDeclarationsNode*),0);
+  setChildNodes(va_arg(in_pArguments,cpDeclarationNode*),1);
+}
 
 #define CHECK_AND_ALLOCATE(__kind, __node_class)\
 case __kind:{\
@@ -201,6 +223,8 @@ cpBaseNode* allocate_cpNode(eNodeKind in_nodekind, ...){
     CHECK_AND_ALLOCATE(WHILE_STATEMENT_NODE,cpWhileStatmentNode);
     CHECK_AND_ALLOCATE(IF_STATEMENT_NODE, cpIfStatementNode);
     CHECK_AND_ALLOCATE(DECLARATION_NODE, cpDeclarationNode);
+    CHECK_AND_ALLOCATE(STATEMENT_NODE,cpStatementsNode);
+    CHECK_AND_ALLOCATE(DECLARATIONS_NODE, cpDeclarationsNode);
     // Leaf ndoes
     CHECK_AND_ALLOCATE(FLOAT_NODE, cpFloatNode);
     CHECK_AND_ALLOCATE(IDENT_NODE, cpIdentifierNode);
