@@ -33,7 +33,7 @@ void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbo
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
     in_pAttribute->m_iType = in_pNode->getTerminalType();
     in_pAttribute->m_iVariableSize = in_pNode->m_iVariableSize;
-    in_pAttribute->m_bIsConst = in_pNode->m_eQualifier;
+    in_pAttribute->m_eQualifier = in_pNode->m_eQualifier;
 }
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table){

@@ -352,20 +352,49 @@ ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTab
     ecpTerminalType variable_type = expression->getTerminalType();
 
     if((expression_type!=ecpTerminalType_Invalid) && (variable_type!=ecpTerminalType_Invalid)){
-        // Check matching      
-        if(variable_type >= expression_type){
-            if((IS_Int(variable_type) && IS_Int(variable_type)) ||
-            (IS_Flt(variable_type) && IS_Flt(variable_type)) ||
-            (IS_Bool(variable_type) && IS_Bool(variable_type))){
-                in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
+        // Check matching
+        cpSymbolAttribute* variable_attribute = lookupSymbolTable(variable->m_value, variable);
+        ecpFunctionQualifier qualifer = variable_attribute->m_eQualifier;
+        switch(qualifer){
+            case ecpFunctionQualifier_Result:{
+                // Check if the result variable is used within an if node
+                cpBaseNode* current_node = in_pNode;
+                in_pNode->updateTerminalType(ecpTerminalType_Unknown);
+                bool isWithinIfNode=false;  
+                while(current_node!=NULL){
+                    if(current_node->getNodeKind() == IF_STATEMENT_NODE){
+                        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+                        isWithinIfNode =true;
+                        break;
+                    }
+                    current_node = current_node->getParentNode();
+                }
+                if(isWithinIfNode){
+                    break;
+                }
+                // Keek checking assignment correctness, should not break if the it is not within an if statement
             }
-            else{
-                in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
+            case ecpFunctionQualifier_None:{
+                if(variable_type >= expression_type){
+                    if((IS_Int(variable_type) && IS_Int(expression_type)) ||
+                    (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
+                    (IS_Bool(variable_type) && IS_Bool(expression_type))){
+                    in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
+                    }
+                }
+                else{
+                    in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
+                }
+                break;
+            }
+            case ecpFunctionQualifier_Attribute: // All of these variable are predefined and read-only
+            case ecpFunctionQualifier_Uniform:
+            case ecpFunctionQualifier_Const: // Const should not be re-assigned.
+            default:{
+                break;
             }
         }
-        else{
-            in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
-        }
+        
     }
     else{
         in_pNode->updateTerminalType(ecpTerminalType_Invalid);

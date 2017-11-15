@@ -9,7 +9,7 @@
 struct cpSymbolAttribute{
     std::string m_sIdentifierName;
     ecpTerminalType m_iType;
-    ecpFunctionQualifier m_bIsConst;
+    ecpFunctionQualifier m_eQualifier;
     int m_iVariableSize;
 };
 

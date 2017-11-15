@@ -73,6 +73,7 @@ enum ecpTerminalType
 };
 
 enum ecpFunctionQualifier{
+    ecpFunctionQualifier_None,
     ecpFunctionQualifier_Const,
     ecpFunctionQualifier_Attribute,
     ecpFunctionQualifier_Result,
