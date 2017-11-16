@@ -66,6 +66,7 @@ enum {
   char *as_str;
   int as_func;
   cpBaseNode *as_ast;
+  ecpTerminalType as_ecpTerminalType;
 }
 
 %token          FLOAT_T
@@ -101,7 +102,17 @@ enum {
 
 // type declarations
 // TODO: fill this out
+
 %type <as_ast> expression
+%type <as_ast> scope
+%type <as_ast> declarations
+%type <as_ast> statement
+%type <as_ast> statements
+%type <as_ast> declaration
+%type <as_ast> arguments_opt
+%type <as_ast> arguments
+%type <as_ast> variable
+%type <as_ecpTerminalType> type
 
 // expect one shift/reduce conflict, where Bison chooses to shift
 // the ELSE.
@@ -120,143 +131,287 @@ enum {
  ***********************************************************************/
 program
   : scope 
-      { yTRACE("program -> scope\n") } 
+      { gAST = $1; yTRACE("program -> scope\n") } 
   ;
 
 scope
   : '{' declarations statements '}'
-      { yTRACE("scope -> { declarations statements }\n") }
+    {
+        $$ = allocate_cpNode(SCOPE_NODE,$2,$3);
+        yTRACE("scope -> { declarations statements }\n")
+    }
   ;
 
 declarations
   : declarations declaration
-      { yTRACE("declarations -> declarations declaration\n") }
+    {
+        $$ = allocate_cpNode(DECLARATIONS_NODE,$1,$2);
+        yTRACE("declarations -> declarations declaration\n") 
+    }
   | 
-      { yTRACE("declarations -> \n") }
+    { 
+        $$ = NULL;
+        yTRACE("declarations -> \n") 
+    }
   ;
 
 statements
   : statements statement
-      { yTRACE("statements -> statements statement\n") }
+    {
+        $$ = allocate_cpNode(STATEMENTS_NODE,$1,$2);
+        yTRACE("statements -> statements statement\n") 
+    }
   | 
-      { yTRACE("statements -> \n") }
+    {
+        $$ = NULL; 
+        yTRACE("statements -> \n") 
+    }
   ;
 
 declaration
   : type ID ';' 
-      { yTRACE("declaration -> type ID ;\n") }
+    {
+        $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,yyval.as_str,NULL);
+        yTRACE("declaration -> type ID ;\n") 
+    }
   | type ID '=' expression ';'
-      { yTRACE("declaration -> type ID = expression ;\n") }
+    {
+        $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,yyval.as_str,$4); 
+        yTRACE("declaration -> type ID = expression ;\n")
+    }
   | CONST type ID '=' expression ';'
-      { yTRACE("declaration -> CONST type ID = expression ;\n") }
+    {
+        $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_Const,$2,yyval.as_str,$5); 
+        yTRACE("declaration -> CONST type ID = expression ;\n")
+    }
   ;
 
 statement
   : variable '=' expression ';'
-      { yTRACE("statement -> variable = expression ;\n") }
+    {
+        $$ = allocate_cpNode(ASSIGNMENT_NODE,$1,$3);
+        yTRACE("statement -> variable = expression ;\n") 
+    }
   | IF '(' expression ')' statement ELSE statement %prec WITH_ELSE
-      { yTRACE("statement -> IF ( expression ) statement ELSE statement \n") }
+    { 
+        $$ = allocate_cpNode(IF_STATEMENT_NODE,$3,$5,$7);
+        yTRACE("statement -> IF ( expression ) statement ELSE statement \n") 
+    }
   | IF '(' expression ')' statement %prec WITHOUT_ELSE
-      { yTRACE("statement -> IF ( expression ) statement \n") }
+    {
+        $$ = allocate_cpNode(IF_STATEMENT_NODE,$3,$5,NULL); 
+        yTRACE("statement -> IF ( expression ) statement \n")
+    }
   | scope 
-      { yTRACE("statement -> scope \n") }
+    {
+        $$ = $1; 
+        yTRACE("statement -> scope \n") 
+    }
   | ';'
-      { yTRACE("statement -> ; \n") }
+    {
+        $$ = NULL; 
+        yTRACE("statement -> ; \n") 
+    }
   ;
 
 type
   : INT_T
-      { yTRACE("type -> INT_T \n") }
+    {
+        $$ = (ecpTerminalType)((ecpTerminalType_int1)+yyval.as_vec);
+        yTRACE("type -> INT_T \n")
+    }
   | IVEC_T
-      { yTRACE("type -> IVEC_T \n") }
+    { 
+        $$ = (ecpTerminalType)((ecpTerminalType_int1)+yyval.as_vec);
+        yTRACE("type -> IVEC_T \n")
+    }
   | BOOL_T
-      { yTRACE("type -> BOOL_T \n") }
+    {
+        $$ = (ecpTerminalType)((ecpTerminalType_bool1)+yyval.as_vec); 
+        yTRACE("type -> BOOL_T \n") 
+    }
   | BVEC_T
-      { yTRACE("type -> BVEC_T \n") }
+    { 
+        $$ = (ecpTerminalType)((ecpTerminalType_bool1)+yyval.as_vec);
+        yTRACE("type -> BVEC_T \n")
+    }
   | FLOAT_T
-      { yTRACE("type -> FLOAT_T \n") }
+    { 
+        $$ = (ecpTerminalType)((ecpTerminalType_float1)+yyval.as_vec);
+        yTRACE("type -> FLOAT_T \n")
+    }
   | VEC_T
-      { yTRACE("type -> VEC_T \n") }
+    { 
+        $$ = (ecpTerminalType)((ecpTerminalType_float1)+yyval.as_vec);
+        yTRACE("type -> VEC_T \n")
+    }
   ;
 
 expression
 
   /* function-like operators */
   : type '(' arguments_opt ')' %prec '('
-      { yTRACE("expression -> type ( arguments_opt ) \n") }
+    {
+        $$ = allocate_cpNode(CONSTRUCTOR_NODE,$1,$3); 
+        yTRACE("expression -> type ( arguments_opt ) \n") 
+    }
   | FUNC '(' arguments_opt ')' %prec '('
-      { yTRACE("expression -> FUNC ( arguments_opt ) \n") }
+    {
+        $$ = allocate_cpNode(FUNCTION_NODE,yyval.as_func,$3); 
+        yTRACE("expression -> FUNC ( arguments_opt ) \n") 
+    }
 
   /* unary opterators */
   | '-' expression %prec UMINUS
-      { yTRACE("expression -> - expression \n") }
+    {
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,'-',$2); 
+        yTRACE("expression -> - expression \n")
+    }
   | '!' expression %prec '!'
-      { yTRACE("expression -> ! expression \n") }
+    {
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,'!',$2); 
+        yTRACE("expression -> ! expression \n") 
+    }
 
   /* binary operators */
   | expression AND expression %prec AND
-      { yTRACE("expression -> expression AND expression \n") }
+    {
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,AND,$3);
+        yTRACE("expression -> expression AND expression \n"); 
+    }
   | expression OR expression %prec OR
-      { yTRACE("expression -> expression OR expression \n") }
+    {
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,OR,$3);
+        yTRACE("expression -> expression OR expression \n");
+    }
   | expression EQ expression %prec EQ
-      { yTRACE("expression -> expression EQ expression \n") }
+    {
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,EQ,$3); 
+        yTRACE("expression -> expression EQ expression \n"); 
+    }
   | expression NEQ expression %prec NEQ
-      { yTRACE("expression -> expression NEQ expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,NEQ,$3);
+        yTRACE("expression -> expression NEQ expression \n"); 
+    }
   | expression '<' expression %prec '<'
-      { yTRACE("expression -> expression < expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'<',$3);
+        yTRACE("expression -> expression < expression \n"); 
+    }
   | expression LEQ expression %prec LEQ
-      { yTRACE("expression -> expression LEQ expression \n") }
+    {
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,LEQ,$3); 
+        yTRACE("expression -> expression LEQ expression \n"); 
+    }
   | expression '>' expression %prec '>'
-      { yTRACE("expression -> expression > expression \n") }
+    {
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'>',$3); 
+        yTRACE("expression -> expression > expression \n"); 
+    }
   | expression GEQ expression %prec GEQ
-      { yTRACE("expression -> expression GEQ expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,GEQ,$3);
+        yTRACE("expression -> expression GEQ expression \n"); 
+    }
   | expression '+' expression %prec '+'
-      { yTRACE("expression -> expression + expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'+',$3);
+        yTRACE("expression -> expression + expression \n"); 
+    }
   | expression '-' expression %prec '-'
-      { yTRACE("expression -> expression - expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'-',$3);
+        yTRACE("expression -> expression - expression \n"); 
+    }
   | expression '*' expression %prec '*'
-      { yTRACE("expression -> expression * expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'*',$3);
+        yTRACE("expression -> expression * expression \n"); 
+    }
   | expression '/' expression %prec '/'
-      { yTRACE("expression -> expression / expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'/',$3);
+        yTRACE("expression -> expression / expression \n"); 
+    }
   | expression '^' expression %prec '^'
-      { yTRACE("expression -> expression ^ expression \n") }
+    { 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'^',$3);
+        yTRACE("expression -> expression ^ expression \n"); 
+    }
 
   /* literals */
   | TRUE_C
-      { yTRACE("expression -> TRUE_C \n") }
+    {
+        $$ = allocate_cpNode(BOOL_NODE, 1); 
+        yTRACE("expression -> TRUE_C \n")
+    }
   | FALSE_C
-      { yTRACE("expression -> FALSE_C \n") }
+    {
+        $$ = allocate_cpNode(BOOL_NODE, 0); 
+        yTRACE("expression -> FALSE_C \n") 
+    }
   | INT_C
-      { yTRACE("expression -> INT_C \n") }
+    {
+        $$ = allocate_cpNode(INT_NODE, yyval.as_int); 
+        yTRACE("expression -> INT_C \n") 
+    }
   | FLOAT_C
-      { yTRACE("expression -> FLOAT_C \n") }
+    {
+        $$ = allocate_cpNode(FLOAT_NODE, yyval.as_float); 
+        yTRACE("expression -> FLOAT_C \n")
+    }
 
   /* misc */
   | '(' expression ')'
-      { yTRACE("expression -> ( expression ) \n") }
-  | variable { }
-    { yTRACE("expression -> variable \n") }
+    {
+        $$ = $2; 
+        yTRACE("expression -> ( expression ) \n")
+    }
+  | variable
+    {
+        $$ = $1;
+        yTRACE("expression -> variable \n") 
+    }
   ;
 
 variable
   : ID
-      { yTRACE("variable -> ID \n") }
+    {
+        $$ = allocate_cpNode(IDENT_NODE,yyval.as_str,1); 
+        yTRACE("variable -> ID \n")
+    }
   | ID '[' INT_C ']' %prec '['
-      { yTRACE("variable -> ID [ INT_C ] \n") }
+    { 
+        $$ = allocate_cpNode(IDENT_NODE,yyval.as_str,yyval.as_int);
+        yTRACE("variable -> ID [ INT_C ] \n")
+    }
   ;
 
 arguments
   : arguments ',' expression
-      { yTRACE("arguments -> arguments , expression \n") }
+    {
+        $$ = allocate_cpNode(ARG_NODE,$1,$3); 
+        yTRACE("arguments -> arguments , expression \n")
+    }
   | expression
-      { yTRACE("arguments -> expression \n") }
+    {
+        $$ = allocate_cpNode(ARG_NODE,NULL,$1); 
+        yTRACE("arguments -> expression \n") 
+    }
   ;
 
 arguments_opt
   : arguments
-      { yTRACE("arguments_opt -> arguments \n") }
+    {
+        $$ = $1; 
+        yTRACE("arguments_opt -> arguments \n") 
+    }
   |
-      { yTRACE("arguments_opt -> \n") }
+    {
+        $$ = NULL; 
+        yTRACE("arguments_opt -> \n") 
+    }
   ;
 
 %%
