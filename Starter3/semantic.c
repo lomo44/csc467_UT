@@ -58,6 +58,7 @@ ecpTerminalType getExpressionTerminalType(cpBaseNode *in_pNode, cpSymbolTableNod
         }
     }
 }
+
 ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable)
 {
     ecpTerminalType currentNodeType = in_pNode->getTerminalType();
@@ -131,10 +132,9 @@ ecpTerminalType getExpressionTerminalType(cpFunctionNode *in_pNode, cpSymbolTabl
     }
     else
     {
-        int operand = in_pNode->getOperand();
-        switch (operand)
+        switch (in_pNode->m_eFunctionType)
         {
-        case 0:
+        case ecpFunctionType_dp3:
         {
             // dp3
             cpBaseNode *first_param = in_pNode->getChildNode(0);
@@ -162,7 +162,7 @@ ecpTerminalType getExpressionTerminalType(cpFunctionNode *in_pNode, cpSymbolTabl
             }
             break;
         }
-        case 1:
+        case ecpFunctionType_lit:
         {
             //lit
             cpBaseNode *first_param = in_pNode->getChildNode(0);
@@ -177,7 +177,7 @@ ecpTerminalType getExpressionTerminalType(cpFunctionNode *in_pNode, cpSymbolTabl
             }
             break;
         }
-        case 2:
+        case ecpFunctionType_rsq:
         {
             //rsq
             cpBaseNode *first_param = in_pNode->getChildNode(0);
@@ -238,82 +238,106 @@ ecpTerminalType getExpressionTerminalType(cpConstructorNode *in_pNode, cpSymbolT
     }
     else
     {
-        cpNormalNode *leftNode = (cpNormalNode *)in_pNode->getChildNode(0);
-        cpNormalNode *rightNode = (cpNormalNode *)in_pNode->getChildNode(1);
+        cpArgumentsNode *current_arguments_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
+        
+        cpNormalNode *current_argument = current_arguments_node->getCurrentArgument();
+        cpArgumentsNode* next_arguments = current_arguments_node->getNextArguments();
         //Asume type node type stored in m.value
-        ecpTerminalType type = getExpressionTerminalType(leftNode, in_pTable);
+        ecpTerminalType type = in_pNode->getConstructorType();
         switch (type)
         {
         case ecpTerminalType_float4:
         case ecpTerminalType_bool4:
         case ecpTerminalType_int4:
         {
-            if (rightNode->getNumOfChildNodes() == 1)
+            if (next_arguments==NULL)
             {
                 currentNodeType = ecpTerminalType_Invalid;
                 break;
             }
-            cpNormalNode *expr = (cpNormalNode *)rightNode->getChildNode(1);
-            ecpTerminalType exprType = getExpressionTerminalType(expr, in_pTable);
-            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
+            else{
+                ecpTerminalType exprType = getExpressionTerminalType(current_argument, in_pTable);
+                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+                {
+                    currentNodeType = ecpTerminalType_Invalid;
+                    break;
+                }
+                else{
+                    current_arguments_node = next_arguments;
+                    current_argument = current_arguments_node->getCurrentArgument();
+                    next_arguments = current_arguments_node->getNextArguments();
+                }    
             }
-            rightNode = (cpNormalNode *)rightNode->getChildNode(0);
         }
         case ecpTerminalType_float3:
         case ecpTerminalType_bool3:
         case ecpTerminalType_int3:
         {
-            if (rightNode->getNumOfChildNodes() == 1)
+            if (next_arguments==NULL)
             {
                 currentNodeType = ecpTerminalType_Invalid;
                 break;
             }
-            cpNormalNode *expr = (cpNormalNode *)(rightNode->getChildNode(1));
-            ecpTerminalType exprType = getExpressionTerminalType(expr, in_pTable);
-            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
+            else{
+                ecpTerminalType exprType = getExpressionTerminalType(current_argument, in_pTable);
+                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+                {
+                    currentNodeType = ecpTerminalType_Invalid;
+                    break;
+                }
+                else{
+                    current_arguments_node = next_arguments;
+                    current_argument = current_arguments_node->getCurrentArgument();
+                    next_arguments = current_arguments_node->getNextArguments();
+                }    
             }
-            rightNode = (cpNormalNode *)rightNode->getChildNode(0);
         }
         case ecpTerminalType_float2:
         case ecpTerminalType_bool2:
         case ecpTerminalType_int2:
         {
-            if (rightNode->getNumOfChildNodes() == 1)
+            if (next_arguments==NULL)
             {
                 currentNodeType = ecpTerminalType_Invalid;
                 break;
             }
-            cpNormalNode *expr = (cpNormalNode *)(rightNode->getChildNode(1));
-            ecpTerminalType exprType = getExpressionTerminalType(expr, in_pTable);
-            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
+            else{
+                ecpTerminalType exprType = getExpressionTerminalType(current_argument, in_pTable);
+                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+                {
+                    currentNodeType = ecpTerminalType_Invalid;
+                    break;
+                }
+                else{
+                    current_arguments_node = next_arguments;
+                    current_argument = current_arguments_node->getCurrentArgument();
+                    next_arguments = current_arguments_node->getNextArguments();
+                }    
             }
-            rightNode = (cpNormalNode *)rightNode->getChildNode(0);
         }
         case ecpTerminalType_float1:
         case ecpTerminalType_bool1:
         case ecpTerminalType_int1:
         {
-            if (rightNode->getNodeKind() == ARG_NODE)
+            if (next_arguments==NULL)
             {
                 currentNodeType = ecpTerminalType_Invalid;
                 break;
             }
-            ecpTerminalType exprType = getExpressionTerminalType(rightNode, in_pTable);
-            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
+            else{
+                ecpTerminalType exprType = getExpressionTerminalType(current_argument, in_pTable);
+                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+                {
+                    currentNodeType = ecpTerminalType_Invalid;
+                    break;
+                }
+                else{
+                    current_arguments_node = next_arguments;
+                    current_argument = current_arguments_node->getCurrentArgument();
+                    next_arguments = current_arguments_node->getNextArguments();
+                }    
             }
-            currentNodeType = type;
+            break;
         }
         default:
         {

@@ -258,6 +258,10 @@ class cpConstructorNode : public cpNormalNode
     virtual ~cpConstructorNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    void setConstructorType(ecpTerminalType in_eConstructorType){m_eConstructorType = in_eConstructorType;}
+    ecpTerminalType getConstructorType(){return m_eConstructorType;}
+private:
+    ecpTerminalType m_eConstructorType;
 };
 
 class cpWhileStatmentNode : public cpNormalNode
