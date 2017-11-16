@@ -32,5 +32,6 @@ cpSymbolAttribute* SearchInScope(const std::string& in_sIdentifier, cpSymbolTabl
 typedef std::tr1::unordered_map<cpBaseNode*,cpSymbolTableNode*> cpSymbolLookUpTable;
 typedef std::tr1::unordered_map<cpBaseNode*,cpSymbolTableNode*>::iterator cpSymbolLookUpTableItor;
 
+extern cpSymbolTableNode* gSymbolTable;
 #endif
 
