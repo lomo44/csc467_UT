@@ -28,7 +28,7 @@
 
 
 cpSymbolLookUpTable gSymbolLookUpTable;
-cpSymbolTableNode gSymbolTable;
+cpSymbolTableNode* gSymbolTable;
 
 void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
