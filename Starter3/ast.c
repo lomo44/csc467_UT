@@ -51,7 +51,9 @@ void cpNormalNode::setChildNodes(cpBaseNode *in_pNode, int in_iNodeIndex)
 {
     if (m_pChildNodes != NULL && in_iNodeIndex >= 0)
     {
-        in_pNode->setParentNode(this);
+        if(in_pNode!=NULL){
+            in_pNode->setParentNode(this);
+        }
         m_pChildNodes[in_iNodeIndex] = in_pNode;
     }
 }
@@ -64,7 +66,9 @@ void cpNormalNode::print()
     {
         for (int i = 0; i < m_iNumOfChildNodes; i++)
         {
-            m_pChildNodes[i]->print();
+            if(m_pChildNodes[i]!=NULL){
+                m_pChildNodes[i]->print();
+            }
         }
     }
 }
