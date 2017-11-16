@@ -52,6 +52,8 @@ void cpPrintSemanticError(cpSemanticError in_pSemanticError);
 
 bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
+void cpPopulateTerminalType();
+
 ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable);

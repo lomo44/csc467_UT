@@ -349,6 +349,7 @@ class cpFunctionNode : public cpNormalNode
     ecpFunctionType m_eFunctionType;
 };
 
+extern cpBaseNode* gAST;
 /** Factory function to create different kind of nodes**/
 cpBaseNode *allocate_cpNode(eNodeKind in_nodeKind, ...);
 void free_cpNode(cpBaseNode *in_pNode);

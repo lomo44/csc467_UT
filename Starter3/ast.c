@@ -10,6 +10,8 @@
 
 #define DEBUG_PRINT_TREE 0
 
+cpBaseNode* gAST;
+
 void cpNormalNode::initChildNodes(int in_iNumOfNodes){
   if(in_iNumOfNodes > 0 && m_pChildNodes==NULL){
     m_iNumOfChildNodes = in_iNumOfNodes;
