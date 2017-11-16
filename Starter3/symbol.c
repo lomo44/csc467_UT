@@ -27,7 +27,7 @@
 ************************************************************/
 
 
-cpSymbolLookUpTable cp_ST_NodeTable;
+cpSymbolLookUpTable gSymbolLookUpTable;
 
 void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
@@ -49,7 +49,7 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
             node->m_pParentScope=table;
             table=node;
         }
-        cp_ST_NodeTable[in_pNode]=table;   
+        gSymbolLookUpTable[in_pNode]=table;   
         //insert into symbol table if current node is declaration node
         if (in_pNode->getNodeKind()==DECLARATION_NODE)
         {
@@ -89,8 +89,8 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
 
 cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_pNode)
 {
-    cpSymbolLookUpTableItor current = cp_ST_NodeTable.find(in_pNode);
-    if(current!=cp_ST_NodeTable.end()){
+    cpSymbolLookUpTableItor current = gSymbolLookUpTable.find(in_pNode);
+    if(current!=gSymbolLookUpTable.end()){
         // Current node exist, try search throught the scope
         return SearchInTable(in_sIdentifier,current->second);
     }

@@ -34,6 +34,8 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
     }
 }
 
+
+
 ecpTerminalType getExpressionTerminalType(cpBaseNode *in_pNode, cpSymbolTableNode *in_pTable)
 {
     ecpTerminalType currentNodeType = in_pNode->getTerminalType();
@@ -53,6 +55,12 @@ ecpTerminalType getExpressionTerminalType(cpBaseNode *in_pNode, cpSymbolTableNod
             return getExpressionTerminalType((cpUnaryExpressionNode *)in_pNode, in_pTable);
         case CONSTRUCTOR_NODE:
             return getExpressionTerminalType((cpConstructorNode *)in_pNode, in_pTable);
+        case IDENT_NODE:
+            return getExpressionTerminalType((cpConstructorNode* )in_pNode, in_pTable);
+        case ASSIGNMENT_NODE:
+            return getExpressionTerminalType((cpAssignmentNode*)in_pNode, in_pTable);
+        case IF_STATEMENT_NODE:
+            return getExpressionTerminalType((cpIfStatementNode*)in_pNode, in_pTable);
         default:
             return ecpTerminalType_Unknown;
         }
@@ -444,6 +452,92 @@ ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTab
     }
     return in_pNode->getTerminalType(); 
 }
+
+cpSemanticError cpCheckAssignmentNode(cpAssignmentNode* in_pNode, cpSymbolTableNode* in_pTable){
+    cpIdentifierNode* variable = in_pNode->getVariable();
+    cpBaseNode* expression = in_pNode->getExpression();
+    ecpTerminalType variable_type = getExpressionTerminalType(variable,in_pTable);
+    ecpTerminalType expression_type  = getExpressionTerminalType(expression,in_pTable);
+    cpSemanticError ret;
+    ret.m_eType = ecpSemanticErrorType_None;
+    if((expression_type!=ecpTerminalType_Invalid) && (variable_type!=ecpTerminalType_Invalid)){
+        // Check matching
+        cpSymbolAttribute* variable_attribute = lookupSymbolTable(variable->m_value, variable);
+        ecpFunctionQualifier qualifer = variable_attribute->m_eQualifier;
+        switch(qualifer){
+            case ecpFunctionQualifier_Result:{
+                // Check if the result variable is used within an if node
+                cpBaseNode* current_node = in_pNode;
+                while(current_node!=NULL){
+                    if(current_node->getNodeKind() == IF_STATEMENT_NODE){
+                        //TODO: Assign line number
+                        ret.m_eType = ecpSemanticErrorType_Result_In_If_Statement;
+                        return ret;
+                    }
+                    current_node = current_node->getParentNode();
+                }
+                // Keek checking assignment correctness, should not break if the it is not within an if statement
+                if(variable_type >= expression_type){
+                    if(!((IS_Int(variable_type) && IS_Int(expression_type)) ||
+                    (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
+                    (IS_Bool(variable_type) && IS_Bool(expression_type)))){
+                        ret.m_eType = ecpSemanticErrorType_Invalid_Conversion;
+                        return ret;
+                    }
+                }
+                else{
+                    ret.m_eType = ecpSemanticErrorType_Target_Invalid_Size;
+                    return ret;
+                }
+                break;
+            }
+            case ecpFunctionQualifier_Const:{
+                if(in_pNode->getParentNode()->getNodeKind() == DECLARATION_NODE){
+                    // Declaration node, allow const assign if 
+                    if(expression->getNodeType()!= ecpBaseNodeType_Leaf){
+                        ret.m_eType = ecpSemanticErrorType_Invalid_Const_Assignment;
+                        return ret;
+                    }
+                    else{
+                        if(expression->getNodeKind()==IDENT_NODE){
+                            cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
+                            if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
+                                ret.m_eType = ecpSemanticErrorType_Invalid_Const_Assignment;
+                                return ret;
+                            }
+                        }
+                    }
+                }
+            } // Const should not be re-assigned.
+            case ecpFunctionQualifier_None:{
+                if(variable_type >= expression_type){
+                    if(!((IS_Int(variable_type) && IS_Int(expression_type)) ||
+                    (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
+                    (IS_Bool(variable_type) && IS_Bool(expression_type)))){
+                        ret.m_eType = ecpSemanticErrorType_Invalid_Conversion;
+                        return ret;
+                    }
+                }
+                else{
+                    ret.m_eType = ecpSemanticErrorType_Target_Invalid_Size;
+                    return ret;
+                }
+                break;
+            }
+            case ecpFunctionQualifier_Attribute: // All of these variable are predefined and read-only
+            case ecpFunctionQualifier_Uniform:
+            default:{
+                ret.m_eType = ecpSemanticErrorType_Target_Read_Only;
+                return ret;
+            }
+        }   
+    }
+    else{
+        ret.m_eType = ecpSemanticErrorType_Invalid_Arguments;
+    }
+    return ret; 
+}
+
 ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable){
     ecpTerminalType expression_type = getExpressionTerminalType(in_pNode->getExpression(),in_pTable);
     if(expression_type!=ecpTerminalType_bool1){

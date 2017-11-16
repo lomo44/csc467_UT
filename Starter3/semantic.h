@@ -4,7 +4,7 @@
 #include "ast.h"
 #include "symbol.h"
 #include <stack>
-typedef std::stack<cpBaseNode*> cpNodeStack;
+
 #define IS_S_Int(x)((x)==ecpTerminalType_int1)
 #define IS_S_Flt(x)((x) == ecpTerminalType_float1)
 
@@ -29,25 +29,36 @@ typedef std::stack<cpBaseNode*> cpNodeStack;
 
 // int semantic_check( node *ast);
 
-bool semanettic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+enum ecpSemanticErrorType{
+    ecpSemanticErrorType_None,
+    ecpSemanticErrorType_Invalid_Const_Assignment,
+    ecpSemanticErrorType_Invalid_Conversion,
+    ecpSemanticErrorType_Target_Invalid_Size,
+    ecpSemanticErrorType_Invalid_Arguments,
+    ecpSemanticErrorType_Duplicate_Declaration,
+    ecpSemanticErrorType_Result_In_If_Statement,
+    ecpSemanticErrorType_Target_Read_Only
+};
 
-// bool semantic_check_function_call(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pSymbolTable);
-// bool semantic_check_operator(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_condition(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_constructor_call(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_vector_index(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_initialization(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_assignment(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
-// bool semantic_check_predifined_variable(cpScopeNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
+class cpSemanticError{
+public:
+    bool hasError(){return m_eType != ecpSemanticErrorType_None;}
+    ecpSemanticErrorType m_eType;
+    int m_iRowNumber;
+    int m_iColNumber;
+};
+
+void cpPrintSemanticError(cpSemanticError in_pSemanticError);
+
+bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable);
 
 ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable);
 ecpTerminalType getExpressionTerminalType(cpConstructorNode* in_pNode,cpSymbolTableNode* in_pTable);
-
 ecpTerminalType getExpressionTerminalType(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable);
+
 ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable); 
 ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable);
 
