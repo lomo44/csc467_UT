@@ -34,7 +34,22 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable)
     }
 }
 
-
+void cpPrintSemanticError(cpSemanticError in_pSemanticError){
+    return; //TODO: Implement
+}
+void cpPopulateTerminalType(cpBaseNode* in_pNode){
+    if(in_pNode == NULL || in_pNode->getNodeType() == ecpBaseNodeType_Leaf){
+        return;
+    }
+    else{
+        cpNormalNode n_node = (cpNormalNode*)(in_pNode);
+        int num_of_nodes = n_node->getNumOfChildNodes();
+        for(int i =0 ; i < num_of_nodes;i++){
+            cpPopulateTerminalType(in_pNode);
+        }
+        getExpressionTerminalType(n_node,gSymbolTable);
+    }
+}
 
 ecpTerminalType getExpressionTerminalType(cpBaseNode *in_pNode, cpSymbolTableNode *in_pTable)
 {
