@@ -289,6 +289,7 @@ class cpDeclarationNode : public cpNormalNode
     virtual ~cpDeclarationNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    cpAssignmentNode* getAssignmentNode(){return (cpAssignmentNode*)m_pChildNodes[0];};
     ecpFunctionQualifier m_eQualifier;
     int m_iVariableSize;
     std::string m_sIdentifierName;

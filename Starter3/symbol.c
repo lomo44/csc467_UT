@@ -39,10 +39,9 @@ void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbo
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table){
     
     if(in_pNode->getNodeType() == ecpBaseNodeType_Leaf){
-        return NULL;
+        return table;
     }
     else{
-        
         //create a scope node whenver enters to a new scope
         if (in_pNode->getNodeKind()==SCOPE_NODE)
         {
@@ -55,10 +54,7 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         if (in_pNode->getNodeKind()==DECLARATION_NODE)
         {
             //check if there are duplicate declarations in current scope
-            if(lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode)!=NULL){
-                return NULL;
-            }
-            else{
+            if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)==NULL){
                 cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
                 initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
                 table->m_vSymbolTable.push_back(new_attribute);
@@ -69,8 +65,8 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         {
             //check if id is already defined, if null means did not find assignment in scope
             cpSymbolAttribute* attr = lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode);
-            if ( attr == NULL){
-                return NULL;
+            if (attr == NULL){
+                in_pNode->setTerminalType(ecpTerminalType_Invalid);
             }
             else{
                 // Node exists, marking the terminal type of this node
@@ -83,7 +79,9 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         for (int i=0;i<num_of_child_nodes;i++)
         {
             cpSymbolTableNode* temp = constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
-            if (temp!=table) table->m_pChildScopes.push_back(temp);
+            if(temp!=NULL && temp != table){
+                table->m_pChildScopes.push_back(temp);
+            }   
         } 
         return table;  
     }    

@@ -344,9 +344,10 @@ ecpTerminalType getExpressionTerminalType(cpIdentifierNode* in_pNode,cpSymbolTab
     }
     return in_pNode->getTerminalType();
 }
+
 ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable){
     cpIdentifierNode* variable = in_pNode->getVariable();
-    cpNormalNode* expression = in_pNode->getExpression();
+    cpBaseNode* expression = in_pNode->getExpression();
     
     ecpTerminalType expression_type = variable->getTerminalType();
     ecpTerminalType variable_type = expression->getTerminalType();
@@ -374,6 +375,24 @@ ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTab
                 }
                 // Keek checking assignment correctness, should not break if the it is not within an if statement
             }
+            case ecpFunctionQualifier_Const:{
+                if(in_pNode->getParentNode()->getNodeKind() == DECLARATION_NODE){
+                    // Declaration node, allow const assign if 
+                    if(expression->getNodeType()!= ecpBaseNodeType_Leaf){
+                        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+                        break;
+                    }
+                    else{
+                        if(expression->getNodeKind()==IDENT_NODE){
+                            cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
+                            if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
+                                 in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } // Const should not be re-assigned.
             case ecpFunctionQualifier_None:{
                 if(variable_type >= expression_type){
                     if((IS_Int(variable_type) && IS_Int(expression_type)) ||
@@ -389,7 +408,7 @@ ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTab
             }
             case ecpFunctionQualifier_Attribute: // All of these variable are predefined and read-only
             case ecpFunctionQualifier_Uniform:
-            case ecpFunctionQualifier_Const: // Const should not be re-assigned.
+            
             default:{
                 break;
             }
@@ -410,4 +429,16 @@ ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolT
         in_pNode->updateTerminalType(ecpTerminalType_Unknown);
     }
     return in_pNode->getTerminalType();
+}
+
+ecpTerminalType getExpressionTerminalType(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable){
+    //check if there are duplicate declarations in current scope
+    cpAssignmentNode* assignment_node = in_pNode->getAssignmentNode();
+    if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)!=NULL){
+        return ecpTerminalType_Invalid;
+    }
+    else{
+        // Check
+        return getExpressionTerminalType(assignment_node,in_pTable);
+    } 
 }
