@@ -103,6 +103,7 @@ int main (int argc, char *argv[]) {
  **********************************************************************/
 
 /* Make calls to any cleanup or finalization routines here. */
+  delete gAST;
   //ast_free(ast);
 
   /* Clean up files if necessary */

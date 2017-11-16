@@ -251,6 +251,19 @@ class cpAssignmentNode : public cpNormalNode
     cpNormalNode* getExpression(){return (cpNormalNode*)m_pChildNodes[1]; }
 };
 
+class cpArgumentsNode : public cpNormalNode
+{
+    public:
+    cpArgumentsNode() : cpNormalNode(BINARY_EXPRESSION_NODE){};
+    virtual ~cpArgumentsNode(){};
+    virtual void initialize(va_list in_pArguments);
+    virtual void printSelf();
+    void setNextArguments(cpArgumentsNode* in_pArguments){setChildNodes(in_pArguments,0);}
+    void setCurrentArgument(cpNormalNode* in_pArgument){setChildNodes(in_pArgument,1);}
+    cpArgumentsNode* getNextArguments(){return (cpArgumentsNode*)m_pChildNodes[0];}
+    cpNormalNode* getCurrentArgument(){return (cpNormalNode*)m_pChildNodes[1];}
+};
+
 class cpConstructorNode : public cpNormalNode
 {
   public:
@@ -260,6 +273,8 @@ class cpConstructorNode : public cpNormalNode
     virtual void printSelf();
     void setConstructorType(ecpTerminalType in_eConstructorType){m_eConstructorType = in_eConstructorType;}
     ecpTerminalType getConstructorType(){return m_eConstructorType;}
+    void setArgumentsNode(cpArgumentsNode* in_pArguments){setChildNodes(in_pArguments,0);}
+    cpArgumentsNode* getArgumentsNode(){return (cpArgumentsNode*)getChildNode(0);}
 private:
     ecpTerminalType m_eConstructorType;
 };
@@ -295,6 +310,7 @@ class cpDeclarationNode : public cpNormalNode
     virtual void printSelf();
     cpAssignmentNode* getAssignmentNode(){return (cpAssignmentNode*)m_pChildNodes[0];};
     ecpFunctionQualifier m_eQualifier;
+    ecpTerminalType m_eTargetType;
     int m_iVariableSize;
     std::string m_sIdentifierName;
 };
@@ -328,16 +344,7 @@ class cpBinaryExpressionNode : public cpNormalNode
     virtual void printSelf();
 };
 
-class cpArgumentsNode : public cpNormalNode
-{
-    public:
-    cpArgumentsNode() : cpNormalNode(BINARY_EXPRESSION_NODE){};
-    virtual ~cpArgumentsNode(){};
-    virtual void initialize(va_list in_pArguments);
-    virtual void printSelf();
-    cpArgumentsNode* getNextArguments(){return (cpArgumentsNode*)m_pChildNodes[0];}
-    cpNormalNode* getCurrentArgument(){return (cpArgumentsNode*)m_pChildNodes[1];}
-};
+
 
 class cpFunctionNode : public cpNormalNode
 {
