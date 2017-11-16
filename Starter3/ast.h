@@ -1,4 +1,3 @@
-
 #ifndef _AST_H_
 #define _AST_H_
 
@@ -55,7 +54,6 @@ enum ecpBaseNodeType
 
 enum ecpTerminalType
 {
-
     ecpTerminalType_int1,
     ecpTerminalType_int2,
     ecpTerminalType_int3,
@@ -69,16 +67,24 @@ enum ecpTerminalType
     ecpTerminalType_float3,
     ecpTerminalType_float4,
     ecpTerminalType_Invalid,
-    ecpTerminalType_Unknown
+    ecpTerminalType_Unknown,
+    ecpTerminalType_TypeCount
 };
+
+extern std::string gTerminalTypeToStringMap[ecpTerminalType_TypeCount];
 
 enum ecpFunctionQualifier{
     ecpFunctionQualifier_None,
     ecpFunctionQualifier_Const,
     ecpFunctionQualifier_Attribute,
     ecpFunctionQualifier_Result,
-    ecpFunctionQualifier_Uniform
+    ecpFunctionQualifier_Uniform,
+    ecpFunctionQualifier_TypeCount
 };
+
+extern std::string gQualifierTypeToStringMap[ecpFunctionQualifier_TypeCount];
+
+std::string toString(ecpFunctionQualifier in_eQualifier);
 
 #define IS_WRITE_ONLY(x) ((x)==ecpFunctionQualifier_Result)
 #define IS_READ_ONLY(x) ((x)==ecpFunctionQualifier_Attribute || (x)==ecpFunctionQualifier_Uniform)

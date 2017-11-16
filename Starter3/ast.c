@@ -10,6 +10,37 @@
 #define DEBUG_PRINT_TREE 0
 
 cpBaseNode *gAST;
+std::string gTerminalTypeToStringMap[ecpTerminalType_TypeCount] = {
+    "int",
+    "ivec2",
+    "ivec3",
+    "ivec4",
+    "bool",
+    "bvec2",
+    "bvec3",
+    "bvec4",
+    "float",
+    "fvec2",
+    "fvec3",
+    "fvec4",
+};
+
+
+
+std::string gQualifierTypeToStringMap[ecpFunctionQualifier_TypeCount] = {
+    "",
+    "Const",
+    "Attribute",
+    "Result",
+    "Uniform",
+};
+std::string toString(ecpFunctionQualifier in_eQualifier)
+{ 
+    return gQualifierTypeToStringMap[in_eQualifier];
+}
+std::string toString(ecpTerminalType in_eTerminalType){
+    return gTerminalTypeToStringMap[in_eTerminalType];
+}
 
 void cpNormalNode::initChildNodes(int in_iNumOfNodes)
 {
@@ -101,12 +132,12 @@ void cpArgumentsNode::initialize(va_list in_pArguments)
 {
     initChildNodes(2);
     setChildNodes(va_arg(in_pArguments, cpArgumentsNode *), 0);
-    setChildNodes(va_arg(in_pArguments, cpNormalNode *), 0);
+    setChildNodes(va_arg(in_pArguments, cpNormalNode *), 1);
 }
 
 void cpArgumentsNode::printSelf()
 {
-    printf("Arguments Node: ");
+    printf("Arguments Node: \n");
 }
 
 void cpBinaryExpressionNode::printSelf()
@@ -156,7 +187,7 @@ void cpIfStatementNode::initialize(va_list in_pArguments)
 
 void cpDeclarationNode::printSelf()
 {
-    //printf("Declaration Node\n",m_Operand);
+    printf("Declaration %s %s %s\n",toString(m_eQualifier).c_str(),toString(m_eTargetType).c_str(),m_sIdentifierName.c_str());
     //TODO: reImplement this
 }
 void cpDeclarationNode::initialize(va_list in_pArguments)
@@ -185,8 +216,9 @@ void cpAssignmentNode::printSelf()
 
 void cpAssignmentNode::initialize(va_list in_pArguments)
 {
-    initChildNodes(1);
+    initChildNodes(2);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
+    setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
 void cpVariableNode::printSelf()
@@ -250,12 +282,12 @@ void cpStatementsNode::initialize(va_list in_pArguments)
 
 void cpStatementsNode::printSelf()
 {
-    printf("Statements: ");
+    printf("Statements: \n");
 }
 
 void cpDeclarationsNode::printSelf()
 {
-    printf("Declarations: ");
+    printf("Declarations: \n");
 }
 
 void cpDeclarationsNode::initialize(va_list in_pArguments)
