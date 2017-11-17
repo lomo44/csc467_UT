@@ -42,24 +42,25 @@ enum ecpSemanticErrorType{
 
 class cpSemanticError{
 public:
+    cpSemanticError():m_eType(ecpSemanticErrorType_None),m_iRowNumber(-1),m_iColNumber(-1){}
     bool hasError(){return m_eType != ecpSemanticErrorType_None;}
     ecpSemanticErrorType m_eType;
     int m_iRowNumber;
     int m_iColNumber;
 };
 
-void cpPrintSemanticError(cpSemanticError in_pSemanticError);
+void cpPrintSemanticError(cpNormalNode* in_pNode,const cpSemanticError& in_pSemanticError);
 
 bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable,cpSemanticError& io_SemanticError);
 
-ecpTerminalType getExpressionTerminalType(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpConstructorNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpBinaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpFunctionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpUnaryExpressionNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpConstructorNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
 
-ecpTerminalType getExpressionTerminalType(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError); 
-ecpTerminalType getExpressionTerminalType(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
-ecpTerminalType getExpressionTerminalType(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError); 
+void cpCheckNode(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
+void cpCheckNode(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);
 #endif

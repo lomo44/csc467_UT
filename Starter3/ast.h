@@ -145,8 +145,13 @@ class cpBaseNode
 
     cpBaseNode *getParentNode() { return m_pParentNode; }
     void setParentNode(cpBaseNode *in_pParentNode) { m_pParentNode = in_pParentNode; }
-
+    void setLineNumber(int in_iLineNumber){m_iLineNumber = in_iLineNumber;}
+    int getLineNumber(){return m_iLineNumber;}
+    void setColNumber(int in_iColNumber){m_iColNumber = in_iColNumber;}
+    int getColNumber(){return m_iColNumber;}
   protected:
+    int m_iLineNumber;
+    int m_iColNumber;
     ecpTerminalType m_TerminalKind;
     eNodeKind m_NodeKind;
     cpBaseNode *m_pParentNode;
