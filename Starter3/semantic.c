@@ -1,12 +1,15 @@
 #include "semantic.h"
 #include "parser.tab.h"
-
+#include <vector>
 //questions: why do we have int_Node,Float_node instead of literal node?
 //           why unknown?should be currentNodeType
 //           type node type stored in m.value
 //           we need to initialize 'const' child node for declaration
 //           why dont we have argument node?If reduced expressions into one level?we should have more than two childs for construction node(added argument node at enum for now)
 //           should change assignment node child num to 4 (assignment under statement and assigment under declaration)
+
+
+
 
 bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable, cpSemanticError& io_SemanticError)
 {
@@ -273,85 +276,132 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
 }
 void cpCheckNode(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pTable,cpSemanticError& io_SemanticError)
 {
-    ecpTerminalType currentNodeType = in_pNode->getTerminalType();
-    if (currentNodeType != ecpTerminalType_Unknown)
-    {
-        {
-            currentNodeType;
-            return;
-        }
+    cpArgumentsNode* arguments_node = in_pNode->getArguments();
+    std::vector<ecpTerminalType> argument_terminal_types;
+    cpArgumentsNode* currentNode = arguments;
+    while(currentNode!=NULL){
+        current_type = currentNode->getTerminalType();
+        arguments_terminal_types.push_back(current_type);
+        currentNode = currentNode->getNextArguments();
+        real_arguments_count++;
     }
-    else
+
+    switch (in_pNode->m_eFunctionType)
     {
-        switch (in_pNode->m_eFunctionType)
-        {
-        case ecpFunctionType_dp3:
-        {
-            // dp3
-            cpBaseNode *first_param = in_pNode->getChildNode(0);
-            cpBaseNode *second_param = in_pNode->getChildNode(1);
-            ecpTerminalType leftNodeKind = cpCheckNode(first_param, in_pTable,io_SemanticError);
-            ecpTerminalType rightNodeKind = cpCheckNode(second_param, in_pTable,io_SemanticError);
-            if (IS_VV_A(leftNodeKind, rightNodeKind))
-            {
-                if (leftNodeKind == ecpTerminalType_float3 || leftNodeKind == ecpTerminalType_float4)
-                {
-                    currentNodeType = ecpTerminalType_float1;
+    case ecpFunctionType_dp3:
+    {
+        if(argument_terminal_types.size()==0){
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else if(argument_terminal_types.size()>2){
+            io_SemanticError.setError(ecpSemanticErrorType_Too_Much_Arguments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else{
+            if(IS_Any(argument_terminal_types[0]) || IS_Any(argument_terminal_types[1])){
+                io_SemanticError.cleanError();
+                if(!IS_Any(argument_terminal_types[0]) || IS_Any(argument_terminal_types[1])){
+                    if(argument_terminal_types[0]!=ecpTerminalType_float3 ||
+                    argument_terminal_types[0]!=ecpTerminalType_float4 ||
+                    argument_terminal_types[0]!=ecpTerminalType_int3 ||
+                    argument_terminal_types[0]!=ecpTerminalType_int4 ||){
+                        // Invalid arguments
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arguments, in_pNode);
+                    }
                 }
-                else if (leftNodeKind == ecpTerminalType_int3 || leftNodeKind == ecpTerminalType_int4)
-                {
-                    currentNodeType = ecpTerminalType_int1;
+                else if(IS_Any(argument_terminal_typess[0]) || !IS_Any(argument_terminal_typess[1])){
+                    if(argument_terminal_types[1]!=ecpTerminalType_float3 ||
+                    argument_terminal_types[1]!=ecpTerminalType_float4 ||
+                    argument_terminal_types[1]!=ecpTerminalType_int3 ||
+                    argument_terminal_types[1]!=ecpTerminalType_int4 ||){
+                        // Invalid arguments
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arguments, in_pNode);
+                    }
                 }
-                else
-                {
-                    currentNodeType = ecpTerminalType_Invalid;
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(argument_terminal_types[0] == argument_terminal_types[1]){
+                    if(argument_terminal_typess[0] == ecpTerminalType_int3 ||argument_terminal_typess[0] == ecpTerminalType_int4){
+                        in_pNode->setTerminalType(ecpTerminalType_int1);
+                        io_SemanticError.cleanError();
+                    }
+                    else if(argument_terminal_typess[0] == ecpTerminalType_float3 ||argument_terminal_typess[0] == ecpTerminalType_float4){
+                        in_pNode->setTerminalType(ecpTerminalType_float1);
+                        io_SemanticError.cleanError();
+                    }
+                    else{
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arguments);
+                        iN_pNode->setTerminalType(ecpTerminalType_Unknown);
+                    }   
                 }
             }
-            else
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-            }
-            break;
-        }
-        case ecpFunctionType_lit:
-        {
-            //lit
-            cpBaseNode *first_param = in_pNode->getChildNode(0);
-            ecpTerminalType leftNodeKind = cpCheckNode(first_param, in_pTable,io_SemanticError);
-            if (leftNodeKind == ecpTerminalType_float4)
-            {
-                currentNodeType = ecpTerminalType_float4;
-            }
-            else
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-            }
-            break;
-        }
-        case ecpFunctionType_rsq:
-        {
-            //rsq
-            cpBaseNode *first_param = in_pNode->getChildNode(0);
-            ecpTerminalType leftNodeKind = cpCheckNode(first_param, in_pTable,io_SemanticError);
-            if (leftNodeKind == ecpTerminalType_float1 || leftNodeKind == ecpTerminalType_int1)
-            {
-                currentNodeType = ecpTerminalType_float1;
-            }
-            else
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-            }
-            break;
-        }
-        default:{
-            break;
-        }
-        }
+        }    
+        break;
     }
-    in_pNode->updateTerminalType(currentNodeType);
+    case ecpFunctionType_lit:
     {
-        currentNodeType;
-        return;
+        //lit
+        if(argument_terminal_types.size()==0){
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else if(argument_terminal_types.size()>1){
+            io_SemanticError.setError(ecpSemanticErrorType_Too_Much_Arguments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else{
+            if(IS_Any(argument_terminal_types[0]){
+                io_SemanticError.cleanError();
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(argument_terminal_types[0] == ecpTerminalType_float4){
+                    io_SemanticError.cleanError();
+                    in_pNode->setTerminalType(ecpTerminalType_float4);   
+                }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arguments);
+                    iN_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }
+        }
+        break;    
+    }
+    case ecpFunctionType_rsq:
+    {
+        //rsq
+        if(argument_terminal_types.size()==0){
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else if(argument_terminal_types.size()>1){
+            io_SemanticError.setError(ecpSemanticErrorType_Too_Much_Arguments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+        }
+        else{
+            if(IS_Any(argument_terminal_types[0]){
+                io_SemanticError.cleanError();
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(argument_terminal_types[0] == ecpTerminalType_int1 ||
+                argument_terminal_types[0] == ecpTerminalType_float1 ){
+                    io_SemanticError.cleanError();
+                    in_pNode->setTerminalType(ecpTerminalType_float1);   
+                }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arguments);
+                    iN_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }
+        }
+        break; 
+    }
+    default:{
+        break;
+    }
     }
 }
 
@@ -393,10 +443,10 @@ void cpCheckNode(cpUnaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,c
 
 void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSemanticError& io_SemanticError)
 {
-    cpArgumentsNode *current_arguments_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
+    cpArgumentsNode *argument_terminal_typess_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
     
-    cpNormalNode *current_argument = current_arguments_node->getCurrentArgument();
-    cpArgumentsNode* next_arguments = current_arguments_node->getNextArguments();
+    cpNormalNode *argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
+    cpArgumentsNode* next_arguments = argument_terminal_typess_node->getNextArguments();
     //Asume type node type stored in m.value
     ecpTerminalType type = in_pNode->getConstructorType();
     switch (type)
@@ -412,7 +462,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
             break;
         }
         else{
-            ecpTerminalType exprType = current_argument->getTerminalType();
+            ecpTerminalType exprType = argument_terminal_types->getTerminalType();
             if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
             {
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
@@ -420,9 +470,9 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
                 break;
             }
             else{
-                current_arguments_node = next_arguments;
-                current_argument = current_arguments_node->getCurrentArgument();
-                next_arguments = current_arguments_node->getNextArguments();
+                argument_terminal_typess_node = next_arguments;
+                argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
+                next_arguments = argument_terminal_typess_node->getNextArguments();
             }    
         }
     }
@@ -437,7 +487,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
             break;
         }
         else{
-            ecpTerminalType exprType = current_argument->getTerminalType();
+            ecpTerminalType exprType = argument_terminal_types->getTerminalType();
             if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
             {
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
@@ -445,9 +495,9 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
                 break;
             }
             else{
-                current_arguments_node = next_arguments;
-                current_argument = current_arguments_node->getCurrentArgument();
-                next_arguments = current_arguments_node->getNextArguments();
+                argument_terminal_typess_node = next_arguments;
+                argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
+                next_arguments = argument_terminal_typess_node->getNextArguments();
             }    
         }
     }
@@ -462,7 +512,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
             break;
         }
         else{
-            ecpTerminalType exprType = current_argument->getTerminalType();
+            ecpTerminalType exprType = argument_terminal_types->getTerminalType();
             if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
             {
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
@@ -470,9 +520,9 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
                 break;
             }
             else{
-                current_arguments_node = next_arguments;
-                current_argument = current_arguments_node->getCurrentArgument();
-                next_arguments = current_arguments_node->getNextArguments();
+                argument_terminal_typess_node = next_arguments;
+                argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
+                next_arguments = argument_terminal_typess_node->getNextArguments();
             }    
         }
     }
@@ -487,7 +537,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
             break;
         }
         else{
-            ecpTerminalType exprType = current_argument->getTerminalType();
+            ecpTerminalType exprType = argument_terminal_types->getTerminalType();
             if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
             {
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);

@@ -389,6 +389,7 @@ class cpFunctionNode : public cpNormalNode
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
     virtual void print();
+    cpArgumentsNode* getArguments(){return getChildNodes()[0];}
     ecpFunctionType m_eFunctionType;
 };
 
