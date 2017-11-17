@@ -621,7 +621,6 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
             case ecpFunctionQualifier_Result:{
                 // Check if the result variable is used within an if node
                 cpBaseNode* current_node = in_pNode;
-                bool isWithinIfNode=false;  
                 while(current_node!=NULL){
                     if(current_node->getNodeKind() == IF_STATEMENT_NODE){
                         io_SemanticError.setError(ecpSemanticErrorType_Result_In_If_Statement,in_pNode);
