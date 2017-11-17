@@ -74,7 +74,6 @@ enum {
 %token          BOOL_T
 %token          CONST
 %token          FALSE_C TRUE_C
-%token          FUNC
 %token          IF ELSE
 %token          AND OR NEQ EQ LEQ GEQ
 
@@ -85,6 +84,7 @@ enum {
 %token <as_float> FLOAT_C
 %token <as_int>   INT_C
 %token <as_str>   ID
+%token <as_func>  FUNC
 
 // operator precdence
 %left     OR                        // 7
@@ -221,32 +221,32 @@ statement
 type
   : INT_T
     {
-        $$ = (ecpTerminalType)((ecpTerminalType_int1)+yyval.as_vec);
+        $$ = (ecpTerminalType)((ecpTerminalType_int1));
         yTRACE("type -> INT_T \n")
     }
   | IVEC_T
     { 
-        $$ = (ecpTerminalType)((ecpTerminalType_int1)+yyval.as_vec);
+        $$ = (ecpTerminalType)((ecpTerminalType_int1)+$1);
         yTRACE("type -> IVEC_T \n")
     }
   | BOOL_T
     {
-        $$ = (ecpTerminalType)((ecpTerminalType_bool1)+yyval.as_vec); 
+        $$ = (ecpTerminalType)((ecpTerminalType_bool1)); 
         yTRACE("type -> BOOL_T \n") 
     }
   | BVEC_T
     { 
-        $$ = (ecpTerminalType)((ecpTerminalType_bool1)+yyval.as_vec);
+        $$ = (ecpTerminalType)((ecpTerminalType_bool1)+$1);
         yTRACE("type -> BVEC_T \n")
     }
   | FLOAT_T
     { 
-        $$ = (ecpTerminalType)((ecpTerminalType_float1)+yyval.as_vec);
+        $$ = (ecpTerminalType)((ecpTerminalType_float1));
         yTRACE("type -> FLOAT_T \n")
     }
   | VEC_T
     { 
-        $$ = (ecpTerminalType)((ecpTerminalType_float1)+yyval.as_vec);
+        $$ = (ecpTerminalType)((ecpTerminalType_float1)+$1);
         yTRACE("type -> VEC_T \n")
     }
   ;
@@ -261,86 +261,86 @@ expression
     }
   | FUNC '(' arguments_opt ')' %prec '('
     {
-        $$ = allocate_cpNode(FUNCTION_NODE,yyval.as_func,$3); 
+        $$ = allocate_cpNode(FUNCTION_NODE,$1,$3); 
         yTRACE("expression -> FUNC ( arguments_opt ) \n") 
     }
 
   /* unary opterators */
   | '-' expression %prec UMINUS
     {
-        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,'-',$2); 
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NEG,$2); 
         yTRACE("expression -> - expression \n")
     }
   | '!' expression %prec '!'
     {
-        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,'!',$2); 
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NOT,$2); 
         yTRACE("expression -> ! expression \n") 
     }
 
   /* binary operators */
   | expression AND expression %prec AND
     {
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,AND,$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_AND,$3);
         yTRACE("expression -> expression AND expression \n"); 
     }
   | expression OR expression %prec OR
     {
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,OR,$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_OR,$3);
         yTRACE("expression -> expression OR expression \n");
     }
   | expression EQ expression %prec EQ
     {
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,EQ,$3); 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_EQ,$3); 
         yTRACE("expression -> expression EQ expression \n"); 
     }
   | expression NEQ expression %prec NEQ
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,NEQ,$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_NEQ,$3);
         yTRACE("expression -> expression NEQ expression \n"); 
     }
   | expression '<' expression %prec '<'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'<',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_LT,$3);
         yTRACE("expression -> expression < expression \n"); 
     }
   | expression LEQ expression %prec LEQ
     {
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,LEQ,$3); 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_LEQ,$3); 
         yTRACE("expression -> expression LEQ expression \n"); 
     }
   | expression '>' expression %prec '>'
     {
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'>',$3); 
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_GT,$3); 
         yTRACE("expression -> expression > expression \n"); 
     }
   | expression GEQ expression %prec GEQ
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,GEQ,$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_GEQ,$3);
         yTRACE("expression -> expression GEQ expression \n"); 
     }
   | expression '+' expression %prec '+'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'+',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_PLUS,$3);
         yTRACE("expression -> expression + expression \n"); 
     }
   | expression '-' expression %prec '-'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'-',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_MINUS,$3);
         yTRACE("expression -> expression - expression \n"); 
     }
   | expression '*' expression %prec '*'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'*',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_MUL,$3);
         yTRACE("expression -> expression * expression \n"); 
     }
   | expression '/' expression %prec '/'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'/',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_DIV,$3);
         yTRACE("expression -> expression / expression \n"); 
     }
   | expression '^' expression %prec '^'
     { 
-        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,'^',$3);
+        $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_BOR,$3);
         yTRACE("expression -> expression ^ expression \n"); 
     }
 
@@ -357,12 +357,12 @@ expression
     }
   | INT_C
     {
-        $$ = allocate_cpNode(INT_NODE, yyval.as_int); 
+        $$ = allocate_cpNode(INT_NODE, $1); 
         yTRACE("expression -> INT_C \n") 
     }
   | FLOAT_C
     {
-        $$ = allocate_cpNode(FLOAT_NODE, yyval.as_float); 
+        $$ = allocate_cpNode(FLOAT_NODE, $1); 
         yTRACE("expression -> FLOAT_C \n")
     }
 
@@ -382,12 +382,12 @@ expression
 variable
   : ID
     {
-        $$ = allocate_cpNode(IDENT_NODE,yyval.as_str,1); 
+        $$ = allocate_cpNode(IDENT_NODE,$1,-1); 
         yTRACE("variable -> ID \n")
     }
   | ID '[' INT_C ']' %prec '['
     { 
-        $$ = allocate_cpNode(IDENT_NODE,yyval.as_str,yyval.as_int);
+        $$ = allocate_cpNode(IDENT_NODE,$1,$3);
         yTRACE("variable -> ID [ INT_C ] \n")
     }
   ;

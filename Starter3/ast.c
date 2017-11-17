@@ -25,8 +25,6 @@ std::string gTerminalTypeToStringMap[ecpTerminalType_TypeCount] = {
     "fvec4",
 };
 
-
-
 std::string gQualifierTypeToStringMap[ecpFunctionQualifier_TypeCount] = {
     "",
     "Const",
@@ -34,12 +32,45 @@ std::string gQualifierTypeToStringMap[ecpFunctionQualifier_TypeCount] = {
     "Result",
     "Uniform",
 };
+
+std::string gOperandTypeToStringMap[ecpOperand_Count] = {
+    "-",
+    "!",
+    "&&",
+    "||",
+    "==",
+    "!=",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "^"
+};
+
+std::string gFunctionTypeToStringMap[ecpFunctionType_count] = {
+    "dp3",
+    "rsq",
+    "lit"
+};
+
 std::string toString(ecpFunctionQualifier in_eQualifier)
 { 
     return gQualifierTypeToStringMap[in_eQualifier];
 }
 std::string toString(ecpTerminalType in_eTerminalType){
     return gTerminalTypeToStringMap[in_eTerminalType];
+}
+
+std::string toString(ecpOperand in_eOperand){
+    return gOperandTypeToStringMap[in_eOperand];
+}
+
+std::string toString(ecpFunctionType in_eFunctionType){
+    return gFunctionTypeToStringMap[in_eFunctionType];
 }
 
 void cpNormalNode::initChildNodes(int in_iNumOfNodes)
@@ -55,6 +86,7 @@ void cpNormalNode::initChildNodes(int in_iNumOfNodes)
         }
     }
 }
+
 
 cpNormalNode::~cpNormalNode()
 {
@@ -106,24 +138,50 @@ void cpNormalNode::print()
 
 void cpFunctionNode::printSelf()
 {
-    printf("Function \n");
+    printf(" ");
+}
+
+void cpFunctionNode::print(){
+    printf("Call %s(",toString(m_eFunctionType).c_str());
+    getChildNodes()[0]->print();
+    printf(")\n");
+
 }
 
 void cpFunctionNode::initialize(va_list in_pArguments)
 {
-    m_Operand = va_arg(in_pArguments, int);
+    switch(va_arg(in_pArguments, int)){
+        case 0: {
+            m_eFunctionType = ecpFunctionType_dp3;
+            break;
+        }
+        case 1:{
+            m_eFunctionType = ecpFunctionType_lit;
+            break;
+        }
+        case 2:{
+            m_eFunctionType = ecpFunctionType_rsq;
+            break;
+        }
+    }
     initChildNodes(1);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
 
 void cpConstructorNode::printSelf()
 {
-    printf("Constructor \n");
+    printf("Constructor ");
+}
+
+void cpConstructorNode::print(){
+    printf("%s (",toString(m_eConstructorType).c_str());
+    getArgumentsNode()->print();
+    printf(")\n");
 }
 
 void cpConstructorNode::initialize(va_list in_pArguments)
 {
-    m_Operand = va_arg(in_pArguments, int);
+    setConstructorType((ecpTerminalType)va_arg(in_pArguments, int));
     initChildNodes(1);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
@@ -140,14 +198,31 @@ void cpArgumentsNode::printSelf()
     printf("Arguments Node: \n");
 }
 
+void cpArgumentsNode::print(){
+    cpArgumentsNode* next_node = getNextArguments();
+    if(next_node!=NULL){
+        next_node->print();
+        printf(",");
+    }
+    getCurrentArgument()->print();
+}
+
 void cpBinaryExpressionNode::printSelf()
 {
-    printf("Binary Expresion Node, Operand %d\n", m_Operand);
+    printf("Binary Expresion Node, Operand %s\n", toString(m_eOperand).c_str());
+}
+
+void cpBinaryExpressionNode::print(){
+    printf("Binary ");
+    getChildNodes()[0]->print();
+    printf(" %s ",toString(m_eOperand).c_str());
+    getChildNodes()[1]->print();
 }
 void cpBinaryExpressionNode::initialize(va_list in_pArguments)
 {
     initChildNodes(2);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
+    m_eOperand = (ecpOperand)va_arg(in_pArguments,int);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
@@ -177,6 +252,20 @@ void cpIfStatementNode::printSelf()
 {
     printf("If Node\n");
 }
+
+void cpIfStatementNode::print(){
+    printf("If ");
+    getExpression()->print();
+    printf("\nThen: ");
+    getIfStatements()->print();
+    cpStatementsNode* statments = getElseStatements();
+    if(statments){
+        printf("Else: ");
+        statments->print();
+    }
+    
+}
+
 void cpIfStatementNode::initialize(va_list in_pArguments)
 {
     initChildNodes(3);
@@ -201,10 +290,18 @@ void cpDeclarationNode::initialize(va_list in_pArguments)
 
 void cpUnaryExpressionNode::printSelf()
 {
-    printf("Unary Expression Node, Operand %d\n", m_Operand);
+    printf("Unary %s\n", toString(m_eOperand).c_str());
 }
+
+void cpUnaryExpressionNode::print(){
+    printf("Unary %s(", toString(m_eOperand).c_str());
+    getChildNodes()[0]->print();
+    printf(")");
+}
+
 void cpUnaryExpressionNode::initialize(va_list in_pArguments)
 {
+    m_eOperand = (ecpOperand)va_arg(in_pArguments, int);
     initChildNodes(1);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
@@ -214,6 +311,14 @@ void cpAssignmentNode::printSelf()
     printf("Assignment Node\n");
 }
 
+void cpAssignmentNode::print()
+{
+    getVariable()->print();
+    printf(" = ");
+    getExpression()->print();
+    printf("\n");
+}
+
 void cpAssignmentNode::initialize(va_list in_pArguments)
 {
     initChildNodes(2);
@@ -221,22 +326,22 @@ void cpAssignmentNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
-void cpVariableNode::printSelf()
-{
-    printf("Variable Node, index %d\n", m_Operand);
-}
+// void cpVariableNode::printSelf()
+// {
+//     printf("Variable Node, index %s\n", m_Operand);
+// }
 
-void cpVariableNode::initialize(va_list in_pArguments)
-{
-    initChildNodes(1);
-    m_Operand = va_arg(in_pArguments, int);
-    setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
-}
+// void cpVariableNode::initialize(va_list in_pArguments)
+// {
+//     initChildNodes(1);
+//     m_Operand = va_arg(in_pArguments, int);
+//     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
+// }
 
 /** Leaf nodes **/
 void cpFloatNode::print()
 {
-    printf("Float Value: %f\n", m_value);
+    printf("(f1: %f)", m_value);
 }
 void cpFloatNode::initialize(va_list in_pArguments)
 {
@@ -245,7 +350,12 @@ void cpFloatNode::initialize(va_list in_pArguments)
 
 void cpIdentifierNode::print()
 {
-    printf("ID : %s\n", m_value.c_str());
+    if(getAccessIndex()>=0){
+        printf("(ID: %s[%d])", m_value.c_str(),getAccessIndex());    
+    }
+    else{
+        printf("(ID: %s)", m_value.c_str());
+    }    
 }
 void cpIdentifierNode::initialize(va_list in_pArguments)
 {
@@ -255,7 +365,7 @@ void cpIdentifierNode::initialize(va_list in_pArguments)
 
 void cpIntNode::print()
 {
-    printf("Int Value : %d\n", m_value);
+    printf("(i1: %d)", m_value);
 }
 void cpIntNode::initialize(va_list in_pArguments)
 {
@@ -264,7 +374,8 @@ void cpIntNode::initialize(va_list in_pArguments)
 
 void cpBoolNode::print()
 {
-    printf("ID : %d\n", m_value);
+    std::string output = m_value==1?"true":"false";
+    printf("b1: %s ",output.c_str());
 }
 void cpBoolNode::initialize(va_list in_pArguments)
 {
@@ -317,7 +428,6 @@ cpBaseNode *allocate_cpNode(eNodeKind in_nodekind, ...)
         CHECK_AND_ALLOCATE(UNARY_EXPRESION_NODE, cpUnaryExpressionNode)
         CHECK_AND_ALLOCATE(ASSIGNMENT_NODE, cpAssignmentNode)
         CHECK_AND_ALLOCATE(FUNCTION_NODE, cpFunctionNode)
-        CHECK_AND_ALLOCATE(VAR_NODE, cpVariableNode)
         CHECK_AND_ALLOCATE(SCOPE_NODE, cpScopeNode)
         CHECK_AND_ALLOCATE(CONSTRUCTOR_NODE, cpConstructorNode)
         CHECK_AND_ALLOCATE(WHILE_STATEMENT_NODE, cpWhileStatmentNode)

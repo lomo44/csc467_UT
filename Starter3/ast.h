@@ -71,7 +71,25 @@ enum ecpTerminalType
     ecpTerminalType_TypeCount
 };
 
-extern std::string gTerminalTypeToStringMap[ecpTerminalType_TypeCount];
+enum ecpOperand{
+    ecpOperand_U_NEG,
+    ecpOperand_U_NOT,
+    ecpOperand_B_AND,
+    ecpOperand_B_OR,
+    ecpOperand_B_EQ,
+    ecpOperand_B_NEQ,
+    ecpOperand_B_LT,
+    ecpOperand_B_LEQ,
+    ecpOperand_B_GT,
+    ecpOperand_B_GEQ,
+    ecpOperand_B_PLUS,
+    ecpOperand_B_MINUS,
+    ecpOperand_B_MUL,
+    ecpOperand_B_DIV,
+    ecpOperand_B_BOR,
+    ecpOperand_Count,
+    ecpOperand_Unset
+};
 
 enum ecpFunctionQualifier{
     ecpFunctionQualifier_None,
@@ -82,19 +100,19 @@ enum ecpFunctionQualifier{
     ecpFunctionQualifier_TypeCount
 };
 
-extern std::string gQualifierTypeToStringMap[ecpFunctionQualifier_TypeCount];
-
-std::string toString(ecpFunctionQualifier in_eQualifier);
-
-#define IS_WRITE_ONLY(x) ((x)==ecpFunctionQualifier_Result)
-#define IS_READ_ONLY(x) ((x)==ecpFunctionQualifier_Attribute || (x)==ecpFunctionQualifier_Uniform)
 
 enum ecpFunctionType
 {
     ecpFunctionType_dp3,
     ecpFunctionType_rsq,
-    ecpFunctionType_lit
+    ecpFunctionType_lit,
+    ecpFunctionType_count
 };
+
+std::string toString(ecpFunctionQualifier in_eQualifier);
+std::string toString(ecpTerminalType in_eTerminalType);
+std::string toString(ecpOperand in_eOperand);
+std::string toString(ecpFunctionType in_eFuncType);
 
 class cpBaseNode
 {
@@ -194,7 +212,7 @@ class cpNormalNode : public cpBaseNode
   public:
     cpNormalNode(){};
     cpNormalNode(eNodeKind in_NodeKind) : cpBaseNode(in_NodeKind),
-                                          m_Operand(-1),
+                                          m_eOperand(ecpOperand_Unset),
                                           m_iNumOfChildNodes(-1),
                                           m_pChildNodes(NULL){};
     virtual ~cpNormalNode();
@@ -203,7 +221,7 @@ class cpNormalNode : public cpBaseNode
     void setChildNodes(cpBaseNode *in_pNode, int in_iNodeIndex);
     cpBaseNode *getChildNode(int in_iNodeIndex);
     cpBaseNode **getChildNodes() { return m_pChildNodes; };
-    int getOperand() { return m_Operand; }
+    ecpOperand getOperand() { return m_eOperand; }
     virtual void print();
     /** These are some of the interfaces that we need to implements **/
     // Self-print for any non-leaf node
@@ -212,7 +230,7 @@ class cpNormalNode : public cpBaseNode
     virtual void initialize(va_list in_pArguments) = 0;
 
   protected:
-    int m_Operand;
+    ecpOperand m_eOperand;
     int m_iNumOfChildNodes;
     cpBaseNode **m_pChildNodes;
 };
@@ -228,14 +246,14 @@ class cpScopeNode : public cpNormalNode
     virtual void printSelf();
 };
 
-class cpVariableNode : public cpNormalNode
-{
-  public:
-    cpVariableNode() : cpNormalNode(WHILE_STATEMENT_NODE){};
-    virtual ~cpVariableNode(){};
-    virtual void initialize(va_list in_pArguments);
-    virtual void printSelf();
-};
+// class cpVariableNode : public cpNormalNode
+// {
+//   public:
+//     cpVariableNode() : cpNormalNode(VAR_NODE){};
+//     virtual ~cpVariableNode(){};
+//     virtual void initialize(va_list in_pArguments);
+//     virtual void printSelf();
+// };
 class cpStatementsNode : public cpNormalNode{
   public:
     cpStatementsNode() : cpNormalNode(STATEMENTS_NODE){};
@@ -253,6 +271,7 @@ class cpAssignmentNode : public cpNormalNode
     virtual ~cpAssignmentNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
     cpIdentifierNode* getVariable(){return (cpIdentifierNode*)m_pChildNodes[0];}
     cpNormalNode* getExpression(){return (cpNormalNode*)m_pChildNodes[1]; }
 };
@@ -264,6 +283,7 @@ class cpArgumentsNode : public cpNormalNode
     virtual ~cpArgumentsNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
     void setNextArguments(cpArgumentsNode* in_pArguments){setChildNodes(in_pArguments,0);}
     void setCurrentArgument(cpNormalNode* in_pArgument){setChildNodes(in_pArgument,1);}
     cpArgumentsNode* getNextArguments(){return (cpArgumentsNode*)m_pChildNodes[0];}
@@ -277,6 +297,7 @@ class cpConstructorNode : public cpNormalNode
     virtual ~cpConstructorNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
     void setConstructorType(ecpTerminalType in_eConstructorType){m_eConstructorType = in_eConstructorType;}
     ecpTerminalType getConstructorType(){return m_eConstructorType;}
     void setArgumentsNode(cpArgumentsNode* in_pArguments){setChildNodes(in_pArguments,0);}
@@ -301,6 +322,7 @@ class cpIfStatementNode : public cpNormalNode
     virtual ~cpIfStatementNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
     cpBaseNode* getExpression(){return m_pChildNodes[0];}
     cpStatementsNode* getIfStatements(){return (cpStatementsNode*)m_pChildNodes[1];}
     cpStatementsNode* getElseStatements(){return (cpStatementsNode*)m_pChildNodes[2];}
@@ -339,6 +361,7 @@ class cpUnaryExpressionNode : public cpNormalNode
     virtual ~cpUnaryExpressionNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
 };
 
 class cpBinaryExpressionNode : public cpNormalNode
@@ -348,6 +371,7 @@ class cpBinaryExpressionNode : public cpNormalNode
     virtual ~cpBinaryExpressionNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
 };
 
 
@@ -359,6 +383,7 @@ class cpFunctionNode : public cpNormalNode
     virtual ~cpFunctionNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
+    virtual void print();
     ecpFunctionType m_eFunctionType;
 };
 
