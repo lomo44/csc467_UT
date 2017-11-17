@@ -389,7 +389,7 @@ expression
 variable
   : ID
     {
-        $$ = allocate_cpNode(IDENT_NODE,$1,-1); 
+        $$ = allocate_cpNode(IDENT_NODE,$1,0); 
         yTRACE("variable -> ID \n")
     }
   | ID '[' INT_C ']' %prec '['

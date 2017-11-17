@@ -43,6 +43,9 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable, cp
                 if(!semantic_check(normal_node->getChildNode(i), in_pSymbolTable,io_SemanticError)){
                     ret = false;
                 }
+                else{
+                    io_SemanticError.cleanError();
+                }
             }
         }
         cpCheckNode(in_pNode, in_pSymbolTable,io_SemanticError);

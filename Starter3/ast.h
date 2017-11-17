@@ -201,7 +201,7 @@ class cpFloatNode : public cpLeafNode
 class cpIdentifierNode : public cpLeafNode
 {
   public:
-    cpIdentifierNode() : cpLeafNode(IDENT_NODE){};
+    cpIdentifierNode() : cpLeafNode(IDENT_NODE){m_iAccessIndex =0;};
     virtual ~cpIdentifierNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);

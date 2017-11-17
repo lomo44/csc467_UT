@@ -58,7 +58,7 @@ void cpSymbolTableNode::print(){
 
 void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
-    in_pAttribute->m_iType = in_pNode->getTerminalType();
+    in_pAttribute->m_iType = in_pNode->m_eTargetType;
     in_pAttribute->m_iVariableSize = in_pNode->m_iVariableSize;
     in_pAttribute->m_eQualifier = in_pNode->m_eQualifier;
 }
@@ -94,6 +94,7 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
     }
     else{
         //create a scope node whenver enters to a new scope
+        gSymbolLookUpTable[in_pNode]=table;
         cpSymbolTableNode* ret = NULL;
         if (in_pNode->getNodeKind() == IDENT_NODE)
         {
@@ -115,8 +116,8 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 table->m_pChildScopes.push_back(node);
                 table=node;
                 ret = node;
-            }
-            gSymbolLookUpTable[in_pNode]=table;   
+            }        
+            //printf("Size: %d\n",gSymbolLookUpTable.size());   
             //insert into symbol table if current node is declaration node
             if (in_pNode->getNodeKind()==DECLARATION_NODE)
             {
@@ -130,9 +131,6 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                     in_pNode->setTerminalType(ecpTerminalType_Unknown);
                 }
             }    
-
-
-
             //traverse tree, connect child scope table to current scope table
             int num_of_child_nodes = ((cpNormalNode*)in_pNode)->getNumOfChildNodes();
             for (int i=0;i<num_of_child_nodes;i++)
