@@ -123,7 +123,7 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
             //check if id is already defined, if null means did not find assignment in scope
             cpSymbolAttribute* attr = lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode);
             if (attr == NULL){
-                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                in_pNode->setTerminalType(ecpTerminalType_Invalid);
             }
             else{
                 // Node exists, marking the terminal type of this node

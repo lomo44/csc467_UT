@@ -30,18 +30,19 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable, cp
 {
     int i;
     bool ret = true;
-    if (in_pNode == NULL || in_pNode->getNodeType() == ecpBaseNodeType_Leaf)
+    if (in_pNode == NULL || (in_pNode->getNodeType() == ecpBaseNodeType_Leaf && in_pNode->getNodeKind()!=IDENT_NODE))
     {
         ret = true;
     }
     else
     {
-        cpNormalNode *normal_node = (cpNormalNode *)in_pNode;
-        
-        for (i = 0; i < normal_node->getNumOfChildNodes(); i++)
-        {
-            if(!semantic_check(normal_node->getChildNode(i), in_pSymbolTable,io_SemanticError)){
-                ret = false;
+        if(in_pNode->getNodeKind()!=IDENT_NODE){
+            cpNormalNode *normal_node = (cpNormalNode *)in_pNode;
+            for (i = 0; i < normal_node->getNumOfChildNodes(); i++)
+            {
+                if(!semantic_check(normal_node->getChildNode(i), in_pSymbolTable,io_SemanticError)){
+                    ret = false;
+                }
             }
         }
         cpCheckNode(in_pNode, in_pSymbolTable,io_SemanticError);
@@ -563,6 +564,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
                 in_pNode->setTerminalType(type);
             }
         }
+        break;
     }
     default:
     {
@@ -698,7 +700,7 @@ void cpCheckNode(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable,cpSem
 
 void cpCheckNode(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable,cpSemanticError& io_SemanticError){
     //check if there are duplicate declarations in current scope
-    if(in_pNode->getTerminalType() == ecpTerminalType_Unknown){
+    if(in_pNode->getTerminalType() == ecpTerminalType_Invalid){
         // Unknown declarartion type, indicate multipler declarartion
         io_SemanticError.setError(ecpSemanticErrorType_Duplicate_Declaration, in_pNode);
     }
