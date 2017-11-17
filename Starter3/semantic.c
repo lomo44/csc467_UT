@@ -89,50 +89,43 @@ void cpCheckNode(cpBaseNode *in_pNode, cpSymbolTableNode *in_pTable, cpSemanticE
 
 void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,cpSemanticError& io_SemanticError)
 {
-    ecpTerminalType currentNodeType = in_pNode->getTerminalType();
-    if (currentNodeType != ecpTerminalType_Unknown)
-    {
-        {
-            currentNodeType;
-            return;
-        }
+    cpBaseNode *leftNode = in_pNode->getChildNode(0);
+    cpBaseNode *rightNode = in_pNode->getChildNode(1);
+    ecpTerminalType leftNodeKind = leftNode->getTerminalType();
+    ecpTerminalType rightNodeKind = rightNode->getTerminalType();
+    if(leftNodeKind == ecpTerminalType_Unknown || rightNodeKind == ecpTerminalType_Unknown){
+        // Error occur somewhere, pass through
+        in_pNode->setTerminalType(ecpTerminalType_Unkown);
     }
-    else
+    switch (in_pNode->getOperand())
     {
-        cpBaseNode *leftNode = in_pNode->getChildNode(0);
-        cpBaseNode *rightNode = in_pNode->getChildNode(1);
-        ecpTerminalType leftNodeKind = cpCheckNode(leftNode, in_pTable,io_SemanticError);
-        ecpTerminalType rightNodeKind = cpCheckNode(rightNode, in_pTable,io_SemanticError);
-        int operand = in_pNode->getOperand();
-        switch (operand)
-        {
-        case '<':
-        case LEQ:
-        case '>':
-        case GEQ:
+        case ecpOperand_B_LT:
+        case ecpOperand_B_LEQ:
+        case ecpOperand_B_GT:
+        case ecpOperand_B_GEQ:
         {
             (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
             break;
         }
-        case EQ:
-        case NEQ:
+        case ecpOperand_B_EQ:
+        case ecpOperand_B_NEQ:
         {
             (IS_SS_A(leftNodeKind, rightNodeKind) || IS_VV_A(leftNodeKind, rightNodeKind) || IS_SS_L(leftNodeKind, rightNodeKind) || IS_VV_L(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
             break;
         }
-        case AND:
-        case OR:
+        case ecpOperand_B_AND:
+        case ecpOperand_B_OR:
         {
             (IS_SS_L(leftNodeKind, rightNodeKind) || IS_VV_L(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
             break;
         }
-        case '/':
-        case '^':
+        case ecpOperand_B_DIV:
+        case ecpOperand_B_BOR:
         {
             (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
             break;
         }
-        case '*':
+        case ecpOperand_B_MUL:
         {
             (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
             (IS_VV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
@@ -140,21 +133,15 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
             (IS_SV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = rightNodeKind : currentNodeType = ecpTerminalType_Invalid;
             break;
         }
-        case '+':
-        case '-':
+        case ecpOperand_B_ADD:
+        case ecpOperand_B_MINUS:
         {
             (IS_SS_A(leftNodeKind, rightNodeKind) || IS_VV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = rightNodeKind : currentNodeType = ecpTerminalType_Invalid;
         }
         default:
         {
-            currentNodeType = ecpTerminalType_Invalid;
+            printf("Invalid Binary Operator\n");
         }
-        }
-    }
-    in_pNode->updateTerminalType(currentNodeType);
-    {
-        currentNodeType;
-        return;
     }
 }
 void cpCheckNode(cpFunctionNode *in_pNode, cpSymbolTableNode *in_pTable,cpSemanticError& io_SemanticError)
