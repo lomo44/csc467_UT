@@ -101,72 +101,169 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
         case ecpOperand_B_GT:
         case ecpOperand_B_GEQ:
         {
+            
             if(IS_Any(leftNodeKind) || IS_Any(rightNodeKind)){
                 // Either left of right node is any type
-                if(IS_Any(leftNodeKind)){
-                    // Only check the type of the right node
-                    if(!IS_S_A(rightNodeKind)){
-                        // Right node is not a arithmatic type, return error
-                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
-                    }
+                if(IS_Any(leftNodeKind) && !IS_Any(RightNodeKind) && && !IS_S_A(rightNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
+                }
+                else if(!IS_Any(leftNodeKind) && IS_Any(RightNodeKind) && !IS_S_A(leftNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
                 }
                 else{
-                    if(!IS_S_A(leftNodeKind)){
-                        // Right node is not a arithmatic type, return error
-                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
-                    }
+                    io_SemanticError.cleanError();   
                 }
-                setTerminalType(ecpTerminalType_Unknown);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
             }
             else{
                 if(leftNode == rightNode){
                     io_SemanticError.setError(ecpSemanticErrorType_Comparision_Between_Different_Type, in_pNode);
-                    setTerminalType(ecpTerminalType_Unknown);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
                 }
                 else{   
                     if(!IS_S_A(left)){
                         io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type);
-                        setTerminalType(ecpTerminalType_Unknown);
+                        in_pNode->setTerminalType(ecpTerminalType_Unknown);
                     }
                     else{
                         io_SemanticError.cleanError();
-                        setTerminalType(ecpTerminalType_bool1);                        
+                        in_pNode->setTerminalType(ecpTerminalType_bool1);                        
                     }
                 }
-                (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
             }
             break;
         }
         case ecpOperand_B_EQ:
         case ecpOperand_B_NEQ:
         {
-            (IS_SS_A(leftNodeKind, rightNodeKind) || IS_VV_A(leftNodeKind, rightNodeKind) || IS_SS_L(leftNodeKind, rightNodeKind) || IS_VV_L(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind) || IS_Any(rightNodeKind)){
+                io_SemanticError.cleanError();
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                // Left and right are both known type, need to check if the type are equal
+                if(leftNodeKind == rightNodeKind){
+                    io_SemanticError.cleanError();
+                    in_pNode->setTerminalType(ecpTerminalType_bool1);
+                }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Comparision_Between_Different_Type);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }
             break;
         }
         case ecpOperand_B_AND:
         case ecpOperand_B_OR:
         {
-            (IS_SS_L(leftNodeKind, rightNodeKind) || IS_VV_L(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind) || IS_Any(rightNodeKind)){
+                if(!IS_Any(leftNodeKind) && IS_Any(rightNodeKind) && !IS_Bool(leftNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Arithmatic_Expression_In_Logical, in_pNode);                 
+                }
+                else if(IS_Any(leftNodeKind) && !IS_Any(rightNodeKind) && !IS_Bool(rightNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Arithmatic_Expression_In_Logical, in_pNode);
+                }
+                else{
+                    io_SemanticError.cleanError();
+                }
+                in_pNode->setTerminalType(ecpTerminalType_Unknown); 
+            }
+            else{
+                // None of the node are any, check for type comparison
+                if(!IS_SS_L(leftNodeKind,rightNodeKind) || IS_VV_L(leftNodeKind, rightNodeKind))){
+                    io_SemanticError.setError(ecpSemanticErrorType_Arithmatic_Expression_In_Logical, in_pNode);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+                else{
+                    in_pNode->setTerminalType(ecpTerminalType_bool1);
+                }
+            }
             break;
         }
         case ecpOperand_B_DIV:
         case ecpOperand_B_BOR:
         {
-            (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind)||IS_Any(rightNodeKind)){
+                if(!IS_Any(leftNodeKind) && IS_Any(rightNodeKind) && !IS_S_A(leftNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                                       
+                }
+                else if(IS_Any(leftNodeKind) && !IS_Any(rightNodeKind) && !IS_S_A(rightNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                   
+                }
+                else{
+                    io_SemanticError.cleanError();
+                }
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(!IS_SS_A(leftNodeKind,rightNodeKind)){
+                    // Could add more information regardin the type miss match
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode); 
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+                else{
+                    io_SemanticError.cleanError();
+                    in_pNode->setTerminalType(leftNodeKind);
+                }
+            }
             break;
         }
         case ecpOperand_B_MUL:
         {
-            (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
-            (IS_VV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
-            (IS_VS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = leftNodeKind : currentNodeType = ecpTerminalType_Invalid;
-            (IS_SV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = rightNodeKind : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind)||IS_Any(rightNodeKind)){
+                if(!IS_Any(leftNodeKind) && IS_Any(rightNodeKind) && IS_S_L(leftNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                                       
+                }
+                else if(IS_Any(leftNodeKind) && !IS_Any(rightNodeKind) && IS_S_L(rightNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                   
+                }
+                else{
+                    io_SemanticError.cleanError();
+                }
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(IS_SS_A(leftNodeKind,rightNodeKind) || IS_VS_A(leftNodeKind,rightNodeKind) || IS_VV_A(leftNodeKind,rightNodeKind)){
+                    in_pNode->setTerminalType(leftNodeKind);
+                    io_SemanticError.cleanError();
+                }
+                else if(IS_SV_A(leftNodeKind,rightNodeKind)){
+                    in_pNode->setTerminalType(rightNodeKind);
+                    io_SemanticError.cleanError();
+                }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }
             break;
         }
         case ecpOperand_B_ADD:
         case ecpOperand_B_MINUS:
         {
-            (IS_SS_A(leftNodeKind, rightNodeKind) || IS_VV_A(leftNodeKind, rightNodeKind)) ? currentNodeType = rightNodeKind : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind)||IS_Any(rightNodeKind)){
+                if(!IS_Any(leftNodeKind) && IS_Any(rightNodeKind) && !IS_S_A(leftNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                                       
+                }
+                else if(IS_Any(leftNodeKind) && !IS_Any(rightNodeKind) && !IS_S_A(rightNodeKind)){
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);                   
+                }
+                else{
+                    io_SemanticError.cleanError();
+                }
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                if(IS_SS_A(leftNodeKind,rightNodeKind) || IS_VV_A(leftNodeKind,rightNodeKind)){
+                    in_pNode->setTerminalType(leftNodeKind);
+                    io_SemanticError.cleanError();
+                }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }
+            break;
         }
         default:
         {
@@ -529,17 +626,16 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
 }
 
 void cpCheckNode(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable,cpSemanticError& io_SemanticError){
-    ecpTerminalType expression_type = cpCheckNode(in_pNode->getExpression(),in_pTable,io_SemanticError);
-    if(expression_type!=ecpTerminalType_bool1){
-        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+    cpBaseNode* expreesionNode = in_pNode->getExpression();
+    ecpTerminalType expression_type = expreesionNode->getTerminalType();
+    if(IS_Any(expression_type) || IS_S_L(expression_type)){
+        io_SemanticError.cleanError();
     }
     else{
-        in_pNode->updateTerminalType(ecpTerminalType_Unknown);
+        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Expression, in_pNode);
     }
-    {
-        in_pNode->getTerminalType();
-        return;
-    }
+    in_pNode->updateTerminalType(ecpTerminalType_Unknown);
+    return;
 }
 
 void cpCheckNode(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable,cpSemanticError& io_SemanticError){
