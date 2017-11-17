@@ -38,6 +38,7 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Invalid_Type,
     ecpSemanticErrorType_Invalid_Variable,
     ecpSemanticErrorType_Invalid_Vecter_Index,
+    ecpSemanticErrorType_Comparision_Between_Different_Type,
     ecpSemanticErrorType_Target_Invalid_Size,
     ecpSemanticErrorType_Invalid_Arguments,
     ecpSemanticErrorType_Duplicate_Declaration,

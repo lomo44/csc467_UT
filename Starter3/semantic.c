@@ -119,6 +119,20 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
                 setTerminalType(ecpTerminalType_Unknown);
             }
             else{
+                if(leftNode == rightNode){
+                    io_SemanticError.setError(ecpSemanticErrorType_Comparision_Between_Different_Type, in_pNode);
+                    setTerminalType(ecpTerminalType_Unknown);
+                }
+                else{   
+                    if(!IS_S_A(left)){
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type);
+                        setTerminalType(ecpTerminalType_Unknown);
+                    }
+                    else{
+                        io_SemanticError.cleanError();
+                        setTerminalType(ecpTerminalType_bool1);                        
+                    }
+                }
                 (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
             }
             break;
