@@ -170,7 +170,7 @@ class cpLeafNode : public cpBaseNode
 class cpIntNode : public cpLeafNode
 {
   public:
-    cpIntNode() : cpLeafNode(INT_NODE){};
+    cpIntNode() : cpLeafNode(INT_NODE){m_TerminalKind = ecpTerminalType_int1;};
     virtual ~cpIntNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
@@ -180,7 +180,7 @@ class cpIntNode : public cpLeafNode
 class cpBoolNode : public cpLeafNode
 {
   public:
-    cpBoolNode() : cpLeafNode(BOOL_NODE){};
+    cpBoolNode() : cpLeafNode(BOOL_NODE){m_TerminalKind = ecpTerminalType_bool1;};
     virtual ~cpBoolNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
@@ -190,7 +190,7 @@ class cpBoolNode : public cpLeafNode
 class cpFloatNode : public cpLeafNode
 {
   public:
-    cpFloatNode() : cpLeafNode(FLOAT_NODE){};
+    cpFloatNode() : cpLeafNode(FLOAT_NODE){m_TerminalKind = ecpTerminalType_float1;};
     virtual ~cpFloatNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
