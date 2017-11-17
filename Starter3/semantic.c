@@ -32,6 +32,7 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable, cp
             ret = false;
         }
     }
+    return ret;
 }
 
 void cpPrintSemanticError(cpNormalNode* in_pNode, const cpSemanticError& in_pSemanticError){
@@ -93,10 +94,6 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
     cpBaseNode *rightNode = in_pNode->getChildNode(1);
     ecpTerminalType leftNodeKind = leftNode->getTerminalType();
     ecpTerminalType rightNodeKind = rightNode->getTerminalType();
-    if(leftNodeKind == ecpTerminalType_Unknown || rightNodeKind == ecpTerminalType_Unknown){
-        // Error occur somewhere, pass through
-        in_pNode->setTerminalType(ecpTerminalType_Unkown);
-    }
     switch (in_pNode->getOperand())
     {
         case ecpOperand_B_LT:
@@ -104,7 +101,26 @@ void cpCheckNode(cpBinaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,
         case ecpOperand_B_GT:
         case ecpOperand_B_GEQ:
         {
-            (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
+            if(IS_Any(leftNodeKind) || IS_Any(rightNodeKind)){
+                // Either left of right node is any type
+                if(IS_Any(leftNodeKind)){
+                    // Only check the type of the right node
+                    if(!IS_S_A(rightNodeKind)){
+                        // Right node is not a arithmatic type, return error
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
+                    }
+                }
+                else{
+                    if(!IS_S_A(leftNodeKind)){
+                        // Right node is not a arithmatic type, return error
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Type,in_pNode);
+                    }
+                }
+                setTerminalType(ecpTerminalType_Unknown);
+            }
+            else{
+                (IS_SS_A(leftNodeKind, rightNodeKind)) ? currentNodeType = ecpTerminalType_bool1 : currentNodeType = ecpTerminalType_Invalid;
+            }
             break;
         }
         case ecpOperand_B_EQ:
@@ -394,22 +410,28 @@ void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
     // Based on the type of the in_pNode, check different things
     ecpTerminalType type = in_pNode->getTerminalType();
     int access_index = in_pNode->getAccessIndex();
-    if(access_index>=0 && access_index <4){
-        if(!(IS_Int(type) && access_index <= (type-ecpTerminalType_int1)) ||
-        !(IS_Flt(type) && access_index <= (type-ecpTerminalType_float1)) ||
-        !(IS_Bool(type) && access_index <= (type-ecpTerminalType_bool1))){
-            in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
-        }
-        else{
-            in_pNode->updateTerminalType(ecpTerminalType_Invalid);
-        }
+    if(IS_Any(type)){
+        // Invalid declarartion
+        io_pNode->setTerminalType(ecpTerminalType_Unknown);
+        cpSemanticError.setError(ecpSemanticErrorType_Invalid_Variable, in_pNode);
     }
     else{
-        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
-    }
-    {
-        in_pNode->getTerminalType();
-        return;
+        if(access_index>=0 && access_index <4){
+            if(!(IS_Int(type) && access_index <= (type-ecpTerminalType_int1)) ||
+            !(IS_Flt(type) && access_index <= (type-ecpTerminalType_float1)) ||
+            !(IS_Bool(type) && access_index <= (type-ecpTerminalType_bool1))){
+                in_pNode->setTerminalType((ecpTerminalType)((type)-access_index));
+                io_SemanticError.cleanError();    
+            }
+            else{
+                io_pNode->setTerminalType(ecpTerminalType_Unknown);
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Vecter_Index,in_pNode);
+            }
+        }
+        else{
+            io_pNode->setTerminalType(ecpTerminalType_Unknown);
+            io_SemanticError.setError(ecpSemanticErrorType_Invalid_Vecter_Index,in_pNode);
+        }
     }
 }
 
@@ -508,18 +530,11 @@ void cpCheckNode(cpIfStatementNode* in_pNode, cpSymbolTableNode* in_pTable,cpSem
 
 void cpCheckNode(cpDeclarationNode* in_pNode, cpSymbolTableNode* in_pTable,cpSemanticError& io_SemanticError){
     //check if there are duplicate declarations in current scope
-    cpAssignmentNode* assignment_node = in_pNode->getAssignmentNode();
-    if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)!=NULL){
-        {
-            ecpTerminalType_Invalid;
-            return;
-        }
+    if(in_pNode->getTerminalType() == ecpTerminalType_Unknown){
+        // Unknown declarartion type, indicate multipler declarartion
+        io_SemanticError.setError(ecpSemanticErrorType_Duplicate_Declaration, in_pNode);
     }
     else{
-        // Check
-        {
-            cpCheckNode(assignment_node,in_pTable,io_SemanticError);
-            return;
-        }
+        io_SemanticError.cleanError();
     } 
 }

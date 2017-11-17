@@ -5,6 +5,8 @@
 #include "symbol.h"
 #include <stack>
 
+
+#define IS_Any(x) ((x)==ecpTerminalType_Unknown)
 #define IS_S_Int(x)((x)==ecpTerminalType_int1)
 #define IS_S_Flt(x)((x) == ecpTerminalType_float1)
 
@@ -33,6 +35,9 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_None,
     ecpSemanticErrorType_Invalid_Const_Assignment,
     ecpSemanticErrorType_Invalid_Conversion,
+    ecpSemanticErrorType_Invalid_Type,
+    ecpSemanticErrorType_Invalid_Variable,
+    ecpSemanticErrorType_Invalid_Vecter_Index,
     ecpSemanticErrorType_Target_Invalid_Size,
     ecpSemanticErrorType_Invalid_Arguments,
     ecpSemanticErrorType_Duplicate_Declaration,
@@ -44,6 +49,10 @@ class cpSemanticError{
 public:
     cpSemanticError():m_eType(ecpSemanticErrorType_None),m_iRowNumber(-1),m_iColNumber(-1){}
     bool hasError(){return m_eType != ecpSemanticErrorType_None;}
+    void setError(ecpSemanticErrorType in_eType, cpBaseNode* in_pNode);
+    void cleanError();
+    void print();
+    cpBaseNode* m_pTargetNode;
     ecpSemanticErrorType m_eType;
     int m_iRowNumber;
     int m_iColNumber;
