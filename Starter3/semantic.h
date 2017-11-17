@@ -43,6 +43,8 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Comparision_Between_Different_Type,
     ecpSemanticErrorType_Target_Invalid_Size,
     ecpSemanticErrorType_Invalid_Arguments,
+    ecpSemanticErrorType_Not_Enough_Arugments,
+    ecpSemanticErrorType_Too_Much_Arguments,
     ecpSemanticErrorType_Duplicate_Declaration,
     ecpSemanticErrorType_Result_In_If_Statement,
     ecpSemanticErrorType_Target_Read_Only

@@ -393,127 +393,115 @@ void cpCheckNode(cpUnaryExpressionNode *in_pNode, cpSymbolTableNode *in_pTable,c
 
 void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSemanticError& io_SemanticError)
 {
-    ecpTerminalType currentNodeType = in_pNode->getTerminalType();
-    if (currentNodeType != ecpTerminalType_Unknown)
+    cpArgumentsNode *current_arguments_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
+    
+    cpNormalNode *current_argument = current_arguments_node->getCurrentArgument();
+    cpArgumentsNode* next_arguments = current_arguments_node->getNextArguments();
+    //Asume type node type stored in m.value
+    ecpTerminalType type = in_pNode->getConstructorType();
+    switch (type)
     {
-        {
-            currentNodeType;
-            return;
-        }
-    }
-    else
+    case ecpTerminalType_float4:
+    case ecpTerminalType_bool4:
+    case ecpTerminalType_int4:
     {
-        cpArgumentsNode *current_arguments_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
-        
-        cpNormalNode *current_argument = current_arguments_node->getCurrentArgument();
-        cpArgumentsNode* next_arguments = current_arguments_node->getNextArguments();
-        //Asume type node type stored in m.value
-        ecpTerminalType type = in_pNode->getConstructorType();
-        switch (type)
+        if (next_arguments==NULL)
         {
-        case ecpTerminalType_float4:
-        case ecpTerminalType_bool4:
-        case ecpTerminalType_int4:
-        {
-            if (next_arguments==NULL)
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
-            }
-            else{
-                ecpTerminalType exprType = cpCheckNode(current_argument, in_pTable,io_SemanticError);
-                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-                {
-                    currentNodeType = ecpTerminalType_Invalid;
-                    break;
-                }
-                else{
-                    current_arguments_node = next_arguments;
-                    current_argument = current_arguments_node->getCurrentArgument();
-                    next_arguments = current_arguments_node->getNextArguments();
-                }    
-            }
-        }
-        case ecpTerminalType_float3:
-        case ecpTerminalType_bool3:
-        case ecpTerminalType_int3:
-        {
-            if (next_arguments==NULL)
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
-            }
-            else{
-                ecpTerminalType exprType = cpCheckNode(current_argument, in_pTable,io_SemanticError);
-                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-                {
-                    currentNodeType = ecpTerminalType_Invalid;
-                    break;
-                }
-                else{
-                    current_arguments_node = next_arguments;
-                    current_argument = current_arguments_node->getCurrentArgument();
-                    next_arguments = current_arguments_node->getNextArguments();
-                }    
-            }
-        }
-        case ecpTerminalType_float2:
-        case ecpTerminalType_bool2:
-        case ecpTerminalType_int2:
-        {
-            if (next_arguments==NULL)
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
-            }
-            else{
-                ecpTerminalType exprType = cpCheckNode(current_argument, in_pTable,io_SemanticError);
-                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-                {
-                    currentNodeType = ecpTerminalType_Invalid;
-                    break;
-                }
-                else{
-                    current_arguments_node = next_arguments;
-                    current_argument = current_arguments_node->getCurrentArgument();
-                    next_arguments = current_arguments_node->getNextArguments();
-                }    
-            }
-        }
-        case ecpTerminalType_float1:
-        case ecpTerminalType_bool1:
-        case ecpTerminalType_int1:
-        {
-            if (next_arguments==NULL)
-            {
-                currentNodeType = ecpTerminalType_Invalid;
-                break;
-            }
-            else{
-                ecpTerminalType exprType = cpCheckNode(current_argument, in_pTable,io_SemanticError);
-                if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
-                {
-                    currentNodeType = ecpTerminalType_Invalid;
-                    break;
-                }
-                else{
-                    current_arguments_node = next_arguments;
-                    current_argument = current_arguments_node->getCurrentArgument();
-                    next_arguments = current_arguments_node->getNextArguments();
-                }    
-            }
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
             break;
         }
-        default:
+        else{
+            ecpTerminalType exprType = current_argument->getTerminalType();
+            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+            {
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                break;
+            }
+            else{
+                current_arguments_node = next_arguments;
+                current_argument = current_arguments_node->getCurrentArgument();
+                next_arguments = current_arguments_node->getNextArguments();
+            }    
+        }
+    }
+    case ecpTerminalType_float3:
+    case ecpTerminalType_bool3:
+    case ecpTerminalType_int3:
+    {
+        if (next_arguments==NULL)
         {
-            currentNodeType = ecpTerminalType_Invalid;
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            break;
         }
+        else{
+            ecpTerminalType exprType = current_argument->getTerminalType();
+            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+            {
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                break;
+            }
+            else{
+                current_arguments_node = next_arguments;
+                current_argument = current_arguments_node->getCurrentArgument();
+                next_arguments = current_arguments_node->getNextArguments();
+            }    
         }
-        in_pNode->updateTerminalType(currentNodeType);
+    }
+    case ecpTerminalType_float2:
+    case ecpTerminalType_bool2:
+    case ecpTerminalType_int2:
+    {
+        if (next_arguments==NULL)
         {
-            currentNodeType;
-            return;
+            io_SemanticError.setError(ecpSemanticErrorType_Not_Enough_Arugments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            break;
         }
+        else{
+            ecpTerminalType exprType = current_argument->getTerminalType();
+            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+            {
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                break;
+            }
+            else{
+                current_arguments_node = next_arguments;
+                current_argument = current_arguments_node->getCurrentArgument();
+                next_arguments = current_arguments_node->getNextArguments();
+            }    
+        }
+    }
+    case ecpTerminalType_float1:
+    case ecpTerminalType_bool1:
+    case ecpTerminalType_int1:
+    {
+        if (!next_arguments==NULL)
+        {
+            io_SemanticError.setError(ecpSemanticErrorType_Too_Much_Arguments, in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            break;
+        }
+        else{
+            ecpTerminalType exprType = current_argument->getTerminalType();
+            if (!(IS_SV_L(exprType, type) || IS_SV_A(exprType, type)))
+            {
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Arugments, in_pNode);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                break;
+            }
+            else{
+                iN_pNode->setTerminalType(type);
+            }
+        }
+    }
+    default:
+    {
+        printf("Invalid constructor type");
     }
 }
 
