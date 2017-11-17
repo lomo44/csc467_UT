@@ -15,6 +15,7 @@
     const int c_iv1 = 1;
 
     if(c_fb1==false){
+        int you3 = 1;
         c_iv1 = 2;
         c_fv1 = rsq(c_iv1);
         c_fv1 = rsq(c_iv1/c_iv1);
@@ -23,10 +24,15 @@
         c_iv2[2] = dp3(c_fv3+c_fv3,c_fv3*c_fv3);
     }
     else{
+        int you = 1;
+        int a = 1;
+        int a = 2;
         if(!c_fb1){
+            int you2 = 1;
             c_iv2 = 3;
             c_fv1 = -rsq(c_fv1);
         }
+
         c_fv1 = dp3(c_fv4,c_fv4);
         c_iv2[0] = dp3(c_fv4-c_fv4,c_fv4);
     }

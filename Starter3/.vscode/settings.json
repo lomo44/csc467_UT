@@ -1,9 +1,13 @@
 {
     "files.associations": {
-        "semantic.c":"cpp",
-        "ast.c":"cpp",
-        "ast.h":"cpp",
-        "symbol.c":"cpp",
-        "semantic.h":"cpp"
+        "semantic.c": "cpp",
+        "ast.c": "cpp",
+        "ast.h": "cpp",
+        "symbol.c": "cpp",
+        "semantic.h": "cpp",
+        "compiler467.c": "cpp",
+        "compiler467.h": "cpp",
+        "cstdarg": "cpp",
+        "cstdio": "cpp"
     }
 }

@@ -26,9 +26,35 @@
 
 ************************************************************/
 
-
 cpSymbolLookUpTable gSymbolLookUpTable;
-cpSymbolTableNode* gSymbolTable;
+cpSymbolTableNode* gSymbolTable = NULL;
+
+void cpSymbolAttribute::print(){
+    printf("[Symbol] Name: %s,Type: %s, Qualifier: %s\n",
+        m_sIdentifierName.c_str(),
+        toString(m_iType).c_str(),
+        toString(m_eQualifier).c_str()
+    );
+}
+
+cpSymbolTableNode::~cpSymbolTableNode(){
+    int num_of_child_nodes = m_pChildScopes.size();
+    for(int i = 0; i < num_of_child_nodes;i++){
+        delete m_pChildScopes[i];
+    }
+}
+
+void cpSymbolTableNode::print(){
+    printf("SymbolTableNode: \n");
+    int attribute_count = m_vSymbolTable.size();
+    for(int i = 0; i < attribute_count;i++){
+        m_vSymbolTable[i]->print();
+    }
+    int num_of_child_nodes = m_pChildScopes.size();
+    for(int i = 0; i < num_of_child_nodes;i++){
+        m_pChildScopes[i]->print();
+    }
+}
 
 void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
@@ -38,17 +64,44 @@ void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbo
 }
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table){
-    
+    if(gSymbolTable == NULL){
+        // pre-defined symbol table is not there, create one
+        cpSymbolTableNode* node = new cpSymbolTableNode();
+        node->m_pParentScope = NULL;
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragColor",ecpTerminalType_float4,ecpFunctionQualifier_Result));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragDepth",ecpTerminalType_bool1,ecpFunctionQualifier_Result));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Result));
+
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_TexCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Color",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Secondary",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FogFragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
+
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Half",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Ambient",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Material_Shininess",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        gSymbolTable = node;
+        table = node;
+    }
+    if(in_pNode==NULL){
+        return NULL;
+    }
     if(in_pNode->getNodeType() == ecpBaseNodeType_Leaf){
-        return table;
+        return NULL;
     }
     else{
         //create a scope node whenver enters to a new scope
+        cpSymbolTableNode* ret = NULL;
         if (in_pNode->getNodeKind()==SCOPE_NODE)
         {
             cpSymbolTableNode* node= new cpSymbolTableNode();
             node->m_pParentScope=table;
+            table->m_pChildScopes.push_back(node);
             table=node;
+            ret = node;
         }
         gSymbolLookUpTable[in_pNode]=table;   
         //insert into symbol table if current node is declaration node
@@ -59,6 +112,9 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
                 initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
                 table->m_vSymbolTable.push_back(new_attribute);
+            }
+            else{
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
             }
         }    
 
@@ -79,12 +135,9 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         int num_of_child_nodes = ((cpNormalNode*)in_pNode)->getNumOfChildNodes();
         for (int i=0;i<num_of_child_nodes;i++)
         {
-            cpSymbolTableNode* temp = constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
-            if(temp!=NULL && temp != table){
-                table->m_pChildScopes.push_back(temp);
-            }   
+            constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
         } 
-        return table;  
+        return ret;  
     }    
 }
 

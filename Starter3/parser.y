@@ -131,7 +131,12 @@ enum {
  ***********************************************************************/
 program
   : scope 
-      { gAST = $1; yTRACE("program -> scope\n") } 
+    {
+        gAST = $1;
+        constructSymbolTable(gAST,NULL);
+        gSymbolTable->print();
+        yTRACE("program -> scope\n");
+    } 
   ;
 
 scope

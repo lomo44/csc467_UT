@@ -6,7 +6,14 @@
 #include <tr1/unordered_map>
 #include "ast.h"
 
-struct cpSymbolAttribute{
+class cpSymbolAttribute{
+public:
+    cpSymbolAttribute(){};
+    cpSymbolAttribute(std::string in_sName, ecpTerminalType in_eType, ecpFunctionQualifier in_eQualifier) : m_sIdentifierName(in_sName)
+                                                                                                          , m_iType(in_eType)
+                                                                                                          , m_eQualifier(in_eQualifier)
+                                                                                                      , m_iVariableSize(-1){};
+    void print();
     std::string m_sIdentifierName;
     ecpTerminalType m_iType;
     ecpFunctionQualifier m_eQualifier;
@@ -15,9 +22,12 @@ struct cpSymbolAttribute{
 
 typedef std::vector<cpSymbolAttribute*> cpSymbolTable;
 
-struct cpSymbolTableNode {
+class cpSymbolTableNode {
+public:
+    cpSymbolTableNode():m_pParentScope(NULL){};
+    virtual ~cpSymbolTableNode();
+    void print();
     cpSymbolTableNode* m_pParentScope;
-    int m_iNumOfChildScopes;
     std::vector<cpSymbolTableNode*> m_pChildScopes;
     cpSymbolTable m_vSymbolTable;
 };
