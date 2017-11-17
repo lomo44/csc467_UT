@@ -38,16 +38,18 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Invalid_Type,
     ecpSemanticErrorType_Invalid_Variable,
     ecpSemanticErrorType_Invalid_Vecter_Index,
-    ecpSemanticErrorType_Arithmatic_Expression_In_Logical,
+    ecpSemanticErrorType_Invalid_Arguments,
     ecpSemanticErrorType_Invalid_Expression,
+    ecpSemanticErrorType_Invalid_Assignment,
+    ecpSemanticErrorType_Arithmatic_Expression_In_Logical,
     ecpSemanticErrorType_Comparision_Between_Different_Type,
     ecpSemanticErrorType_Target_Invalid_Size,
-    ecpSemanticErrorType_Invalid_Arguments,
     ecpSemanticErrorType_Not_Enough_Arugments,
     ecpSemanticErrorType_Too_Much_Arguments,
     ecpSemanticErrorType_Duplicate_Declaration,
     ecpSemanticErrorType_Result_In_If_Statement,
-    ecpSemanticErrorType_Target_Read_Only
+    ecpSemanticErrorType_Target_Read_Only,
+    ecpSemanticErrorType_Const_Reassign
 };
 
 class cpSemanticError{

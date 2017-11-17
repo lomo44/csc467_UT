@@ -66,7 +66,6 @@ enum ecpTerminalType
     ecpTerminalType_float2,
     ecpTerminalType_float3,
     ecpTerminalType_float4,
-    ecpTerminalType_Invalid,
     ecpTerminalType_Unknown,
     ecpTerminalType_TypeCount
 };

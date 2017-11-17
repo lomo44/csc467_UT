@@ -601,32 +601,34 @@ void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSema
 }
 
 void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSemanticError& io_SemanticError){
+    
     cpIdentifierNode* variable = in_pNode->getVariable();
     cpBaseNode* expression = in_pNode->getExpression();
     
     ecpTerminalType expression_type = variable->getTerminalType();
     ecpTerminalType variable_type = expression->getTerminalType();
 
-    if((expression_type!=ecpTerminalType_Invalid) && (variable_type!=ecpTerminalType_Invalid)){
-        // Check matching
+    if(IS_Any(expression_type) || IS_Any(variable_type)){
+        io_SemanticError.cleanError();
+        in_pNode->setTerminalType(ecpTerminalType_Unknown);
+    }
+    else{
         cpSymbolAttribute* variable_attribute = lookupSymbolTable(variable->m_value, variable);
-        ecpFunctionQualifier qualifer = variable_attribute->m_eQualifier;
-        switch(qualifer){
+        cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
+        ecpFunctionQualifier variable_qualifier = variable_attribute->m_eQualifier;
+        // Check write_only
+        switch(variable_qualifier){
             case ecpFunctionQualifier_Result:{
                 // Check if the result variable is used within an if node
                 cpBaseNode* current_node = in_pNode;
-                in_pNode->updateTerminalType(ecpTerminalType_Unknown);
                 bool isWithinIfNode=false;  
                 while(current_node!=NULL){
                     if(current_node->getNodeKind() == IF_STATEMENT_NODE){
-                        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
-                        isWithinIfNode =true;
-                        break;
+                        io_SemanticError.setError(ecpSemanticErrorType_Result_In_If_Statement,in_pNode);
+                        in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                        return;
                     }
                     current_node = current_node->getParentNode();
-                }
-                if(isWithinIfNode){
-                    break;
                 }
                 // Keek checking assignment correctness, should not break if the it is not within an if statement
             }
@@ -634,44 +636,51 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
                 if(in_pNode->getParentNode()->getNodeKind() == DECLARATION_NODE){
                     // Declaration node, allow const assign if 
                     if(expression->getNodeType()!= ecpBaseNodeType_Leaf){
-                        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
-                        break;
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+                        in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                        return;
                     }
                     else{
                         if(expression->getNodeKind()==IDENT_NODE){
-                            cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
                             if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
-                                 in_pNode->updateTerminalType(ecpTerminalType_Invalid);
-                                break;
+                                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+                                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                                return;
                             }
                         }
                     }
                 }
+                else{
+                    io_SemanticError.setError(ecpSemanticErrorType_Const_Reassign, in_pNode);
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                    return;
+                }
             } // Const should not be re-assigned.
             case ecpFunctionQualifier_None:{
-                if(variable_type >= expression_type){
-                    if((IS_Int(variable_type) && IS_Int(expression_type)) ||
-                    (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
-                    (IS_Bool(variable_type) && IS_Bool(expression_type))){
-                    in_pNode->updateTerminalType(ecpTerminalType_Unknown);    
-                    }
-                }
-                else{
-                    in_pNode->updateTerminalType(ecpTerminalType_Invalid);    
-                }
                 break;
             }
             case ecpFunctionQualifier_Attribute: // All of these variable are predefined and read-only
             case ecpFunctionQualifier_Uniform:
-            
             default:{
-                break;
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+                in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                return;
             }
         }
-        
-    }
-    else{
-        in_pNode->updateTerminalType(ecpTerminalType_Invalid);
+        if(variable_type >= expression_type){
+            if((IS_Int(variable_type) && IS_Int(expression_type)) ||
+            (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
+            (IS_Bool(variable_type) && IS_Bool(expression_type))){
+                io_SemanticError.cleanError();
+            }
+            else{
+                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+            }
+        }
+        else{
+            io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+        }
+        in_pNode->setTerminalType(ecpTerminalType_Unknown);
     }
 }
 
