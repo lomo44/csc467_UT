@@ -89,35 +89,12 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
     if(in_pNode==NULL){
         return NULL;
     }
-    if(in_pNode->getNodeType() == ecpBaseNodeType_Leaf){
+    if(in_pNode->getNodeType() == ecpBaseNodeType_Leaf && in_pNode->getNodeKind()!=IDENT_NODE){
         return NULL;
     }
     else{
         //create a scope node whenver enters to a new scope
         cpSymbolTableNode* ret = NULL;
-        if (in_pNode->getNodeKind()==SCOPE_NODE)
-        {
-            cpSymbolTableNode* node= new cpSymbolTableNode();
-            node->m_pParentScope=table;
-            table->m_pChildScopes.push_back(node);
-            table=node;
-            ret = node;
-        }
-        gSymbolLookUpTable[in_pNode]=table;   
-        //insert into symbol table if current node is declaration node
-        if (in_pNode->getNodeKind()==DECLARATION_NODE)
-        {
-            //check if there are duplicate declarations in current scope
-            if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)==NULL){
-                cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
-                initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
-                table->m_vSymbolTable.push_back(new_attribute);
-            }
-            else{
-                in_pNode->setTerminalType(ecpTerminalType_Unknown);
-            }
-        }    
-
         if (in_pNode->getNodeKind() == IDENT_NODE)
         {
             //check if id is already defined, if null means did not find assignment in scope
@@ -130,13 +107,39 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 in_pNode->setTerminalType(attr->m_iType);
             } 
         }
-        
-        //traverse tree, connect child scope table to current scope table
-        int num_of_child_nodes = ((cpNormalNode*)in_pNode)->getNumOfChildNodes();
-        for (int i=0;i<num_of_child_nodes;i++)
-        {
-            constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
-        } 
+        else{
+            if (in_pNode->getNodeKind()==SCOPE_NODE)
+            {
+                cpSymbolTableNode* node= new cpSymbolTableNode();
+                node->m_pParentScope=table;
+                table->m_pChildScopes.push_back(node);
+                table=node;
+                ret = node;
+            }
+            gSymbolLookUpTable[in_pNode]=table;   
+            //insert into symbol table if current node is declaration node
+            if (in_pNode->getNodeKind()==DECLARATION_NODE)
+            {
+                //check if there are duplicate declarations in current scope
+                if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)==NULL){
+                    cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
+                    initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
+                    table->m_vSymbolTable.push_back(new_attribute);
+                }
+                else{
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                }
+            }    
+
+
+
+            //traverse tree, connect child scope table to current scope table
+            int num_of_child_nodes = ((cpNormalNode*)in_pNode)->getNumOfChildNodes();
+            for (int i=0;i<num_of_child_nodes;i++)
+            {
+                constructSymbolTable(((cpNormalNode*)in_pNode)->getChildNode(i),table);
+            } 
+        }    
         return ret;  
     }    
 }
