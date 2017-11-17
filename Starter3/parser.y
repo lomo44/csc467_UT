@@ -134,7 +134,9 @@ program
     {
         gAST = $1;
         constructSymbolTable(gAST,NULL);
-        gSymbolTable->print();
+        cpSemanticError semantic_error;
+        bool has_error = semantic_check(gAST,gSymbolTable,semantic_error);
+        //gSymbolTable->print();
         yTRACE("program -> scope\n");
     } 
   ;

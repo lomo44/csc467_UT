@@ -65,8 +65,6 @@ public:
     int m_iColNumber;
 };
 
-void cpPrintSemanticError(cpNormalNode* in_pNode,const cpSemanticError& in_pSemanticError);
-
 bool semantic_check(cpBaseNode* in_pNode, cpSymbolTableNode* in_pSymbolTable,cpSemanticError& io_SemanticError);
 
 void cpCheckNode(cpBaseNode* in_pNode, cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError);

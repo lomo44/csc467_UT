@@ -44,7 +44,7 @@ bool semantic_check(cpBaseNode *in_pNode, cpSymbolTableNode *in_pSymbolTable, cp
                 ret = false;
             }
         }
-        cpCheckNode(normal_node, in_pSymbolTable,io_SemanticError);
+        cpCheckNode(in_pNode, in_pSymbolTable,io_SemanticError);
         if(io_SemanticError.hasError()){
             io_SemanticError.print();
             ret = false;
@@ -78,7 +78,7 @@ void cpCheckNode(cpBaseNode *in_pNode, cpSymbolTableNode *in_pTable, cpSemanticE
     }
     case IDENT_NODE:
     {
-        cpCheckNode((cpConstructorNode* )in_pNode, in_pTable,io_SemanticError);
+        cpCheckNode((cpIdentifierNode* )in_pNode, in_pTable,io_SemanticError);
         return;
     }
     case ASSIGNMENT_NODE:

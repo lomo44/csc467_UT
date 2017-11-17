@@ -283,7 +283,7 @@ class cpAssignmentNode : public cpNormalNode
 class cpArgumentsNode : public cpNormalNode
 {
     public:
-    cpArgumentsNode() : cpNormalNode(BINARY_EXPRESSION_NODE){};
+    cpArgumentsNode() : cpNormalNode(ARG_NODE){};
     virtual ~cpArgumentsNode(){};
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
