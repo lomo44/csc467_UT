@@ -2,6 +2,7 @@
 #define _AST_H_
 
 #include <cstdarg>
+#include <cstdio>
 //#include <stdarg.h>
 #include <string>
 #include <vector>

@@ -183,14 +183,14 @@ declaration
     }
   | type ID '=' expression ';'
     {
-        cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$2,-1);
+        cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$2,0);
         cpBaseNode* a_node = allocate_cpNode(ASSIGNMENT_NODE,i_node,$4);
         $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,$2,a_node); 
         yTRACE("declaration -> type ID = expression ;\n")
     }
   | CONST type ID '=' expression ';'
     {
-        cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$3,-1);
+        cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$3,0);
         cpBaseNode* a_node = allocate_cpNode(ASSIGNMENT_NODE,i_node,$5);
         $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_Const,$2,$3,a_node); 
         yTRACE("declaration -> CONST type ID = expression ;\n")

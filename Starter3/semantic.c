@@ -17,6 +17,7 @@ void cpSemanticError::cleanError(){
 }
 
 void cpSemanticError::print(){
+    m_pTargetNode->print();
     printf("Semantic Error\n");
 }
 
@@ -619,7 +620,6 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
     }
     else{
         cpSymbolAttribute* variable_attribute = lookupSymbolTable(variable->m_value, variable);
-        cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
         ecpFunctionQualifier variable_qualifier = variable_attribute->m_eQualifier;
         // Check write_only
         switch(variable_qualifier){
@@ -646,6 +646,7 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
                     }
                     else{
                         if(expression->getNodeKind()==IDENT_NODE){
+                            cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
                             if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
                                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
                                 in_pNode->setTerminalType(ecpTerminalType_Unknown);
