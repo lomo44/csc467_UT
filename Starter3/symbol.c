@@ -56,11 +56,12 @@ void cpSymbolTableNode::print(){
     }
 }
 
-void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute){
+void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute,int i){
     in_pAttribute->m_sIdentifierName = in_pNode->m_sIdentifierName;
     in_pAttribute->m_iType = in_pNode->m_eTargetType;
     in_pAttribute->m_iVariableSize = in_pNode->m_iVariableSize;
     in_pAttribute->m_eQualifier = in_pNode->m_eQualifier;
+    in_pAttribute->m_isWrite = i;
 }
 
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table){
@@ -124,7 +125,10 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 //check if there are duplicate declarations in current scope
                 if(SearchInScope(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,table)==NULL){
                     cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
-                    initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
+                    if(((cpDeclarationNode*)in_pNode)->getChildNode(0)!=NULL) 
+                        initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute,1);
+                    else
+                        initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute,0);
                     table->m_vSymbolTable.push_back(new_attribute);
                 }
                 else{

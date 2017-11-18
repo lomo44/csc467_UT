@@ -18,6 +18,7 @@ public:
     ecpTerminalType m_iType;
     ecpFunctionQualifier m_eQualifier;
     int m_iVariableSize;
+    int m_isWrite;
 };
 
 typedef std::vector<cpSymbolAttribute*> cpSymbolTable;
@@ -35,7 +36,7 @@ public:
 cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* table);
 cpSymbolAttribute* lookupSymbolTable(std::string in_sIdentifier, cpBaseNode* in_pNode);
 
-void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute);
+void initSymbolAttributeFromDeclarationNode(cpDeclarationNode* in_pNode, cpSymbolAttribute* in_pAttribute,int i);
 cpSymbolAttribute* SearchInTable(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode); 
 cpSymbolAttribute* SearchInScope(const std::string& in_sIdentifier, cpSymbolTableNode* in_pTableNode);
 
