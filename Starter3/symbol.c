@@ -102,8 +102,6 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
             cpSymbolAttribute* attr = lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode);
             if (attr == NULL){
                 in_pNode->setTerminalType(ecpTerminalType_Invalid);
-                std::string name=((cpIdentifierNode*)in_pNode)->m_value;
-                //printf ("invalidate name: %s\n",name.c_str());
             }
             else{
                 // Node exists, marking the terminal type of this node
@@ -118,7 +116,6 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 table->m_pChildScopes.push_back(node);
                 table=node;
                 ret = node;
-                printf("table address:%x\n",table);
             }        
             //printf("Size: %d\n",gSymbolLookUpTable.size());   
             //insert into symbol table if current node is declaration node

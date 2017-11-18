@@ -145,6 +145,7 @@ scope
   : '{' declarations statements '}'
     {
         $$ = allocate_cpNode(SCOPE_NODE,$2,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("scope -> { declarations statements }\n")
     }
   ;
@@ -153,11 +154,12 @@ declarations
   : declarations declaration
     {
         $$ = allocate_cpNode(DECLARATIONS_NODE,$1,$2);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("declarations -> declarations declaration\n") 
     }
   | 
     { 
-        $$ = NULL;
+        $$ = NULL; 
         yTRACE("declarations -> \n") 
     }
   ;
@@ -166,6 +168,7 @@ statements
   : statements statement
     {
         $$ = allocate_cpNode(STATEMENTS_NODE,$1,$2);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("statements -> statements statement\n") 
     }
   | 
@@ -179,20 +182,28 @@ declaration
   : type ID ';' 
     {
         $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,$2,NULL);
+        $$->setLineAndCol(@$.first_line,@$.first_column);  
         yTRACE("declaration -> type ID ;\n") 
     }
   | type ID '=' expression ';'
     {
         cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$2,-1,0);
+        i_node->setLineAndCol(@2.first_line,@2.first_column);
         cpBaseNode* a_node = allocate_cpNode(ASSIGNMENT_NODE,i_node,$4);
-        $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,$2,a_node); 
+        a_node->setLineAndCol(@3.first_line,@3.first_column);
+        $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_None,$1,$2,a_node);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("declaration -> type ID = expression ;\n")
     }
   | CONST type ID '=' expression ';'
     {
         cpBaseNode* i_node = allocate_cpNode(IDENT_NODE,$3,-1,0);
+        i_node->setLineAndCol(@2.first_line,@2.first_column);
         cpBaseNode* a_node = allocate_cpNode(ASSIGNMENT_NODE,i_node,$5);
+        a_node->setLineAndCol(@3.first_line,@3.first_column);
         $$ = allocate_cpNode(DECLARATION_NODE,ecpFunctionQualifier_Const,$2,$3,a_node); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("declaration -> CONST type ID = expression ;\n")
     }
   ;
@@ -201,26 +212,31 @@ statement
   : variable '=' expression ';'
     {
         $$ = allocate_cpNode(ASSIGNMENT_NODE,$1,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("statement -> variable = expression ;\n") 
     }
   | IF '(' expression ')' statement ELSE statement %prec WITH_ELSE
     { 
         $$ = allocate_cpNode(IF_STATEMENT_NODE,$3,$5,$7);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("statement -> IF ( expression ) statement ELSE statement \n") 
     }
   | IF '(' expression ')' statement %prec WITHOUT_ELSE
     {
-        $$ = allocate_cpNode(IF_STATEMENT_NODE,$3,$5,NULL); 
+        $$ = allocate_cpNode(IF_STATEMENT_NODE,$3,$5,NULL);
+        $$->setLineAndCol(@$.first_line,@$.first_column);  
         yTRACE("statement -> IF ( expression ) statement \n")
     }
   | scope 
     {
         $$ = $1; 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("statement -> scope \n") 
     }
   | ';'
     {
         $$ = NULL; 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("statement -> ; \n") 
     }
   ;
@@ -228,7 +244,7 @@ statement
 type
   : INT_T
     {
-        $$ = (ecpTerminalType)((ecpTerminalType_int1));
+        $$ = (ecpTerminalType)((ecpTerminalType_int1)); 
         yTRACE("type -> INT_T \n")
     }
   | IVEC_T
@@ -263,24 +279,28 @@ expression
   /* function-like operators */
   : type '(' arguments_opt ')' %prec '('
     {
-        $$ = allocate_cpNode(CONSTRUCTOR_NODE,$1,$3); 
+        $$ = allocate_cpNode(CONSTRUCTOR_NODE,$1,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column);   
         yTRACE("expression -> type ( arguments_opt ) \n") 
     }
   | FUNC '(' arguments_opt ')' %prec '('
     {
         $$ = allocate_cpNode(FUNCTION_NODE,$1,$3); 
+        $$->setLineAndCol(@$.first_line,@$.first_column);  
         yTRACE("expression -> FUNC ( arguments_opt ) \n") 
     }
 
   /* unary opterators */
   | '-' expression %prec UMINUS
     {
-        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NEG,$2); 
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NEG,$2);
+        $$->setLineAndCol(@$.first_line,@$.first_column);   
         yTRACE("expression -> - expression \n")
     }
   | '!' expression %prec '!'
     {
-        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NOT,$2); 
+        $$ = allocate_cpNode(UNARY_EXPRESION_NODE,ecpOperand_U_NOT,$2);
+        $$->setLineAndCol(@$.first_line,@$.first_column);  
         yTRACE("expression -> ! expression \n") 
     }
 
@@ -288,66 +308,80 @@ expression
   | expression AND expression %prec AND
     {
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_AND,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression AND expression \n"); 
     }
   | expression OR expression %prec OR
     {
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_OR,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression OR expression \n");
     }
   | expression EQ expression %prec EQ
     {
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_EQ,$3); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression EQ expression \n"); 
     }
   | expression NEQ expression %prec NEQ
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_NEQ,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression NEQ expression \n"); 
     }
   | expression '<' expression %prec '<'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_LT,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression < expression \n"); 
     }
   | expression LEQ expression %prec LEQ
     {
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_LEQ,$3); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression LEQ expression \n"); 
     }
   | expression '>' expression %prec '>'
     {
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_GT,$3); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression > expression \n"); 
     }
   | expression GEQ expression %prec GEQ
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_GEQ,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression GEQ expression \n"); 
     }
   | expression '+' expression %prec '+'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_PLUS,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression + expression \n"); 
     }
   | expression '-' expression %prec '-'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_MINUS,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression - expression \n"); 
     }
   | expression '*' expression %prec '*'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_MUL,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression * expression \n"); 
     }
   | expression '/' expression %prec '/'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_DIV,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression / expression \n"); 
     }
   | expression '^' expression %prec '^'
     { 
         $$ = allocate_cpNode(BINARY_EXPRESSION_NODE,$1,ecpOperand_B_BOR,$3);
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> expression ^ expression \n"); 
     }
 
@@ -355,34 +389,40 @@ expression
   | TRUE_C
     {
         $$ = allocate_cpNode(BOOL_NODE, 1); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> TRUE_C \n")
     }
   | FALSE_C
     {
         $$ = allocate_cpNode(BOOL_NODE, 0); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> FALSE_C \n") 
     }
   | INT_C
     {
         $$ = allocate_cpNode(INT_NODE, $1); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("expression -> INT_C \n") 
     }
   | FLOAT_C
     {
         $$ = allocate_cpNode(FLOAT_NODE, $1); 
-        yTRACE("expression -> FLOAT_C \n")
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("expression -> FLOAT_C \n");
     }
 
   /* misc */
   | '(' expression ')'
     {
         $$ = $2; 
-        yTRACE("expression -> ( expression ) \n")
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("expression -> ( expression ) \n");
     }
   | variable
     {
         $$ = $1;
-        yTRACE("expression -> variable \n") 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("expression -> variable \n");
     }
   ;
 
@@ -390,12 +430,14 @@ variable
   : ID
     {
         $$ = allocate_cpNode(IDENT_NODE,$1,-1,0); 
-        yTRACE("variable -> ID \n")
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("variable -> ID \n");
     }
   | ID '[' INT_C ']' %prec '['
     { 
         $$ = allocate_cpNode(IDENT_NODE,$1,$3,1);
-        yTRACE("variable -> ID [ INT_C ] \n")
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("variable -> ID [ INT_C ] \n");
     }
   ;
 
@@ -403,12 +445,14 @@ arguments
   : arguments ',' expression
     {
         $$ = allocate_cpNode(ARG_NODE,$1,$3); 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
         yTRACE("arguments -> arguments , expression \n")
     }
   | expression
     {
         $$ = allocate_cpNode(ARG_NODE,NULL,$1); 
-        yTRACE("arguments -> expression \n") 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("arguments -> expression \n"); 
     }
   ;
 
@@ -416,12 +460,14 @@ arguments_opt
   : arguments
     {
         $$ = $1; 
-        yTRACE("arguments_opt -> arguments \n") 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("arguments_opt -> arguments \n"); 
     }
   |
     {
         $$ = NULL; 
-        yTRACE("arguments_opt -> \n") 
+        $$->setLineAndCol(@$.first_line,@$.first_column); 
+        yTRACE("arguments_opt -> \n");
     }
   ;
 

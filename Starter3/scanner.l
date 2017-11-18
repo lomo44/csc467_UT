@@ -21,14 +21,14 @@
 #define yTRACE(x)    { if (traceScanner) fprintf(traceFile, "TOKEN %3d : %s\n", x, yytext); }
 #define yERROR(x)    { fprintf(errorFile, "\nLEXICAL ERROR, LINE %d: %s\n", yyline, x); errorOccurred = TRUE; }
 #define yOUT(x)      { yTRACE(x); return x; }
-
+#define YY_USER_ACTION {yylloc.first_line = yyline; yylloc.first_column = colnum; colnum=colnum+yyleng; yylloc.last_column=colnum; yylloc.last_line = yyline;}
 /* forward declarations */
 int ParseComment(void);
 int ParseInt(void);
 int ParseFloat(void);
 int ParseIdent(void);
 int yyline = 1;
-
+int colnum = 1;
 %}
 %option noyywrap
 
@@ -36,8 +36,9 @@ int yyline = 1;
 
 "/*"                          { if(!ParseComment()) { yyterminate(); } }
 
-[ \t]                         { }
-\r?\n                         { yyline++; }
+[\t]                          {}
+[ ]                           {}
+\r?\n                         { yyline++; colnum=1;}
 <<EOF>>                       { yyterminate(); }
 
 [+\-*/\^]                     { yOUT(yytext[0]); }
