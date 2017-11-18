@@ -49,7 +49,8 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Duplicate_Declaration,
     ecpSemanticErrorType_Result_In_If_Statement,
     ecpSemanticErrorType_Target_Read_Only,
-    ecpSemanticErrorType_Const_Reassign
+    ecpSemanticErrorType_Const_Reassign,
+    ecpSemanticErrorType_ErrorCount
 };
 
 class cpSemanticError{

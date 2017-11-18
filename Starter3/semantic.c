@@ -8,6 +8,26 @@
 //           why dont we have argument node?If reduced expressions into one level?we should have more than two childs for construction node(added argument node at enum for now)
 //           should change assignment node child num to 4 (assignment under statement and assigment under declaration)
 
+std::string gErrorMessages[ecpSemanticErrorType_ErrorCount] = {
+    "", //No error
+    "invalid constant assignment",
+    "invalid conversion",
+    "invalid type",
+    "invalid variable",
+    "invalid vecter index",
+    "invalid arguments",
+    "invalid expression",
+    "invalid assignment",
+    "invalid used of arithmatic expression in logical operation",
+    "invalid comparison between different type",
+    "invalid target size",
+    "invalid arguments: not enough arguments",
+    "invalid arguments: too much arguments",
+    "invalid declaration. Identifier has been declared already",
+    "invalid use of result in If statement",
+    "invalid access, target is read-only",
+    "invalid reassignment for constant identifier",
+};
 
 void cpSemanticError::cleanError(){
     m_pTargetNode = NULL;
@@ -17,13 +37,14 @@ void cpSemanticError::cleanError(){
 }
 
 void cpSemanticError::print(){
-    m_pTargetNode->print();
-    printf("Semantic Error, ID: %d\n",this->m_eType);
+    //m_pTargetNode->print();
+    printf("%d:%d: error: %s in %s \n",m_iRowNumber,m_iColNumber,gErrorMessages[this->m_eType].c_str(),this->m_pTargetNode->toString().c_str());
 }
 
 void cpSemanticError::setError(ecpSemanticErrorType in_eType, cpBaseNode* in_pNode){
     m_eType = in_eType;
     m_pTargetNode = in_pNode;
+    in_pNode->getLineAndCol(&m_iRowNumber,&m_iColNumber);
 }
 
 

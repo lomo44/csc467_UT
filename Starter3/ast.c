@@ -142,7 +142,7 @@ void cpFunctionNode::printSelf()
 }
 
 void cpFunctionNode::print(){
-    printf("Call %s(",toString(m_eFunctionType).c_str());
+    printf("Call %s(",::toString(m_eFunctionType).c_str());
     getChildNodes()[0]->print();
     printf(")\n");
 
@@ -174,9 +174,9 @@ void cpConstructorNode::printSelf()
 }
 
 void cpConstructorNode::print(){
-    printf("%s (",toString(m_eConstructorType).c_str());
+    printf("%s (",::toString(m_eConstructorType).c_str());
     getArgumentsNode()->print();
-    printf(")\n");
+    printf(")");
 }
 
 void cpConstructorNode::initialize(va_list in_pArguments)
@@ -209,13 +209,13 @@ void cpArgumentsNode::print(){
 
 void cpBinaryExpressionNode::printSelf()
 {
-    printf("Binary Expresion Node, Operand %s\n", toString(m_eOperand).c_str());
+    printf("Binary Expresion Node, Operand %s\n", ::toString(m_eOperand).c_str());
 }
 
 void cpBinaryExpressionNode::print(){
     printf("Binary ");
     getChildNodes()[0]->print();
-    printf(" %s ",toString(m_eOperand).c_str());
+    printf(" %s ",::toString(m_eOperand).c_str());
     getChildNodes()[1]->print();
 }
 void cpBinaryExpressionNode::initialize(va_list in_pArguments)
@@ -276,7 +276,7 @@ void cpIfStatementNode::initialize(va_list in_pArguments)
 
 void cpDeclarationNode::printSelf()
 {
-    printf("Declaration %s %s %s\n",toString(m_eQualifier).c_str(),toString(m_eTargetType).c_str(),m_sIdentifierName.c_str());
+    printf("Declaration %s %s %s\n",::toString(m_eQualifier).c_str(),::toString(m_eTargetType).c_str(),m_sIdentifierName.c_str());
     //TODO: reImplement this
 }
 void cpDeclarationNode::initialize(va_list in_pArguments)
@@ -290,11 +290,11 @@ void cpDeclarationNode::initialize(va_list in_pArguments)
 
 void cpUnaryExpressionNode::printSelf()
 {
-    printf("Unary %s\n", toString(m_eOperand).c_str());
+    printf("Unary %s\n", ::toString(m_eOperand).c_str());
 }
 
 void cpUnaryExpressionNode::print(){
-    printf("Unary %s(", toString(m_eOperand).c_str());
+    printf("Unary %s(", ::toString(m_eOperand).c_str());
     getChildNodes()[0]->print();
     printf(")");
 }
