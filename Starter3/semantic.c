@@ -621,7 +621,7 @@ void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSema
     // Based on the type of the in_pNode, check different things
     ecpTerminalType type = in_pNode->getTerminalType();
     
-    if(IS_Any(type)){
+    if(type==ecpTerminalType_Invalid){
         // Invalid declarartion
         in_pNode->setTerminalType(ecpTerminalType_Unknown);
         io_SemanticError.setError(ecpSemanticErrorType_Invalid_Variable, in_pNode);
