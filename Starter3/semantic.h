@@ -50,6 +50,9 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Result_In_If_Statement,
     ecpSemanticErrorType_Target_Read_Only,
     ecpSemanticErrorType_Const_Reassign,
+    ecpSemanticErrorType_Invalid_Expression_L_In_A,
+    ecpSemanticErrorType_Invalid_Expreesion_A_In_L,
+    ecpSemanticErrorType_Invalid_Operands_Type,
     ecpSemanticErrorType_ErrorCount
 };
 

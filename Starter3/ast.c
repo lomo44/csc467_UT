@@ -212,6 +212,14 @@ void cpBinaryExpressionNode::printSelf()
     printf("Binary Expresion Node, Operand %s\n", ::toString(m_eOperand).c_str());
 }
 
+std::string cpBinaryExpressionNode::toString()
+{
+    return "binary operation "+::toString(m_eOperand)+" between "+m_pChildNodes[0]->toString()+" and "+
+    m_pChildNodes[1]->toString();
+}
+
+
+
 void cpBinaryExpressionNode::print(){
     printf("Binary ");
     getChildNodes()[0]->print();
@@ -298,6 +306,11 @@ void cpUnaryExpressionNode::print(){
     getChildNodes()[0]->print();
     printf(")");
 }
+std::string cpUnaryExpressionNode::toString() {
+    return "unary operation "+::toString(m_eOperand)+" with "+getChildNodes()[0]->toString();
+}
+
+
 
 void cpUnaryExpressionNode::initialize(va_list in_pArguments)
 {
