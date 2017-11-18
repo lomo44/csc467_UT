@@ -209,7 +209,7 @@ class cpIdentifierNode : public cpLeafNode
     virtual ~cpIdentifierNode(){};
     virtual void print();
     virtual void initialize(va_list in_pArguments);
-    virtual std::string toString() {return "identifier "+ ::toString(m_TerminalKind)+" "+m_value;}
+    virtual std::string toString() {return ::toString(m_TerminalKind)+" "+m_value;}
     std::string m_value;
     int getAccessIndex(){return m_iAccessIndex;}
     void setAccessIndex(int in_iAccessIndex){m_iAccessIndex = in_iAccessIndex;}
@@ -288,7 +288,7 @@ class cpAssignmentNode : public cpNormalNode
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
     virtual void print();
-    virtual std::string toString() {return "assignment";}
+    virtual std::string toString() {return getVariable()->toString()+" = "+::toString(getExpression()->getTerminalType())+"("+getExpression()->toString()+")";}
     cpIdentifierNode* getVariable(){return (cpIdentifierNode*)m_pChildNodes[0];}
     cpNormalNode* getExpression(){return (cpNormalNode*)m_pChildNodes[1]; }
 };

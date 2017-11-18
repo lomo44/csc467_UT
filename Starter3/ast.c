@@ -214,7 +214,7 @@ void cpBinaryExpressionNode::printSelf()
 
 std::string cpBinaryExpressionNode::toString()
 {
-    return "binary operation "+::toString(m_eOperand)+" between "+m_pChildNodes[0]->toString()+" and "+
+    return "operation "+::toString(m_eOperand)+" between "+m_pChildNodes[0]->toString()+" and "+
     m_pChildNodes[1]->toString();
 }
 
