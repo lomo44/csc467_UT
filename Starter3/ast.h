@@ -209,7 +209,11 @@ class cpIdentifierNode : public cpLeafNode
     std::string m_value;
     int getAccessIndex(){return m_iAccessIndex;}
     void setAccessIndex(int in_iAccessIndex){m_iAccessIndex = in_iAccessIndex;}
+    void EnableIndex(){m_bEnableIndex=true;}
+    void DisableIndex(){m_bEnableIndex=false;}
+    bool isIndexEnable(){return m_bEnableIndex;}
   private:
+    bool m_bEnableIndex;
     int m_iAccessIndex;
 };
 

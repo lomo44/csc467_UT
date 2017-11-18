@@ -361,6 +361,7 @@ void cpIdentifierNode::initialize(va_list in_pArguments)
 {
     m_value = (std::string)(va_arg(in_pArguments, char*));
     setAccessIndex(va_arg(in_pArguments, int));
+    va_arg(in_pArguments,int) == 1?this->EnableIndex():this->DisableIndex();
 }
 
 void cpIntNode::print()

@@ -599,28 +599,36 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
 void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError){
     // Based on the type of the in_pNode, check different things
     ecpTerminalType type = in_pNode->getTerminalType();
-    int access_index = in_pNode->getAccessIndex();
+    
     if(IS_Any(type)){
         // Invalid declarartion
         in_pNode->setTerminalType(ecpTerminalType_Unknown);
         io_SemanticError.setError(ecpSemanticErrorType_Invalid_Variable, in_pNode);
     }
     else{
-        if(access_index>=0 && access_index <4){
-            if(!(IS_Int(type) && access_index <= (type-ecpTerminalType_int1)) ||
-            !(IS_Flt(type) && access_index <= (type-ecpTerminalType_float1)) ||
-            !(IS_Bool(type) && access_index <= (type-ecpTerminalType_bool1))){
-                in_pNode->setTerminalType((ecpTerminalType)((type)-access_index));
-                io_SemanticError.cleanError();    
+        if(in_pNode->isIndexEnable()){
+            int access_index = in_pNode->getAccessIndex();
+        // Index enable, need to reduce its type;
+            if(access_index>=0 && access_index <4){
+                io_SemanticError.cleanError();   
+                if(IS_Int(type)&& access_index <= (type-ecpTerminalType_int1)){
+                    in_pNode->setTerminalType(ecpTerminalType_int1);
+                }
+                else if(IS_Flt(type)&& access_index <= (type-ecpTerminalType_float1)){
+                    in_pNode->setTerminalType(ecpTerminalType_float1);
+                }
+                else if(IS_Bool(type)&& access_index <= (type-ecpTerminalType_bool1)){
+                    in_pNode->setTerminalType(ecpTerminalType_bool1);
+                }
+                else{
+                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                    io_SemanticError.setError(ecpSemanticErrorType_Invalid_Vecter_Index,in_pNode);
+                }
             }
             else{
                 in_pNode->setTerminalType(ecpTerminalType_Unknown);
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Vecter_Index,in_pNode);
             }
-        }
-        else{
-            in_pNode->setTerminalType(ecpTerminalType_Unknown);
-            io_SemanticError.setError(ecpSemanticErrorType_Invalid_Vecter_Index,in_pNode);
         }
     }
 }
