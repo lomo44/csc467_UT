@@ -10,7 +10,7 @@
 
 std::string gErrorMessages[ecpSemanticErrorType_ErrorCount] = {
     "", //No error
-    "invalid constant assignment",
+    "invalid constant assignment fron non-uniform variable",
     "invalid conversion",
     "invalid type",
     "invalid variable",
@@ -711,7 +711,7 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
                         if(expression->getNodeKind()==IDENT_NODE){
                             cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
                             if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
-                                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+                                io_SemanticError.setError(ecpSemanticErrorType_Invalid_Const_Assignment, in_pNode);
                                 in_pNode->setTerminalType(ecpTerminalType_Unknown);
                                 return;
                             }
