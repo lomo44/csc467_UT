@@ -81,8 +81,8 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Ambient",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
         node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Material_Shininess",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
         node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env2",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env3",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
         gSymbolTable = node;
         table = node;
     }
@@ -102,6 +102,8 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
             cpSymbolAttribute* attr = lookupSymbolTable(((cpIdentifierNode*)in_pNode)->m_value,in_pNode);
             if (attr == NULL){
                 in_pNode->setTerminalType(ecpTerminalType_Invalid);
+                std::string name=((cpIdentifierNode*)in_pNode)->m_value;
+                //printf ("invalidate name: %s\n",name.c_str());
             }
             else{
                 // Node exists, marking the terminal type of this node
@@ -116,19 +118,20 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
                 table->m_pChildScopes.push_back(node);
                 table=node;
                 ret = node;
+                printf("table address:%x\n",table);
             }        
             //printf("Size: %d\n",gSymbolLookUpTable.size());   
             //insert into symbol table if current node is declaration node
             if (in_pNode->getNodeKind()==DECLARATION_NODE)
             {
                 //check if there are duplicate declarations in current scope
-                if(lookupSymbolTable(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,in_pNode)==NULL){
+                if(SearchInScope(((cpDeclarationNode*)in_pNode)->m_sIdentifierName,table)==NULL){
                     cpSymbolAttribute* new_attribute = new cpSymbolAttribute();
                     initSymbolAttributeFromDeclarationNode((cpDeclarationNode*)in_pNode,new_attribute);
                     table->m_vSymbolTable.push_back(new_attribute);
                 }
                 else{
-                    in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                    in_pNode->setTerminalType(ecpTerminalType_Invalid);
                 }
             }    
             //traverse tree, connect child scope table to current scope table
@@ -158,7 +161,7 @@ cpSymbolAttribute* SearchInTable(const std::string& in_sIdentifier, cpSymbolTabl
     cpSymbolTableNode* current_node = in_pTableNode;
     cpSymbolAttribute* ret = NULL;
     while(current_node != NULL){
-        ret = SearchInScope(in_sIdentifier, in_pTableNode);
+        ret = SearchInScope(in_sIdentifier, current_node);
         if(ret!=NULL){
             break;
         }
