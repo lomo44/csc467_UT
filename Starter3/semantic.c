@@ -14,6 +14,7 @@ std::string gErrorMessages[ecpSemanticErrorType_ErrorCount] = {
     "invalid conversion",
     "invalid type",
     "invalid variable",
+    "invalid variable: variable is read before write",
     "invalid vecter index",
     "invalid arguments",
     "invalid expression",
@@ -624,11 +625,21 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
 void cpCheckNode(cpIdentifierNode* in_pNode,cpSymbolTableNode* in_pTable, cpSemanticError& io_SemanticError){
     // Based on the type of the in_pNode, check different things
     ecpTerminalType type = in_pNode->getTerminalType();
+    cpNormalNode* parent = (cpNormalNode*)in_pNode->getParentNode();
+    eNodeKind parentKind=parent->getNodeKind();
     
     if(type==ecpTerminalType_Invalid){
         // Invalid declarartion
         in_pNode->setTerminalType(ecpTerminalType_Unknown);
         io_SemanticError.setError(ecpSemanticErrorType_Invalid_Variable, in_pNode);
+    }
+    else if(!((parentKind==ASSIGNMENT_NODE) && (parent->getChildNode(0)==in_pNode))){
+        cpSymbolAttribute* attr = lookupSymbolTable(in_pNode->m_value,in_pNode);
+        if (attr->m_isWrite==0){
+            io_SemanticError.setError(ecpSemanticErrorType_Variable_Not_Defined,in_pNode);
+            in_pNode->setTerminalType(ecpTerminalType_Unknown);
+            return;
+        }
     }
     else{
         if(in_pNode->isIndexEnable()){
@@ -729,6 +740,8 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
             (IS_Flt(variable_type) && IS_Flt(expression_type)) ||
             (IS_Bool(variable_type) && IS_Bool(expression_type))){
                 io_SemanticError.cleanError();
+                cpSymbolAttribute* var = lookupSymbolTable(variable->m_value,variable);
+                if (var!=NULL) var->m_isWrite=1;
             }
             else{
                 io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);

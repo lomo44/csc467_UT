@@ -37,6 +37,7 @@ enum ecpSemanticErrorType{
     ecpSemanticErrorType_Invalid_Conversion,
     ecpSemanticErrorType_Invalid_Type,
     ecpSemanticErrorType_Invalid_Variable,
+    ecpSemanticErrorType_Variable_Not_Defined,
     ecpSemanticErrorType_Invalid_Vecter_Index,
     ecpSemanticErrorType_Invalid_Arguments,
     ecpSemanticErrorType_Invalid_Expression,
