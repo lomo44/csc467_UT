@@ -22,11 +22,15 @@ Approach to type/semantic checking
 - After construction of AST, we construct an global symbol table by in-order traversing the AST. At the same type, any identifier
   type is being propagated through the tree. If there are any re-declaration and use of undeclarede variable, we discover the error
   and set a invalid terminal type to either declaration node or identifier node. Pre-defined variables are also loaded into the 
-  global symbol table in this stage
-- Semantic checking then is done in a bottom-up pattern. For any expression node, we need to reduce its final terminal type to proceed
-  the checking. If any of error happen, we print out the error and set its terminal type to an "any" type so that we could dectect more
-  error. For any declaration or statement,function calls, or constructor. We check if its arguments is accepted by the grammar. If not, 
-  then the error is thrown.
+  global symbol table in this stage.
+- Semantic checking then is done in a bottom-up pattern. If any of error happen while traversing, we print out the error and set
+  its terminal type to an "any" type so that we could dectect more error. For any expression node, we need to reduce its final terminal   type to proceed the checking. For any declaration or statement, function calls, or constructor, We check if its arguments is accepted   semantically. If it fails, then corresponding error will be thrown. For any identifiers, we check if its terminal type is invalid. If   invalid, then variable is not defined properly, and error will be thrown.
+  
+  Bonus
+- Ensure that every has been assigned a value before write by having a write flag in symbol table. If the value is being read but the     write flag is 0, then error "variable is being read before write" would be thrown. The write_read status is stored in symbol table.
+- Report the line number on which the semantic error occured.
+- Report the column of the line, with the line number, on which the error occured.
+- Provided a contextual message that gives extra meaning to the error to help the programmer debug the error.
 
 Breakdown of work
 Li Zhuang: AST constructing, semantic checking
