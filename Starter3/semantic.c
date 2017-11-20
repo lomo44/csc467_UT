@@ -1,5 +1,6 @@
 #include "semantic.h"
 #include "parser.tab.h"
+#include "common.h"
 #include <vector>
 //questions: why do we have int_Node,Float_node instead of literal node?
 //           why unknown?should be currentNodeType
@@ -42,7 +43,7 @@ void cpSemanticError::cleanError(){
 
 void cpSemanticError::print(){
     //m_pTargetNode->print();
-    printf("%d:%d: error: %s in %s \n",m_iRowNumber,m_iColNumber,gErrorMessages[this->m_eType].c_str(),this->m_pTargetNode->toString().c_str());
+    fprintf(errorFile,"%d:%d: error: %s in %s \n",m_iRowNumber,m_iColNumber,gErrorMessages[this->m_eType].c_str(),this->m_pTargetNode->toString().c_str());
 }
 
 void cpSemanticError::setError(ecpSemanticErrorType in_eType, cpBaseNode* in_pNode){

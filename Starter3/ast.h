@@ -288,7 +288,7 @@ class cpAssignmentNode : public cpNormalNode
     virtual void initialize(va_list in_pArguments);
     virtual void printSelf();
     virtual void print();
-    virtual std::string toString() {return getVariable()->toString()+" = "+::toString(getExpression()->getTerminalType())C
+    virtual std::string toString() {return getVariable()->toString()+" = "+::toString(getExpression()->getTerminalType())
     +"("+getExpression()->toString()+")";}
     cpIdentifierNode* getVariable(){return (cpIdentifierNode*)m_pChildNodes[0];}
     cpNormalNode* getExpression(){return (cpNormalNode*)m_pChildNodes[1]; }
