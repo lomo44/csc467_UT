@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "common.h"
 #include "parser.tab.h"
+#include "symbol.h"
 
 #define DEBUG_PRINT_TREE 0
 
@@ -168,6 +169,40 @@ void cpFunctionNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
 
+void cpFunctionNode::generateIR(cpIRList& in_IRList){
+    // grabing all of the arguments ir
+    cpIRRegisterList tempList;
+    cpArgumentsNode* arguments = getArguments();
+    arguments->generateIR(in_IRList);
+    while(arguments!=NULL){
+        cpNormalNode* currentArgument = arguments->getCurrentArgument();
+        tempList.push_back(currentArgument->getIROutput());
+        arguments->getNextArguments();
+    }
+    cpIR* ret = NULL;
+    switch(m_eFunctionType){
+        case ecpFunctionType_dp3:{
+            ret = new cpIR(ecpIR_DP3,tempList[0],tempList[1]);
+            break;
+        }
+        case ecpFunctionType_lit:{
+            ret = new cpIR(ecpIR_LIT,tempList[0],NULL);
+            break;  
+        }
+        case ecpFunctionType_rsq:{
+            ret = new cpIR(ecpIR_RSQ,tempList[0],NULL);
+            break;
+        }
+        default:{
+            break;
+        }
+    }
+    ret->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(ret);
+    m_pIROutput = ret->getDst();
+}
+
+
 void cpConstructorNode::printSelf()
 {
     printf("Constructor ");
@@ -184,6 +219,66 @@ void cpConstructorNode::initialize(va_list in_pArguments)
     setConstructorType((ecpTerminalType)va_arg(in_pArguments, int));
     initChildNodes(1);
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
+}
+
+void cpConstructorNode::generateIR(cpIRList& in_IRList){
+    getArgumentsNode()->generateIR(in_IRList);
+    cpIRRegisterList temp_list;
+    cpArgumentsNode* node = getArgumentsNode();
+    while(node!=NULL){
+        temp_list.push_back(node->getCurrentArgument()->getIROutput());
+        node->getNextArguments();
+    }
+    cpIRRegister* output = NULL;
+    if(temp_list.size()>=2){
+        cpIR_CONST_I* mask_x = new cpIR_CONST_I();
+        mask_x->m_ix = 1;
+        mask_x->m_iy = 0;
+        mask_x->m_iz = 0;
+        mask_x->m_iw = 0;
+        cpInsertInList(mask_x,in_IRList);
+        cpIR_CONST_I* mask_y = new cpIR_CONST_I();
+        mask_y->m_ix = 0;
+        mask_y->m_iy = 1;
+        mask_y->m_iz = 0;
+        mask_y->m_iw = 0;
+        cpInsertInList(mask_y,in_IRList);
+        cpIR* com_x = new cpIR(ecpIR_MUL,temp_list[0],mask_x->getDst());
+        cpInsertInList(com_x,in_IRList);
+        cpIR* com_y = new cpIR(ecpIR_MUL,temp_list[1],mask_y->getDst());
+        cpInsertInList(com_y,in_IRList);
+        cpIR* sum_xy = new cpIR(ecpIR_ADD,com_x->getDst(),com_y->getDst());
+        cpInsertInList(sum_xy,in_IRList);
+        output = sum_xy->getDst();
+        if(temp_list.size()>=3){
+            cpIR_CONST_I* mask_z = new cpIR_CONST_I();
+            mask_z->m_ix = 0;
+            mask_z->m_iy = 0;
+            mask_z->m_iz = 1;
+            mask_z->m_iw = 0;
+            cpIR* com_z = new cpIR(ecpIR_MUL,temp_list[2],mask_z->getDst());
+            cpInsertInList(com_z,in_IRList);
+            cpIR* sum_xyz = new cpIR(ecpIR_ADD,sum_xy->getDst(),com_z->getDst());
+            cpInsertInList(sum_xyz,in_IRList);
+            output = sum_xyz->getDst();
+            if(temp_list.size()==4){
+                cpIR_CONST_I* mask_w = new cpIR_CONST_I();
+                mask_w->m_ix = 0;
+                mask_w->m_iy = 0;
+                mask_w->m_iz = 1;
+                mask_w->m_iw = 0;
+                cpIR* com_w = new cpIR(ecpIR_MUL,temp_list[3],mask_w->getDst());
+                cpInsertInList(com_w,in_IRList);
+                cpIR* sum_wxyz = new cpIR(ecpIR_ADD,sum_xyz->getDst(),com_w->getDst());
+                cpInsertInList(sum_wxyz,in_IRList);
+                output = sum_wxyz->getDst();
+            }
+        }
+        m_pIROutput = output;
+    }
+    else{
+        printf("Constructor error\n");
+    }
 }
 
 void cpArgumentsNode::initialize(va_list in_pArguments)
@@ -207,6 +302,14 @@ void cpArgumentsNode::print(){
     getCurrentArgument()->print();
 }
 
+void cpArgumentsNode::generateIR(cpIRList& in_IRList){
+    cpArgumentsNode* arguments = this;
+    while(arguments!=NULL){
+        arguments->getCurrentArgument()->generateIR(in_IRList);
+        arguments->getNextArguments();
+    }
+}
+
 void cpBinaryExpressionNode::printSelf()
 {
     printf("Binary Expresion Node, Operand %s\n", ::toString(m_eOperand).c_str());
@@ -217,7 +320,6 @@ std::string cpBinaryExpressionNode::toString()
     return "operation "+::toString(m_eOperand)+" between "+m_pChildNodes[0]->toString()+" and "+
     m_pChildNodes[1]->toString();
 }
-
 
 
 void cpBinaryExpressionNode::print(){
@@ -234,6 +336,34 @@ void cpBinaryExpressionNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
+void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
+    m_pChildNodes[0]->generateIR(in_IRList);
+    m_pChildNodes[1]->generateIR(in_IRList);
+    cpIR* newIR = NULL;
+    ecpIROpcode targetOpcode;
+    switch(m_eOperand){
+        case ecpOperand_B_AND:{targetOpcode=ecpIR_AND;break;}
+        case ecpOperand_B_OR:{targetOpcode=ecpIR_OR;break;}
+        case ecpOperand_B_EQ:{targetOpcode=ecpIR_EQ;break;}
+        case ecpOperand_B_NEQ:{targetOpcode=ecpIR_NEQ;break;}
+        case ecpOperand_B_LEQ:{targetOpcode=ecpIR_LEQ;break;}
+        case ecpOperand_B_GT:{targetOpcode=ecpIR_GT;break;}
+        case ecpOperand_B_GEQ:{targetOpcode=ecpIR_GEQ;break;}
+        case ecpOperand_B_PLUS:{targetOpcode=ecpIR_ADD;break;}
+        case ecpOperand_B_MINUS:{targetOpcode=ecpIR_SUB;break;}
+        case ecpOperand_B_MUL:{targetOpcode=ecpIR_MUL;break;}
+        case ecpOperand_B_DIV:{targetOpcode=ecpIR_DIV;break;}
+        case ecpOperand_B_BOR:{targetOpcode=ecpIR_POW;break;}
+        default:{
+            break;
+        }
+    }
+    newIR = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),m_pChildNodes[1]->getIROutput());
+    newIR->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(newIR);
+    m_pIROutput = newIR->getDst();
+}
+
 void cpScopeNode::printSelf()
 {
     printf("Scope Node\n");
@@ -245,15 +375,9 @@ void cpScopeNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
-void cpWhileStatmentNode::printSelf()
-{
-    printf("While Node\n");
-}
-void cpWhileStatmentNode::initialize(va_list in_pArguments)
-{
-    initChildNodes(2);
-    setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
-    setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
+void cpScopeNode::generateIR(cpIRList& in_IRList){
+    m_pChildNodes[0]->generateIR(in_IRList);
+    m_pChildNodes[1]->generateIR(in_IRList);
 }
 
 void cpIfStatementNode::printSelf()
@@ -296,6 +420,44 @@ void cpDeclarationNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
 
+void cpDeclarationNode::generateIR(cpIRList& in_IRList){
+    // Allocate an register
+    cpIR* ret = NULL;
+    switch(m_eTargetType){
+        case ecpTerminalType_bool1:
+        case ecpTerminalType_bool2:
+        case ecpTerminalType_bool3:
+        case ecpTerminalType_bool4:{
+            ret = new cpIR_CONST_B();
+            break;
+        }
+        case ecpTerminalType_float1:
+        case ecpTerminalType_float2:
+        case ecpTerminalType_float3:
+        case ecpTerminalType_float4:{
+            ret = new cpIR_CONST_F();
+            break;
+        }
+        case ecpTerminalType_int1:
+        case ecpTerminalType_int2:
+        case ecpTerminalType_int3:
+        case ecpTerminalType_int4:{
+            ret = new cpIR_CONST_I();
+            break;
+        }
+        default:{
+            break;
+        }
+    }
+    gSymbolIRLookUpTable[m_sIdentifierName] = ret;
+    ret->setDst(new cpIRRegister(in_IRList.size()));
+    m_pIROutput = ret->getDst();
+    in_IRList.push_back(ret);
+    if(m_pChildNodes[0]!=NULL){    
+        m_pChildNodes[0]->generateIR(in_IRList);
+    }
+}
+
 void cpUnaryExpressionNode::printSelf()
 {
     printf("Unary %s\n", ::toString(m_eOperand).c_str());
@@ -319,6 +481,28 @@ void cpUnaryExpressionNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
 }
 
+void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
+    m_pChildNodes[0]->generateIR(in_IRList);
+    cpIR* ret = NULL;
+    ecpIROpcode targetOpcode;
+    switch(m_eOperand){
+        case ecpOperand_U_NEG:{
+            targetOpcode = ecpIR_NEG;
+            break;
+        }
+        case ecpOperand_U_NOT:{
+            targetOpcode = ecpIR_NOT;
+            break;
+        }
+        default:{
+            break;
+        }
+    }
+    ret = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),NULL);
+    cpInsertInList(ret, in_IRList);
+    m_pIROutput = ret->getDst();
+}
+
 void cpAssignmentNode::printSelf()
 {
     printf("Assignment Node\n");
@@ -339,18 +523,13 @@ void cpAssignmentNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 1);
 }
 
-// void cpVariableNode::printSelf()
-// {
-//     printf("Variable Node, index %s\n", m_Operand);
-// }
-
-// void cpVariableNode::initialize(va_list in_pArguments)
-// {
-//     initChildNodes(1);
-//     m_Operand = va_arg(in_pArguments, int);
-//     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 0);
-// }
-
+void cpAssignmentNode::generateIR(cpIRList& in_IRList){
+    m_pChildNodes[0]->generateIR(in_IRList);
+    m_pChildNodes[1]->generateIR(in_IRList);
+    cpIR* newIR = new cpIR(ecpIR_MOVE,m_pChildNodes[0]->getIROutput(), m_pChildNodes[1]->getIROutput());
+    newIR->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(newIR);
+}
 /** Leaf nodes **/
 void cpFloatNode::print()
 {
@@ -359,6 +538,14 @@ void cpFloatNode::print()
 void cpFloatNode::initialize(va_list in_pArguments)
 {
     m_value = va_arg(in_pArguments, double);
+}
+
+void cpFloatNode::generateIR(cpIRList& in_IRList){
+    cpIR_CONST_F* newIR = new cpIR_CONST_F();
+    newIR->setScalar(m_value);
+    newIR->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(newIR);
+    m_pIROutput = newIR->getDst();
 }
 
 void cpIdentifierNode::print()
@@ -377,6 +564,24 @@ void cpIdentifierNode::initialize(va_list in_pArguments)
     va_arg(in_pArguments,int) == 1?this->EnableIndex():this->DisableIndex();
 }
 
+void cpIdentifierNode::generateIR(cpIRList& in_IRList){
+    // use identifier should not generate any instruction
+    
+    // getting the declaration of this identifier
+    cpSymbolIRLookUpTableItor itor = gSymbolIRLookUpTable.find(m_value);
+    if(itor!=gSymbolIRLookUpTable.end()){
+        // Found entry
+        cpIR* ir = itor->second;
+        m_pIROutput = new cpIRRegister(ir->getDst()->m_iIRID);
+        if(m_bEnableIndex){
+            m_pIROutput[m_iAccessIndex] = true;
+        }
+    }
+    else{
+        printf("Undefined identifier\n");
+    }
+}
+
 void cpIntNode::print()
 {
     printf("(i1: %d)", m_value);
@@ -384,6 +589,14 @@ void cpIntNode::print()
 void cpIntNode::initialize(va_list in_pArguments)
 {
     m_value = va_arg(in_pArguments, int);
+}
+
+void cpIntNode::generateIR(cpIRList& in_IRList){
+    cpIR_CONST_I* newIR = new cpIR_CONST_I();
+    newIR->setScalar(m_value);
+    newIR->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(newIR);
+    m_pIROutput = newIR->getDst();
 }
 
 void cpBoolNode::print()
@@ -394,6 +607,14 @@ void cpBoolNode::print()
 void cpBoolNode::initialize(va_list in_pArguments)
 {
     m_value = va_arg(in_pArguments, int);
+}
+
+void cpBoolNode::generateIR(cpIRList& in_IRList){
+    cpIR_CONST_B* newIR = new cpIR_CONST_B();
+    newIR->setScalar(m_value);
+    newIR->setDst(new cpIRRegister(in_IRList.size()));
+    in_IRList.push_back(newIR);
+    m_pIROutput = newIR->getDst();
 }
 
 void cpStatementsNode::initialize(va_list in_pArguments)
@@ -410,6 +631,15 @@ void cpStatementsNode::printSelf()
     printf("Statements: \n");
 }
 
+void cpStatementsNode::generateIR(cpIRList& in_IRList){
+    cpStatementsNode* current_statements = this;
+    while(current_statements!=NULL){
+        cpBaseNode* currentStatement = current_statements->getCurrentStatementNode();
+        currentStatement->generateIR(in_IRList);
+        current_statements = current_statements->getNextStatementsNode();
+    }
+}
+
 void cpDeclarationsNode::printSelf()
 {
     printf("Declarations: \n");
@@ -421,6 +651,16 @@ void cpDeclarationsNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpDeclarationsNode *), 0);
     setChildNodes(va_arg(in_pArguments, cpStatementsNode *), 1);
 }
+
+void cpDeclarationsNode::generateIR(cpIRList& in_IRList){
+    cpDeclarationsNode* current = this;
+    while(current!=NULL){
+        current->getCurrentDeclarationNode()->generateIR(in_IRList);
+        current = current->getNextDeclarationsNode();
+    }
+}
+
+
 
 #define CHECK_AND_ALLOCATE(__kind, __node_class) \
     \
@@ -444,7 +684,7 @@ cpBaseNode *allocate_cpNode(eNodeKind in_nodekind, ...)
         CHECK_AND_ALLOCATE(FUNCTION_NODE, cpFunctionNode)
         CHECK_AND_ALLOCATE(SCOPE_NODE, cpScopeNode)
         CHECK_AND_ALLOCATE(CONSTRUCTOR_NODE, cpConstructorNode)
-        CHECK_AND_ALLOCATE(WHILE_STATEMENT_NODE, cpWhileStatmentNode)
+        //CHECK_AND_ALLOCATE(WHILE_STATEMENT_NODE, cpWhileStatmentNode)
         CHECK_AND_ALLOCATE(IF_STATEMENT_NODE, cpIfStatementNode)
         CHECK_AND_ALLOCATE(DECLARATION_NODE, cpDeclarationNode)
         CHECK_AND_ALLOCATE(STATEMENT_NODE, cpStatementsNode)

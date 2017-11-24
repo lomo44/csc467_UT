@@ -9,7 +9,8 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "ADD",
     "MUL",
     "DIV",
-    "CMP",
+    "EQ",
+    "NEQ",
     "GT",
     "LT",
     "GEQ",
@@ -19,8 +20,11 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "NEG",
     "NOT",
     "POW",
-    "FMOVE",
-    "TMOVE"
+    "BRZ",
+    "BR",
+    "LIT",
+    "RSQ",
+    "DP3"
 };
 
 std::string toString(ecpIROpcode in_eOpcode){
@@ -32,4 +36,9 @@ void cpPrintIR(cpIRList& in_vlist){
     for(int i = 0 ; i < size; i++){
         printf("%s\n",in_vlist[i]->toIRString().c_str());
     }
+}
+
+void cpInsertInList(cpIR* in_pIR, cpIRList& in_List){
+    in_pIR->setDst(new cpIRRegister(in_List.size()));
+    in_List.push_back(in_pIR);
 }

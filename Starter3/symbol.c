@@ -27,6 +27,7 @@
 ************************************************************/
 
 cpSymbolLookUpTable gSymbolLookUpTable;
+cpSymbolIRLookUpTable gSymbolIRLookUpTable;
 cpSymbolTableNode* gSymbolTable = NULL;
 
 void cpSymbolAttribute::print(){
