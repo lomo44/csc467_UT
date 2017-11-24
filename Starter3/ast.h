@@ -3,9 +3,10 @@
 
 #include <cstdarg>
 #include <cstdio>
-//#include <stdarg.h>
 #include <string>
 #include <vector>
+
+#include "cpIR.h"
 // Dummy node just so everything compiles, create your own node/nodes
 //
 // The code provided below is an example ONLY. You can use/modify it,
@@ -150,6 +151,7 @@ class cpBaseNode
     void setLineNumber(int in_iLineNumber){m_iLineNumber = in_iLineNumber;}
     void setLineAndCol(int in_iLine, int in_iCol){m_iLineNumber = in_iLine, m_iColNumber = in_iCol;}
     void getLineAndCol(int* in_pLine, int* in_pCol){*in_pLine = m_iLineNumber;*in_pCol=m_iColNumber;}
+    virtual void generateIR(cpIRList& in_CurrentIR){};
   protected:
     int m_iLineNumber;
     int m_iColNumber;

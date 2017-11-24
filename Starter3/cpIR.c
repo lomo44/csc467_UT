@@ -33,9 +33,3 @@ void cpPrintIR(cpIRList& in_vlist){
         printf("%s\n",in_vlist[i]->toIRString().c_str());
     }
 }
-void cpPrintRI(cpIRList& in_vlist){
-    int size = in_vlist.size();
-    for(int i = 0 ; i < size; i++){
-        printf("%s\n",in_vlist[i]->toRIString().c_str());
-    }
-}
