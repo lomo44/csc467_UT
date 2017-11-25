@@ -96,11 +96,22 @@ public:
     cpIR(ecpIROpcode in_eIROpcode, cpIRRegister* in_SrcA, cpIRRegister* in_SrcB): m_SrcA(in_SrcA),
                                                                             m_SrcB(in_SrcB),
                                                                             m_eOpcode(in_eIROpcode){};
-    virtual ~cpIR(){};
+    virtual ~cpIR(){delete m_Dst;};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+" "+m_Dst->toString()+
-                                   " "+m_SrcA->toString()+
-                                   " "+m_SrcB->toString();
+        std::string ret = "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode);
+        if(m_Dst!=NULL){
+            ret += " ";
+            ret += m_Dst->toString();
+        }
+        if(m_SrcA!=NULL){
+            ret += " ";
+            ret += m_SrcA->toString();
+        }
+        if(m_SrcB!=NULL){
+            ret += " ";
+            ret += m_SrcB->toString();
+        }
+        return ret;
     };
     cpIRRegister*  getSrcA(){return m_SrcA;}
     cpIRRegister*  getSrcB(){return m_SrcB;}
@@ -124,10 +135,10 @@ public:
     cpIR_CONST_F() : cpIR_CONST(ecpIR_CONST_F){};
     virtual ~cpIR_CONST_F(){};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+"("+std::to_string(m_fw)+","+
-                                       std::to_string(m_fx)+","+
-                                       std::to_string(m_fy)+","+
-                                       std::to_string(m_fz)+")";
+        return "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode)+"("+std::to_string(m_fx)+","+
+                                            std::to_string(m_fy)+","+
+                                       std::to_string(m_fz)+","+
+                                       std::to_string(m_fw)+")";
     }
     virtual void setScalar(float in_fValue){
         m_fw = in_fValue;
@@ -146,10 +157,10 @@ public:
     cpIR_CONST_I() : cpIR_CONST(ecpIR_CONST_I){};
     virtual ~cpIR_CONST_I(){};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+"("+std::to_string(m_iw)+","+
-                                       std::to_string(m_ix)+","+
+        return "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode)+"("+std::to_string(m_ix)+","+
                                        std::to_string(m_iy)+","+
-                                       std::to_string(m_iz)+")";
+                                       std::to_string(m_iz)+","+
+                                       std::to_string(m_iw)+")";
     }
     virtual void setScalar(int in_iValue){
         m_iw = in_iValue;
@@ -168,10 +179,10 @@ public:
     cpIR_CONST_B() : cpIR_CONST(ecpIR_CONST_B){};
     virtual ~cpIR_CONST_B(){};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+"("+std::to_string(m_bw)+","+
-                                       std::to_string(m_bx)+","+
+        return "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode)+"("+std::to_string(m_bx)+","+
                                        std::to_string(m_by)+","+
-                                       std::to_string(m_bz)+")";
+                                       std::to_string(m_bz)+","+
+                                       std::to_string(m_bw)+")";
     }
     virtual void setScalar(bool in_bValue){
         m_bw = in_bValue;
@@ -192,7 +203,7 @@ public:
     };
     virtual ~cpIR_Br(){};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+" "+std::to_string(m_iOffset);
+        return "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode)+" "+std::to_string(m_iOffset);
     }
     virtual void setOffset(int in_iOffset){m_iOffset = in_iOffset;}
     virtual int getOffset(){return m_iOffset;}
@@ -203,11 +214,12 @@ protected:
 class cpIR_Brz : public cpIR_Br{
 public:
     cpIR_Brz(int in_iOffset, cpIRRegister* in_pSrcA) : cpIR_Br(in_iOffset){
-        m_Dst = in_pSrcA;
+        m_SrcA = in_pSrcA;
+        m_eOpcode = ecpIR_BRZ;
     }
     virtual ~cpIR_Brz(){};
     virtual std::string toIRString(){
-        return toString(m_eOpcode)+" "+m_Dst->toString()+" "+std::to_string(m_iOffset);
+        return "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode)+" "+m_SrcA->toString()+" "+std::to_string(m_iOffset);
     }
 };
 
@@ -222,4 +234,5 @@ typedef std::vector<cpIR*> cpIRList;
 
 void cpPrintIR(cpIRList& in_vlist);
 void cpInsertInList(cpIR* in_pIR, cpIRList& in_List);
+void cpFreeIRList(cpIRList& in_List);
 #endif

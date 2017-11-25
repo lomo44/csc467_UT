@@ -95,7 +95,12 @@ int main (int argc, char *argv[]) {
 /* TODO: call your code generation routine here */
   if (errorOccurred)
     fprintf(outputFile,"Failed to compile\n");
-  else 
+  else{
+    cpIRList irlist;
+    gAST->generateIR(irlist);
+    cpPrintIR(irlist);
+    cpFreeIRList(irlist);
+  }
    // genCode(ast);
     ;
 /***********************************************************************

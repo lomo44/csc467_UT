@@ -7,6 +7,7 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "CONST_INT",
     "MOVE",
     "ADD",
+    "SUB",
     "MUL",
     "DIV",
     "EQ",
@@ -41,4 +42,11 @@ void cpPrintIR(cpIRList& in_vlist){
 void cpInsertInList(cpIR* in_pIR, cpIRList& in_List){
     in_pIR->setDst(new cpIRRegister(in_List.size()));
     in_List.push_back(in_pIR);
+}
+
+void cpFreeIRList(cpIRList& in_List){
+    int size = in_List.size();
+    for(int i = 0; i < size; i++){
+        delete in_List[i];
+    }
 }

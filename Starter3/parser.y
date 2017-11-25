@@ -135,7 +135,7 @@ program
         gAST = $1;
         constructSymbolTable(gAST,NULL);
         cpSemanticError semantic_error;
-        if(semantic_check(gAST,gSymbolTable,semantic_error)){
+        if(!semantic_check(gAST,gSymbolTable,semantic_error)){
           errorOccurred = 1;
         }
         //gSymbolTable->print();

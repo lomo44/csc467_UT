@@ -177,7 +177,7 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
     while(arguments!=NULL){
         cpNormalNode* currentArgument = arguments->getCurrentArgument();
         tempList.push_back(currentArgument->getIROutput());
-        arguments->getNextArguments();
+        arguments = arguments->getNextArguments();
     }
     cpIR* ret = NULL;
     switch(m_eFunctionType){
@@ -227,20 +227,20 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
     cpArgumentsNode* node = getArgumentsNode();
     while(node!=NULL){
         temp_list.push_back(node->getCurrentArgument()->getIROutput());
-        node->getNextArguments();
+        node = node->getNextArguments();
     }
     cpIRRegister* output = NULL;
     if(temp_list.size()>=2){
         cpIR_CONST_I* mask_x = new cpIR_CONST_I();
-        mask_x->m_ix = 1;
+        mask_x->m_ix = 0;
         mask_x->m_iy = 0;
         mask_x->m_iz = 0;
-        mask_x->m_iw = 0;
+        mask_x->m_iw = 1;
         cpInsertInList(mask_x,in_IRList);
         cpIR_CONST_I* mask_y = new cpIR_CONST_I();
         mask_y->m_ix = 0;
-        mask_y->m_iy = 1;
-        mask_y->m_iz = 0;
+        mask_y->m_iy = 0;
+        mask_y->m_iz = 1;
         mask_y->m_iw = 0;
         cpInsertInList(mask_y,in_IRList);
         cpIR* com_x = new cpIR(ecpIR_MUL,temp_list[0],mask_x->getDst());
@@ -253,9 +253,10 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
         if(temp_list.size()>=3){
             cpIR_CONST_I* mask_z = new cpIR_CONST_I();
             mask_z->m_ix = 0;
-            mask_z->m_iy = 0;
-            mask_z->m_iz = 1;
+            mask_z->m_iy = 1;
+            mask_z->m_iz = 0;
             mask_z->m_iw = 0;
+            cpInsertInList(mask_z, in_IRList);
             cpIR* com_z = new cpIR(ecpIR_MUL,temp_list[2],mask_z->getDst());
             cpInsertInList(com_z,in_IRList);
             cpIR* sum_xyz = new cpIR(ecpIR_ADD,sum_xy->getDst(),com_z->getDst());
@@ -263,10 +264,11 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
             output = sum_xyz->getDst();
             if(temp_list.size()==4){
                 cpIR_CONST_I* mask_w = new cpIR_CONST_I();
-                mask_w->m_ix = 0;
+                mask_w->m_ix = 1;
                 mask_w->m_iy = 0;
-                mask_w->m_iz = 1;
+                mask_w->m_iz = 0;
                 mask_w->m_iw = 0;
+                cpInsertInList(mask_w, in_IRList);
                 cpIR* com_w = new cpIR(ecpIR_MUL,temp_list[3],mask_w->getDst());
                 cpInsertInList(com_w,in_IRList);
                 cpIR* sum_wxyz = new cpIR(ecpIR_ADD,sum_xyz->getDst(),com_w->getDst());
@@ -303,11 +305,10 @@ void cpArgumentsNode::print(){
 }
 
 void cpArgumentsNode::generateIR(cpIRList& in_IRList){
-    cpArgumentsNode* arguments = this;
-    while(arguments!=NULL){
-        arguments->getCurrentArgument()->generateIR(in_IRList);
-        arguments->getNextArguments();
+    if(getNextArguments()!=NULL){
+        getNextArguments()->generateIR(in_IRList);
     }
+    getCurrentArgument()->generateIR(in_IRList);
 }
 
 void cpBinaryExpressionNode::printSelf()
@@ -359,8 +360,7 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         }
     }
     newIR = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),m_pChildNodes[1]->getIROutput());
-    newIR->setDst(new cpIRRegister(in_IRList.size()));
-    in_IRList.push_back(newIR);
+    cpInsertInList(newIR,in_IRList);
     m_pIROutput = newIR->getDst();
 }
 
@@ -376,8 +376,12 @@ void cpScopeNode::initialize(va_list in_pArguments)
 }
 
 void cpScopeNode::generateIR(cpIRList& in_IRList){
-    m_pChildNodes[0]->generateIR(in_IRList);
-    m_pChildNodes[1]->generateIR(in_IRList);
+    if(m_pChildNodes[0]!=NULL){
+        m_pChildNodes[0]->generateIR(in_IRList);
+    }
+    if(m_pChildNodes[1]!=NULL){
+        m_pChildNodes[1]->generateIR(in_IRList);
+    }
 }
 
 void cpIfStatementNode::printSelf()
@@ -416,15 +420,16 @@ void cpIfStatementNode::generateIR(cpIRList& in_IRList){
     cpInsertInList(newBr, in_IRList);
     int current_count = in_IRList.size();
     if_statements->generateIR(in_IRList);
-    int delta = in_IRList.size() - current_count;
-    newBr->setOffset(delta);
+    int if_delta = in_IRList.size() - current_count+1;
+    newBr->setOffset(if_delta);
     if(else_statements!=NULL){
+        newBr->setOffset(if_delta+1);
         cpIR_Br* elseBr = new cpIR_Br(0);
         cpInsertInList(elseBr,in_IRList);
         current_count = in_IRList.size();
         else_statements->generateIR(in_IRList);
-        delta = in_IRList.size()-current_count;
-        elseBr->setOffset(delta);
+        int else_delta = in_IRList.size()-current_count+1;
+        elseBr->setOffset(else_delta);
     }
 }
 void cpDeclarationNode::printSelf()
@@ -442,40 +447,47 @@ void cpDeclarationNode::initialize(va_list in_pArguments)
 
 void cpDeclarationNode::generateIR(cpIRList& in_IRList){
     // Allocate an register
-    cpIR* ret = NULL;
-    switch(m_eTargetType){
-        case ecpTerminalType_bool1:
-        case ecpTerminalType_bool2:
-        case ecpTerminalType_bool3:
-        case ecpTerminalType_bool4:{
-            ret = new cpIR_CONST_B();
-            break;
-        }
-        case ecpTerminalType_float1:
-        case ecpTerminalType_float2:
-        case ecpTerminalType_float3:
-        case ecpTerminalType_float4:{
-            ret = new cpIR_CONST_F();
-            break;
-        }
-        case ecpTerminalType_int1:
-        case ecpTerminalType_int2:
-        case ecpTerminalType_int3:
-        case ecpTerminalType_int4:{
-            ret = new cpIR_CONST_I();
-            break;
-        }
-        default:{
-            break;
-        }
+    
+    cpAssignmentNode* node = getAssignmentNode();
+    cpIRRegister* out = NULL;
+    if(node!=NULL){
+        node->getExpression()->generateIR(in_IRList);
+        out = node->getExpression()->getIROutput();
     }
-    gSymbolIRLookUpTable[m_sIdentifierName] = ret;
-    ret->setDst(new cpIRRegister(in_IRList.size()));
-    m_pIROutput = ret->getDst();
-    in_IRList.push_back(ret);
-    if(m_pChildNodes[0]!=NULL){    
-        m_pChildNodes[0]->generateIR(in_IRList);
+    else{
+        cpIR* ret = NULL;
+        switch(m_eTargetType){
+            case ecpTerminalType_bool1:
+            case ecpTerminalType_bool2:
+            case ecpTerminalType_bool3:
+            case ecpTerminalType_bool4:{
+                ret = new cpIR_CONST_B();
+                break;
+            }
+            case ecpTerminalType_float1:
+            case ecpTerminalType_float2:
+            case ecpTerminalType_float3:
+            case ecpTerminalType_float4:{
+                ret = new cpIR_CONST_F();
+                break;
+            }
+            case ecpTerminalType_int1:
+            case ecpTerminalType_int2:
+            case ecpTerminalType_int3:
+            case ecpTerminalType_int4:{
+                ret = new cpIR_CONST_I();
+                break;
+            }
+            default:{
+                break;
+            }
+        }
+        cpInsertInList(ret,in_IRList);
+        out = ret->getDst();
     }
+    
+    gSymbolIRLookUpTable[m_sIdentifierName] = out;
+    m_pIROutput = out;
 }
 
 void cpUnaryExpressionNode::printSelf()
@@ -547,8 +559,7 @@ void cpAssignmentNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     m_pChildNodes[1]->generateIR(in_IRList);
     cpIR* newIR = new cpIR(ecpIR_MOVE,m_pChildNodes[0]->getIROutput(), m_pChildNodes[1]->getIROutput());
-    newIR->setDst(new cpIRRegister(in_IRList.size()));
-    in_IRList.push_back(newIR);
+    cpInsertInList(newIR,in_IRList);
 }
 /** Leaf nodes **/
 void cpFloatNode::print()
@@ -563,8 +574,7 @@ void cpFloatNode::initialize(va_list in_pArguments)
 void cpFloatNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_F* newIR = new cpIR_CONST_F();
     newIR->setScalar(m_value);
-    newIR->setDst(new cpIRRegister(in_IRList.size()));
-    in_IRList.push_back(newIR);
+    cpInsertInList(newIR,in_IRList);
     m_pIROutput = newIR->getDst();
 }
 
@@ -591,8 +601,8 @@ void cpIdentifierNode::generateIR(cpIRList& in_IRList){
     cpSymbolIRLookUpTableItor itor = gSymbolIRLookUpTable.find(m_value);
     if(itor!=gSymbolIRLookUpTable.end()){
         // Found entry
-        cpIR* ir = itor->second;
-        m_pIROutput = new cpIRRegister(ir->getDst()->m_iIRID);
+        cpIRRegister* ir = itor->second;
+        m_pIROutput = ir;
         if(m_bEnableIndex){
             m_pIROutput[m_iAccessIndex] = true;
         }
@@ -614,8 +624,7 @@ void cpIntNode::initialize(va_list in_pArguments)
 void cpIntNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_I* newIR = new cpIR_CONST_I();
     newIR->setScalar(m_value);
-    newIR->setDst(new cpIRRegister(in_IRList.size()));
-    in_IRList.push_back(newIR);
+    cpInsertInList(newIR, in_IRList);
     m_pIROutput = newIR->getDst();
 }
 
@@ -632,8 +641,7 @@ void cpBoolNode::initialize(va_list in_pArguments)
 void cpBoolNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_B* newIR = new cpIR_CONST_B();
     newIR->setScalar(m_value);
-    newIR->setDst(new cpIRRegister(in_IRList.size()));
-    in_IRList.push_back(newIR);
+    cpInsertInList(newIR,in_IRList);
     m_pIROutput = newIR->getDst();
 }
 
@@ -652,12 +660,10 @@ void cpStatementsNode::printSelf()
 }
 
 void cpStatementsNode::generateIR(cpIRList& in_IRList){
-    cpStatementsNode* current_statements = this;
-    while(current_statements!=NULL){
-        cpBaseNode* currentStatement = current_statements->getCurrentStatementNode();
-        currentStatement->generateIR(in_IRList);
-        current_statements = current_statements->getNextStatementsNode();
+    if(getNextStatementsNode()!=NULL){
+        getNextStatementsNode()->generateIR(in_IRList);
     }
+    getCurrentStatementNode()->generateIR(in_IRList);
 }
 
 void cpDeclarationsNode::printSelf()
@@ -673,11 +679,10 @@ void cpDeclarationsNode::initialize(va_list in_pArguments)
 }
 
 void cpDeclarationsNode::generateIR(cpIRList& in_IRList){
-    cpDeclarationsNode* current = this;
-    while(current!=NULL){
-        current->getCurrentDeclarationNode()->generateIR(in_IRList);
-        current = current->getNextDeclarationsNode();
+    if(getNextDeclarationsNode()!=NULL){
+        getNextDeclarationsNode()->generateIR(in_IRList);
     }
+    getCurrentDeclarationNode()->generateIR(in_IRList);
 }
 
 
