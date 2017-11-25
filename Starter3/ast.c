@@ -59,6 +59,7 @@ std::string gFunctionTypeToStringMap[ecpFunctionType_count] = {
 };
 
 std::string gPredefinedVariableString[ecpPredifinedVariable_Count] = {
+    "",
     "gl_FragColor",
     "gl_FragDepth",
     "gl_FragCoord",
@@ -72,7 +73,6 @@ std::string gPredefinedVariableString[ecpPredifinedVariable_Count] = {
     "env1",
     "env2",
     "env3",
-    "tmp"
 };
 
 
@@ -373,7 +373,15 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
             break;
         }
     }
-    newIR = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),m_pChildNodes[1]->getIROutput());
+    cpIRRegister* srcA = m_pChildNodes[0]->getIROutput();
+    cpIRRegister* srcB = m_pChildNodes[0]->getIROutput();
+    if(m_pChildNodes[0]->getIROutput()->hasMasks()){
+        srcA = in_IRList.insert(new cpIR(ecpIR_EPD,srcA,NULL));
+    }
+    if(m_pChildNodes[1]->getIROutput()->hasMasks()){
+        srcB = in_IRList.insert(new cpIR(ecpIR_EPD,srcB,NULL));
+    }
+    newIR = new cpIR(targetOpcode,srcA,srcB);
     m_pIROutput = in_IRList.insert(newIR);
 }
 
@@ -459,6 +467,38 @@ void cpDeclarationNode::generateIR(cpIRList& in_IRList){
     if(node!=NULL){
         node->getExpression()->generateIR(in_IRList);
         out = node->getExpression()->getIROutput();
+        if(node->getExpression()->getNodeKind()==IDENT_NODE){
+            cpIR* ret = NULL;
+            switch(m_eTargetType){
+                case ecpTerminalType_bool1:
+                case ecpTerminalType_bool2:
+                case ecpTerminalType_bool3:
+                case ecpTerminalType_bool4:{
+                    ret = new cpIR_CONST_B();
+                    break;
+                }
+                case ecpTerminalType_float1:
+                case ecpTerminalType_float2:
+                case ecpTerminalType_float3:
+                case ecpTerminalType_float4:{
+                    ret = new cpIR_CONST_F();
+                    break;
+                }
+                case ecpTerminalType_int1:
+                case ecpTerminalType_int2:
+                case ecpTerminalType_int3:
+                case ecpTerminalType_int4:{
+                    ret = new cpIR_CONST_I();
+                    break;
+                }
+                default:{
+                    break;
+                }
+            }
+            cpIRRegister* new_var = in_IRList.insert(ret);
+            in_IRList.insert(new cpIR(ecpIR_MOVE,new_var,out));
+            out = new_var;
+        }
     }
     else{
         cpIR* ret = NULL;
@@ -562,8 +602,43 @@ void cpAssignmentNode::initialize(va_list in_pArguments)
 void cpAssignmentNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     m_pChildNodes[1]->generateIR(in_IRList);
-    cpIR* newIR = new cpIR(ecpIR_MOVE,m_pChildNodes[0]->getIROutput(), m_pChildNodes[1]->getIROutput());
-    in_IRList.insert(newIR);
+    cpIRRegister* dst = m_pChildNodes[0]->getIROutput();
+    cpIRRegister* src = m_pChildNodes[1]->getIROutput();
+    if(dst->hasMasks() || src->hasMasks()){
+        // Generate inverse masks
+        cpIR_CONST_I* dst_inv_mask = new cpIR_CONST_I();
+        dst_inv_mask->m_ix = (dst->m_bMasks[0]==false);
+        dst_inv_mask->m_iy = (dst->m_bMasks[1]==false);
+        dst_inv_mask->m_iz = (dst->m_bMasks[2]==false);
+        dst_inv_mask->m_iw = (dst->m_bMasks[3]==false);
+        in_IRList.insert(dst_inv_mask);
+        cpIRRegister* pre_dst = in_IRList.insert(new cpIR(ecpIR_MUL,dst_inv_mask->getDst(),dst));
+        cpIR_CONST_I* dst_mask = new cpIR_CONST_I();
+        dst_mask->m_ix = (dst->m_bMasks[0]==true);
+        dst_mask->m_iy = (dst->m_bMasks[1]==true);
+        dst_mask->m_iz = (dst->m_bMasks[2]==true);
+        dst_mask->m_iw = (dst->m_bMasks[3]==true);
+        in_IRList.insert(dst_mask);
+        cpIRRegister* expanded_src = src;
+        if(src->hasMasks()){
+            cpIR_CONST_I* src_mask = new cpIR_CONST_I();
+            src_mask->m_ix = (src->m_bMasks[0]==true);
+            src_mask->m_iy = (src->m_bMasks[1]==true);
+            src_mask->m_iz = (src->m_bMasks[2]==true);
+            src_mask->m_iw = (src->m_bMasks[3]==true);
+            in_IRList.insert(src_mask);
+            cpIRRegister* masked_src = in_IRList.insert(new cpIR(ecpIR_MUL,src_mask->getDst(),src));
+            masked_src->copyMasks(src);
+            expanded_src = in_IRList.insert(new cpIR(ecpIR_EPD,masked_src,NULL));
+        }
+        cpIRRegister* src_dstmask = in_IRList.insert(new cpIR(ecpIR_MUL,expanded_src,dst_mask->getDst()));
+        cpIRRegister* final_v = in_IRList.insert(new cpIR(ecpIR_ADD, src_dstmask, pre_dst));
+        in_IRList.insert(new cpIR(ecpIR_MOVE, dst, final_v));    
+    }
+    else{
+        cpIR* newIR = new cpIR(ecpIR_MOVE,m_pChildNodes[0]->getIROutput(), m_pChildNodes[1]->getIROutput());
+        in_IRList.insert(newIR);
+    }
 }
 /** Leaf nodes **/
 void cpFloatNode::print()

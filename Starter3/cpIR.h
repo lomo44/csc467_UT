@@ -35,6 +35,7 @@ enum ecpIROpcode{
     ecpIR_DP3,
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
+    ecpIR_EPD, // Expand an field to all fieds. x -> xxxx
     ecpIR_Count
 };
 
@@ -62,7 +63,7 @@ public:
         m_bMasks[3] = in_bW;
     };
     cpIRRegister(cpIRID in_iID){
-         m_iIRID = in_iID;
+        m_iIRID = in_iID;
         m_bMasks[0] = false;
         m_bMasks[1] = false;
         m_bMasks[2] = false;
@@ -70,22 +71,31 @@ public:
     }
     std::string toString(){
         std::string ret = std::to_string(m_iIRID);
-        if(m_bMasks[0]||m_bMasks[1]||m_bMasks[2]||m_bMasks[3]){
-            ret+=".";
-            if(m_bMasks[0]){
-                ret+="x";
-            }
-            if(m_bMasks[1]){
-                ret+="y";
-            }
-            if(m_bMasks[2]){
-                ret+="z";
-            }
-            if(m_bMasks[3]){
-                ret+="w";
-            }
-        }
+        // if(m_bMasks[0]||m_bMasks[1]||m_bMasks[2]||m_bMasks[3]){
+        //     ret+=".";
+        //     if(m_bMasks[0]){
+        //         ret+="x";
+        //     }
+        //     if(m_bMasks[1]){
+        //         ret+="y";
+        //     }
+        //     if(m_bMasks[2]){
+        //         ret+="z";
+        //     }
+        //     if(m_bMasks[3]){
+        //         ret+="w";
+        //     }
+        // }
         return ret;
+    }
+    bool hasMasks(){
+       return m_bMasks[0]||m_bMasks[1]||m_bMasks[2]||m_bMasks[3];
+    }
+    void copyMasks(cpIRRegister* in_pRegister){
+        m_bMasks[0] = in_pRegister->m_bMasks[0];
+        m_bMasks[1] = in_pRegister->m_bMasks[1];
+        m_bMasks[2] = in_pRegister->m_bMasks[2];
+        m_bMasks[3] = in_pRegister->m_bMasks[3];
     }
     cpIRID m_iIRID;
     bool m_bMasks[ecpRegister_Count];

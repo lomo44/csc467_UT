@@ -113,6 +113,7 @@ enum ecpFunctionType
 
 
 enum ecpPredefinedVariable{
+    ecp_Reserve,
     ecp_gl_FragColor,
     ecp_gl_FragDepth,
     ecp_gl_FragCoord,
@@ -126,7 +127,6 @@ enum ecpPredefinedVariable{
     ecp_env1,
     ecp_env2,
     ecp_env3,
-    ecp_temp,
     ecpPredifinedVariable_Count
 };
 
