@@ -126,6 +126,7 @@ enum ecpPredefinedVariable{
     ecp_env1,
     ecp_env2,
     ecp_env3,
+    ecp_temp,
     ecpPredifinedVariable_Count
 };
 

@@ -71,7 +71,8 @@ std::string gPredefinedVariableString[ecpPredifinedVariable_Count] = {
     "gl_Material_Shininess",
     "env1",
     "env2",
-    "env3"
+    "env3",
+    "tmp"
 };
 
 
@@ -215,8 +216,7 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
             break;
         }
     }
-    in_IRList.insert(ret);
-    m_pIROutput = ret->getDst();
+    m_pIROutput = in_IRList.insert(ret);
 }
 
 
@@ -265,8 +265,7 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
         cpIR* com_y = new cpIR(ecpIR_MUL,temp_list[1],mask_y->getDst());
         in_IRList.insert(com_y);
         cpIR* sum_xy = new cpIR(ecpIR_ADD,com_x->getDst(),com_y->getDst());
-        in_IRList.insert(sum_xy);
-        output = sum_xy->getDst();
+        output = in_IRList.insert(sum_xy);
         if(temp_list.size()>=3){
             cpIR_CONST_I* mask_z = new cpIR_CONST_I();
             mask_z->m_ix = 0;
@@ -277,8 +276,7 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
             cpIR* com_z = new cpIR(ecpIR_MUL,temp_list[2],mask_z->getDst());
             in_IRList.insert(com_z);
             cpIR* sum_xyz = new cpIR(ecpIR_ADD,sum_xy->getDst(),com_z->getDst());
-            in_IRList.insert(sum_xyz);
-            output = sum_xyz->getDst();
+            output = in_IRList.insert(sum_xyz);
             if(temp_list.size()==4){
                 cpIR_CONST_I* mask_w = new cpIR_CONST_I();
                 mask_w->m_ix = 1;
@@ -289,8 +287,7 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
                 cpIR* com_w = new cpIR(ecpIR_MUL,temp_list[3],mask_w->getDst());
                 in_IRList.insert(com_w);
                 cpIR* sum_wxyz = new cpIR(ecpIR_ADD,sum_xyz->getDst(),com_w->getDst());
-                in_IRList.insert(sum_wxyz);
-                output = sum_wxyz->getDst();
+                output = in_IRList.insert(sum_wxyz);
             }
         }
         m_pIROutput = output;
@@ -377,8 +374,7 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         }
     }
     newIR = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),m_pChildNodes[1]->getIROutput());
-    in_IRList.insert(newIR);
-    m_pIROutput = newIR->getDst();
+    m_pIROutput = in_IRList.insert(newIR);
 }
 
 void cpScopeNode::printSelf()
@@ -393,14 +389,12 @@ void cpScopeNode::initialize(va_list in_pArguments)
 }
 
 void cpScopeNode::generateIR(cpIRList& in_IRList){
-    in_IRList.insert(new cpIR(ecpIR_SCOPE_START,NULL,NULL));
     if(m_pChildNodes[0]!=NULL){
         m_pChildNodes[0]->generateIR(in_IRList);
     }
     if(m_pChildNodes[1]!=NULL){
         m_pChildNodes[1]->generateIR(in_IRList);
     }
-    in_IRList.insert(new cpIR(ecpIR_SCOPE_END,NULL,NULL));
 }
 
 void cpIfStatementNode::printSelf()
@@ -433,23 +427,16 @@ void cpIfStatementNode::generateIR(cpIRList& in_IRList){
     cpBaseNode* expression = getExpression();
     expression->generateIR(in_IRList);
     cpIRRegister* expression_reg = expression->getIROutput();
+    
     cpStatementsNode* if_statements = getIfStatements();
     cpStatementsNode* else_statements = getElseStatements();
-    cpIR_Brz* newBr = new cpIR_Brz(0,expression_reg);
-    in_IRList.insert(newBr);
-    int current_count = in_IRList.size();
+    
+    in_IRList.pushIfCondition(expression_reg);
     if_statements->generateIR(in_IRList);
-    int if_delta = in_IRList.size() - current_count+1;
-    newBr->setOffset(if_delta);
     if(else_statements!=NULL){
-        newBr->setOffset(if_delta+1);
-        cpIR_Br* elseBr = new cpIR_Br(0);
-        in_IRList.insert(elseBr);
-        current_count = in_IRList.size();
         else_statements->generateIR(in_IRList);
-        int else_delta = in_IRList.size()-current_count+1;
-        elseBr->setOffset(else_delta);
     }
+    in_IRList.popIfCondition();
 }
 void cpDeclarationNode::printSelf()
 {
@@ -501,8 +488,7 @@ void cpDeclarationNode::generateIR(cpIRList& in_IRList){
                 break;
             }
         }
-        in_IRList.insert(ret);
-        out = ret->getDst();
+        out = in_IRList.insert(ret);
     }
     
     gSymbolIRLookUpTable[m_sIdentifierName] = out;
@@ -550,8 +536,7 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
         }
     }
     ret = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),NULL);
-    in_IRList.insert(ret);
-    m_pIROutput = ret->getDst();
+    m_pIROutput = in_IRList.insert(ret);;
 }
 
 void cpAssignmentNode::printSelf()
@@ -593,8 +578,7 @@ void cpFloatNode::initialize(va_list in_pArguments)
 void cpFloatNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_F* newIR = new cpIR_CONST_F();
     newIR->setScalar(m_value);
-    in_IRList.insert(newIR);
-    m_pIROutput = newIR->getDst();
+    m_pIROutput = in_IRList.insert(newIR);
 }
 
 void cpIdentifierNode::print()
@@ -643,8 +627,7 @@ void cpIntNode::initialize(va_list in_pArguments)
 void cpIntNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_I* newIR = new cpIR_CONST_I();
     newIR->setScalar(m_value);
-    in_IRList.insert(newIR);
-    m_pIROutput = newIR->getDst();
+    m_pIROutput = in_IRList.insert(newIR);
 }
 
 void cpBoolNode::print()
@@ -660,8 +643,7 @@ void cpBoolNode::initialize(va_list in_pArguments)
 void cpBoolNode::generateIR(cpIRList& in_IRList){
     cpIR_CONST_B* newIR = new cpIR_CONST_B();
     newIR->setScalar(m_value);
-    in_IRList.insert(newIR);
-    m_pIROutput = newIR->getDst();
+    m_pIROutput = in_IRList.insert(newIR);
 }
 
 void cpStatementsNode::initialize(va_list in_pArguments)

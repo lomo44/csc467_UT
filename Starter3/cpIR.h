@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <stack>
 // Define some of the opcode of the ir
 typedef int cpIRID;
 
@@ -97,8 +98,13 @@ public:
     cpIR();
     cpIR(ecpIROpcode in_eIROpcode, cpIRRegister* in_SrcA, cpIRRegister* in_SrcB): m_SrcA(in_SrcA),
                                                                             m_SrcB(in_SrcB),
+                                                                            m_Dst(NULL),
                                                                             m_eOpcode(in_eIROpcode){};
-    virtual ~cpIR(){delete m_Dst;};
+    virtual ~cpIR(){
+        if(m_Dst!=NULL){
+            delete m_Dst;
+        }
+    };
     virtual std::string toIRString(){
         std::string ret = "["+std::to_string(m_Dst->m_iIRID)+"] "+toString(m_eOpcode);
         if(m_Dst!=NULL){
@@ -119,6 +125,7 @@ public:
     cpIRRegister*  getSrcB(){return m_SrcB;}
     void           setDst(cpIRRegister* in_Dst){m_Dst=in_Dst;}
     cpIRRegister*  getDst(){return m_Dst;}
+    ecpIROpcode getOpCode(){return m_eOpcode;}
 protected:
     cpIRRegister* m_SrcA;
     cpIRRegister* m_SrcB;
@@ -232,9 +239,12 @@ public:
     int size(){return m_vIRList.size();}
     cpIR*& operator[](int in_iIndex){return m_vIRList[in_iIndex];}
     void print();
-    void insert(cpIR* in_pIR); 
+    cpIRRegister* insert(cpIR* in_pIR); 
+    void pushIfCondition(cpIRRegister* in_pCondition);
+    void popIfCondition();
 private:
     std::vector<cpIR*> m_vIRList;
+    std::stack<cpIRRegister*> m_IfConditionStack;
 };
 
 #endif
