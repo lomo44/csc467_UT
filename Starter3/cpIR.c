@@ -30,6 +30,7 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "SCOPE_END"
 };
 
+
 std::string toString(ecpIROpcode in_eOpcode){
     return gIROpcodeToStringMap[in_eOpcode];
 }

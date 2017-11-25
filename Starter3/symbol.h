@@ -9,10 +9,11 @@
 class cpSymbolAttribute{
 public:
     cpSymbolAttribute(){};
-    cpSymbolAttribute(std::string in_sName, ecpTerminalType in_eType, ecpFunctionQualifier in_eQualifier) : m_sIdentifierName(in_sName)
+    cpSymbolAttribute(std::string in_sName, ecpTerminalType in_eType, ecpFunctionQualifier in_eQualifier, int in_iIsWrite) : m_sIdentifierName(in_sName)
                                                                                                           , m_iType(in_eType)
                                                                                                           , m_eQualifier(in_eQualifier)
-                                                                                                      , m_iVariableSize(-1){};
+                                                                                                          , m_iVariableSize(-1)
+                                                                                                          , m_isWrite(in_iIsWrite){};
     void print();
     std::string m_sIdentifierName;
     ecpTerminalType m_iType;

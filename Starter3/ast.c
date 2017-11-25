@@ -58,6 +58,24 @@ std::string gFunctionTypeToStringMap[ecpFunctionType_count] = {
     "lit"
 };
 
+std::string gPredefinedVariableString[ecpPredifinedVariable_Count] = {
+    "gl_FragColor",
+    "gl_FragDepth",
+    "gl_FragCoord",
+    "gl_TexCoord",
+    "gl_Color",
+    "gl_Secondary",
+    "gl_FogFragCoord",
+    "gl_Light_Half",
+    "gl_Light_Ambient",
+    "gl_Material_Shininess",
+    "env1",
+    "env2",
+    "env3"
+};
+
+
+
 std::string toString(ecpFunctionQualifier in_eQualifier)
 { 
     return gQualifierTypeToStringMap[in_eQualifier];
@@ -742,4 +760,10 @@ void print_cpNode(cpNormalNode *in_pNode)
 void free_cpNode(cpBaseNode *in_pNode)
 {
     delete in_pNode;
+}
+
+void cpInitSymbolIRLookUpTable(){
+    for(int i = 0; i < ecpPredifinedVariable_Count;i++){
+        gSymbolIRLookUpTable[gPredefinedVariableString[i]] = new cpIRRegister(-i);
+    }
 }

@@ -97,6 +97,7 @@ int main (int argc, char *argv[]) {
     fprintf(outputFile,"Failed to compile\n");
   else{
     cpIRList irlist;
+    cpInitSymbolIRLookUpTable();
     gAST->generateIR(irlist);
     cpPrintIR(irlist);
     cpFreeIRList(irlist);

@@ -30,6 +30,7 @@ cpSymbolLookUpTable gSymbolLookUpTable;
 cpSymbolIRLookUpTable gSymbolIRLookUpTable;
 cpSymbolTableNode* gSymbolTable = NULL;
 
+
 void cpSymbolAttribute::print(){
     printf("[Symbol] Name: %s,Type: %s, Qualifier: %s\n",
         m_sIdentifierName.c_str(),
@@ -70,21 +71,21 @@ cpSymbolTableNode* constructSymbolTable(cpBaseNode* in_pNode,cpSymbolTableNode* 
         // pre-defined symbol table is not there, create one
         cpSymbolTableNode* node = new cpSymbolTableNode();
         node->m_pParentScope = NULL;
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragColor",ecpTerminalType_float4,ecpFunctionQualifier_Result));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragDepth",ecpTerminalType_bool1,ecpFunctionQualifier_Result));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Result));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragColor",ecpTerminalType_float4,ecpFunctionQualifier_Result,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragDepth",ecpTerminalType_bool1,ecpFunctionQualifier_Result,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Result,1));
 
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_TexCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Color",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Secondary",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FogFragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_TexCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Color",ecpTerminalType_float4,ecpFunctionQualifier_Attribute,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Secondary",ecpTerminalType_float4,ecpFunctionQualifier_Attribute,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_FogFragCoord",ecpTerminalType_float4,ecpFunctionQualifier_Attribute,1));
 
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Half",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Ambient",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Material_Shininess",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env2",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
-        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env3",ecpTerminalType_float4,ecpFunctionQualifier_Uniform));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Half",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Light_Ambient",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("gl_Material_Shininess",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env1",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env2",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
+        node->m_vSymbolTable.push_back(new cpSymbolAttribute("env3",ecpTerminalType_float4,ecpFunctionQualifier_Uniform,1));
         gSymbolTable = node;
         table = node;
     }

@@ -111,6 +111,25 @@ enum ecpFunctionType
     ecpFunctionType_count
 };
 
+
+enum ecpPredefinedVariable{
+    ecp_gl_FragColor,
+    ecp_gl_FragDepth,
+    ecp_gl_FragCoord,
+    ecp_gl_TexCoord,
+    ecp_gl_Color,
+    ecp_gl_Secondary,
+    ecp_gl_FogFragCoord,
+    ecp_gl_Light_Half,
+    ecp_gl_Light_Ambient,
+    ecp_gl_Material_Shininess,
+    ecp_env1,
+    ecp_env2,
+    ecp_env3,
+    ecpPredifinedVariable_Count
+};
+
+
 std::string toString(ecpFunctionQualifier in_eQualifier);
 std::string toString(ecpTerminalType in_eTerminalType);
 std::string toString(ecpOperand in_eOperand);
@@ -425,5 +444,6 @@ extern cpBaseNode* gAST;
 cpBaseNode *allocate_cpNode(eNodeKind in_nodeKind, ...);
 void free_cpNode(cpBaseNode *in_pNode);
 void print_cpNode(cpBaseNode *in_pNode);
+void cpInitSymbolIRLookUpTable();
 
 #endif /* AST_H_ */
