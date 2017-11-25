@@ -225,16 +225,16 @@ public:
     }
 };
 
-/** cpIRContext
- * Control context that used when traversing ast node and generate IR
- * **/
-struct cpIRContext{
-    cpIR* m_pPreviousIfCondition;
+class cpIRList{
+public:
+    cpIRList(){};
+    virtual ~cpIRList();
+    int size(){return m_vIRList.size();}
+    cpIR*& operator[](int in_iIndex){return m_vIRList[in_iIndex];}
+    void print();
+    void insert(cpIR* in_pIR); 
+private:
+    std::vector<cpIR*> m_vIRList;
 };
 
-typedef std::vector<cpIR*> cpIRList;
-
-void cpPrintIR(cpIRList& in_vlist);
-void cpInsertInList(cpIR* in_pIR, cpIRList& in_List);
-void cpFreeIRList(cpIRList& in_List);
 #endif

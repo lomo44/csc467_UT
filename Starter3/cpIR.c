@@ -35,21 +35,21 @@ std::string toString(ecpIROpcode in_eOpcode){
     return gIROpcodeToStringMap[in_eOpcode];
 }
 
-void cpPrintIR(cpIRList& in_vlist){
-    int size = in_vlist.size();
+void cpIRList::print(){
+    int size = m_vIRList.size();
     for(int i = 0 ; i < size; i++){
-        printf("%s\n",in_vlist[i]->toIRString().c_str());
+        printf("%s\n",m_vIRList[i]->toIRString().c_str());
     }
 }
 
-void cpInsertInList(cpIR* in_pIR, cpIRList& in_List){
-    in_pIR->setDst(new cpIRRegister(in_List.size()));
-    in_List.push_back(in_pIR);
+void cpIRList::insert(cpIR* in_pIR){
+    in_pIR->setDst(new cpIRRegister(m_vIRList.size()));
+    m_vIRList.push_back(in_pIR);
 }
 
-void cpFreeIRList(cpIRList& in_List){
-    int size = in_List.size();
+cpIRList::~cpIRList(){
+    int size = m_vIRList.size();
     for(int i = 0; i < size; i++){
-        delete in_List[i];
+        delete m_vIRList[i];
     }
 }
