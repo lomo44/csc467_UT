@@ -376,12 +376,14 @@ void cpScopeNode::initialize(va_list in_pArguments)
 }
 
 void cpScopeNode::generateIR(cpIRList& in_IRList){
+    cpInsertInList(new cpIR(ecpIR_SCOPE_START,NULL,NULL), in_IRList);
     if(m_pChildNodes[0]!=NULL){
         m_pChildNodes[0]->generateIR(in_IRList);
     }
     if(m_pChildNodes[1]!=NULL){
         m_pChildNodes[1]->generateIR(in_IRList);
     }
+    cpInsertInList(new cpIR(ecpIR_SCOPE_END,NULL,NULL), in_IRList);
 }
 
 void cpIfStatementNode::printSelf()

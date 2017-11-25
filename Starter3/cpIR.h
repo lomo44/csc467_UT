@@ -32,6 +32,8 @@ enum ecpIROpcode{
     ecpIR_LIT,
     ecpIR_RSQ,
     ecpIR_DP3,
+    ecpIR_SCOPE_START,
+    ecpIR_SCOPE_END,
     ecpIR_Count
 };
 

@@ -25,7 +25,9 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "BR",
     "LIT",
     "RSQ",
-    "DP3"
+    "DP3",
+    "SCOPE_START",
+    "SCOPE_END"
 };
 
 std::string toString(ecpIROpcode in_eOpcode){
