@@ -605,9 +605,9 @@ void cpIdentifierNode::generateIR(cpIRList& in_IRList){
     if(itor!=gSymbolIRLookUpTable.end()){
         // Found entry
         cpIRRegister* ir = itor->second;
-        m_pIROutput = ir;
+        m_pIROutput = new cpIRRegister(ir->m_iIRID);
         if(m_bEnableIndex){
-            m_pIROutput[m_iAccessIndex] = true;
+            m_pIROutput->m_bMasks[m_iAccessIndex] = true;
         }
     }
     else{

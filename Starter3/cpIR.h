@@ -103,6 +103,7 @@ public:
     virtual ~cpIR(){
         if(m_Dst!=NULL){
             delete m_Dst;
+            m_Dst = NULL;
         }
     };
     virtual std::string toIRString(){
