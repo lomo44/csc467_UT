@@ -406,10 +406,30 @@ void cpIfStatementNode::initialize(va_list in_pArguments)
     setChildNodes(va_arg(in_pArguments, cpBaseNode *), 2);
 }
 
+void cpIfStatementNode::generateIR(cpIRList& in_IRList){
+    cpBaseNode* expression = getExpression();
+    expression->generateIR(in_IRList);
+    cpIRRegister* expression_reg = expression->getIROutput();
+    cpStatementsNode* if_statements = getIfStatements();
+    cpStatementsNode* else_statements = getElseStatements();
+    cpIR_Brz* newBr = new cpIR_Brz(0,expression_reg);
+    cpInsertInList(newBr, in_IRList);
+    int current_count = in_IRList.size();
+    if_statements->generateIR(in_IRList);
+    int delta = in_IRList.size() - current_count;
+    newBr->setOffset(delta);
+    if(else_statements!=NULL){
+        cpIR_Br* elseBr = new cpIR_Br(0);
+        cpInsertInList(elseBr,in_IRList);
+        current_count = in_IRList.size();
+        else_statements->generateIR(in_IRList);
+        delta = in_IRList.size()-current_count;
+        elseBr->setOffset(delta);
+    }
+}
 void cpDeclarationNode::printSelf()
 {
     printf("Declaration %s %s %s\n",::toString(m_eQualifier).c_str(),::toString(m_eTargetType).c_str(),m_sIdentifierName.c_str());
-    //TODO: reImplement this
 }
 void cpDeclarationNode::initialize(va_list in_pArguments)
 {

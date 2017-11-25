@@ -185,6 +185,32 @@ public:
     bool m_bz;
 };
 
+class cpIR_Br : public cpIR{
+public:
+    cpIR_Br(int in_iOffset) : cpIR(ecpIR_BR,NULL,NULL){
+        m_iOffset = in_iOffset; 
+    };
+    virtual ~cpIR_Br(){};
+    virtual std::string toIRString(){
+        return toString(m_eOpcode)+" "+std::to_string(m_iOffset);
+    }
+    virtual void setOffset(int in_iOffset){m_iOffset = in_iOffset;}
+    virtual int getOffset(){return m_iOffset;}
+protected:
+    int m_iOffset;
+};
+
+class cpIR_Brz : public cpIR_Br{
+public:
+    cpIR_Brz(int in_iOffset, cpIRRegister* in_pSrcA) : cpIR_Br(in_iOffset){
+        m_Dst = in_pSrcA;
+    }
+    virtual ~cpIR_Brz(){};
+    virtual std::string toIRString(){
+        return toString(m_eOpcode)+" "+m_Dst->toString()+" "+std::to_string(m_iOffset);
+    }
+};
+
 /** cpIRContext
  * Control context that used when traversing ast node and generate IR
  * **/

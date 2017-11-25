@@ -344,6 +344,7 @@ class cpIfStatementNode : public cpNormalNode
     virtual void printSelf();
     virtual void print();
     virtual std::string toString() {return "if Statement";}
+    virtual void generateIR(cpIRList& in_IRList);
     cpBaseNode* getExpression(){return m_pChildNodes[0];}
     cpStatementsNode* getIfStatements(){return (cpStatementsNode*)m_pChildNodes[1];}
     cpStatementsNode* getElseStatements(){return (cpStatementsNode*)m_pChildNodes[2];}
