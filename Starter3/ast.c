@@ -362,6 +362,7 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         case ecpOperand_B_EQ:{targetOpcode=ecpIR_EQ;break;}
         case ecpOperand_B_NEQ:{targetOpcode=ecpIR_NEQ;break;}
         case ecpOperand_B_LEQ:{targetOpcode=ecpIR_LEQ;break;}
+        case ecpOperand_B_LT:{targetOpcode=ecpIR_LEQ;break;}
         case ecpOperand_B_GT:{targetOpcode=ecpIR_GT;break;}
         case ecpOperand_B_GEQ:{targetOpcode=ecpIR_GEQ;break;}
         case ecpOperand_B_PLUS:{targetOpcode=ecpIR_ADD;break;}
@@ -374,7 +375,7 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         }
     }
     cpIRRegister* srcA = m_pChildNodes[0]->getIROutput();
-    cpIRRegister* srcB = m_pChildNodes[0]->getIROutput();
+    cpIRRegister* srcB = m_pChildNodes[1]->getIROutput();
     if(m_pChildNodes[0]->getIROutput()->hasMasks()){
         srcA = in_IRList.insert(new cpIR(ecpIR_EPD,srcA,NULL));
     }
