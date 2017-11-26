@@ -602,43 +602,34 @@ void cpAssignmentNode::initialize(va_list in_pArguments)
 void cpAssignmentNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     m_pChildNodes[1]->generateIR(in_IRList);
+    // Getting output registerss
     cpIRRegister* dst = m_pChildNodes[0]->getIROutput();
     cpIRRegister* src = m_pChildNodes[1]->getIROutput();
+    /**
+     * Check if any of the instruction has an array index, if yes
+     * then we need to expand it and mask it to the correct location
+     **/
     if(dst->hasMasks() || src->hasMasks()){
-        // Generate inverse masks
-        cpIR_CONST_I* dst_inv_mask = new cpIR_CONST_I();
-        dst_inv_mask->m_ix = (dst->m_bMasks[0]==false);
-        dst_inv_mask->m_iy = (dst->m_bMasks[1]==false);
-        dst_inv_mask->m_iz = (dst->m_bMasks[2]==false);
-        dst_inv_mask->m_iw = (dst->m_bMasks[3]==false);
-        in_IRList.insert(dst_inv_mask);
-        cpIRRegister* pre_dst = in_IRList.insert(new cpIR(ecpIR_MUL,dst_inv_mask->getDst(),dst));
-        cpIR_CONST_I* dst_mask = new cpIR_CONST_I();
-        dst_mask->m_ix = (dst->m_bMasks[0]==true);
-        dst_mask->m_iy = (dst->m_bMasks[1]==true);
-        dst_mask->m_iz = (dst->m_bMasks[2]==true);
-        dst_mask->m_iw = (dst->m_bMasks[3]==true);
-        in_IRList.insert(dst_mask);
-        cpIRRegister* expanded_src = src;
+        // Generate inverse masks for src
         if(src->hasMasks()){
-            cpIR_CONST_I* src_mask = new cpIR_CONST_I();
-            src_mask->m_ix = (src->m_bMasks[0]==true);
-            src_mask->m_iy = (src->m_bMasks[1]==true);
-            src_mask->m_iz = (src->m_bMasks[2]==true);
-            src_mask->m_iw = (src->m_bMasks[3]==true);
+            cpIR_CONST_I* src_mask = cpIR_CONST_I::generateMaskIR(src);
             in_IRList.insert(src_mask);
             cpIRRegister* masked_src = in_IRList.insert(new cpIR(ecpIR_MUL,src_mask->getDst(),src));
+            masked_src = new cpIRRegister(*masked_src);
             masked_src->copyMasks(src);
-            expanded_src = in_IRList.insert(new cpIR(ecpIR_EPD,masked_src,NULL));
+            src = in_IRList.insert(new cpIR(ecpIR_EPD,masked_src,NULL));
         }
-        cpIRRegister* src_dstmask = in_IRList.insert(new cpIR(ecpIR_MUL,expanded_src,dst_mask->getDst()));
-        cpIRRegister* final_v = in_IRList.insert(new cpIR(ecpIR_ADD, src_dstmask, pre_dst));
-        in_IRList.insert(new cpIR(ecpIR_MOVE, dst, final_v));    
+        if(dst->hasMasks()){
+            cpIR_CONST_I* inv_mask = cpIR_CONST_I::generateInvMaskIR(dst); 
+            in_IRList.insert(inv_mask);
+            cpIRRegister* pre_dst = in_IRList.insert(new cpIR(ecpIR_MUL,inv_mask->getDst(),dst));
+            cpIR_CONST_I* dst_mask = cpIR_CONST_I::generateMaskIR(dst);
+            in_IRList.insert(dst_mask);
+            cpIR* final_v = new cpIR(ecpIR_MUL,src,dst_mask->getDst());
+            src = in_IRList.insert(new cpIR(ecpIR_ADD,in_IRList.insert(final_v),pre_dst));
+        }
     }
-    else{
-        cpIR* newIR = new cpIR(ecpIR_MOVE,m_pChildNodes[0]->getIROutput(), m_pChildNodes[1]->getIROutput());
-        in_IRList.insert(newIR);
-    }
+    in_IRList.insert(new cpIR(ecpIR_MOVE,dst,src));  
 }
 /** Leaf nodes **/
 void cpFloatNode::print()
