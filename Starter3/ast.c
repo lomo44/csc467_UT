@@ -563,21 +563,30 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     cpIR* ret = NULL;
     ecpIROpcode targetOpcode;
+    cpIRRegister* reg = new cpIRRegister(*(m_pChildNodes[0]->getIROutput()));
     switch(m_eOperand){
         case ecpOperand_U_NEG:{
             targetOpcode = ecpIR_NEG;
+            reg->negate();
+            ret = new cpIR(targetOpcode,reg,NULL);
+            m_pIROutput = in_IRList.insert(ret);
             break;
         }
         case ecpOperand_U_NOT:{
             targetOpcode = ecpIR_NOT;
+            reg->not_();
+            cpIR_CONST_B* bool0 = new cpIR_CONST_B();
+            bool0->setScalar(0);
+            cpIR_CONST_B* bool1 = new cpIR_CONST_B();
+            bool1->setScalar(1);
+            ret = new cpIR (ecpIR_LRP,reg,in_IRList.insert(bool0),in_IRList.insert(bool1));
+            m_pIROutput = in_IRList.insert(ret);
             break;
         }
         default:{
             break;
         }
     }
-    ret = new cpIR(targetOpcode,m_pChildNodes[0]->getIROutput(),NULL);
-    m_pIROutput = in_IRList.insert(ret);;
 }
 
 void cpAssignmentNode::printSelf()

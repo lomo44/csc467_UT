@@ -26,6 +26,7 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "LIT",
     "RSQ",
     "DP3",
+    "LRP",
     "SCOPE_START",
     "SCOPE_END",
     "EPD"
@@ -50,8 +51,16 @@ cpIRRegister* cpIRList::insert(cpIR* in_pIR){
             cpIRRegister* currentCondition = m_IfConditionStack.top();
             cpIRRegister* dst = in_pIR->getSrcA();
             cpIRRegister* src = in_pIR->getSrcB();
-            cpIR* negate = new cpIR(ecpIR_NEG, currentCondition,NULL);
-            cpIRRegister* negCon = insert(negate);
+            /***********replace not with LRT***************/
+            cpIRRegister * condition =  new cpIRRegister(*currentCondition);
+            condition->not_();
+            cpIR_CONST_B* bool0 = new cpIR_CONST_B();
+            bool0->setScalar(0);
+            cpIR_CONST_B* bool1 = new cpIR_CONST_B();
+            bool1->setScalar(1);
+            cpIR* notCondition = new cpIR(ecpIR_LRP,condition,insert(bool0),insert(bool1));
+            cpIRRegister* negCon = insert(notCondition);
+            /***********************************************/
             cpIR* src_sum = new cpIR(ecpIR_MUL,src,currentCondition);
             cpIR* dst_sum = new cpIR(ecpIR_MUL,dst,negCon);
             cpIR* total_sum = new cpIR(ecpIR_ADD, insert(src_sum),insert(dst_sum));
@@ -63,6 +72,8 @@ cpIRRegister* cpIRList::insert(cpIR* in_pIR){
             return output->getDst();
         }
     }
+    if (in_pIR->getOpCode() == ecpIR_NEG) 
+        in_pIR->setOpCode(ecpIR_MOVE);
     in_pIR->setDst(new cpIRRegister(m_vIRList.size()));
     m_vIRList.push_back(in_pIR);
     return in_pIR->getDst();

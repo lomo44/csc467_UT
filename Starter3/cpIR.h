@@ -33,6 +33,7 @@ enum ecpIROpcode
     ecpIR_LIT,
     ecpIR_RSQ,
     ecpIR_DP3,
+    ecpIR_LRP,
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
     ecpIR_EPD, // Expand an field to all fieds. x -> xxxx
@@ -81,6 +82,23 @@ class cpIRRegister
         m_bMasks[2] = rhs.m_bMasks[2];
         m_bMasks[3] = rhs.m_bMasks[3];
     }
+
+    void negate(){
+        m_iIRID = -m_iIRID;
+        m_bMasks[0]= - m_bMasks[0];
+        m_bMasks[1]= - m_bMasks[1];
+        m_bMasks[2]= - m_bMasks[2];
+        m_bMasks[3]= - m_bMasks[3];
+    }
+
+     void not_(){
+        m_iIRID = m_iIRID;
+        m_bMasks[0]= ! m_bMasks[0];
+        m_bMasks[1]= ! m_bMasks[1];
+        m_bMasks[2]= ! m_bMasks[2];
+        m_bMasks[3]= ! m_bMasks[3];
+    }
+
     std::string toString()
     {
         std::string ret = std::to_string(m_iIRID);
@@ -124,8 +142,15 @@ class cpIR
     cpIR();
     cpIR(ecpIROpcode in_eIROpcode, cpIRRegister *in_SrcA, cpIRRegister *in_SrcB) : m_SrcA(in_SrcA),
                                                                                    m_SrcB(in_SrcB),
+                                                                                   m_SrcC(NULL),
                                                                                    m_Dst(NULL),
                                                                                    m_eOpcode(in_eIROpcode){};
+    cpIR(ecpIROpcode in_eIROpcode, cpIRRegister *in_SrcA, cpIRRegister *in_SrcB, cpIRRegister *in_SrcC) : m_SrcA(in_SrcA),
+                                                                                                          m_SrcB(in_SrcB),
+                                                                                                          m_SrcC(in_SrcC),
+                                                                                                          m_Dst(NULL),
+                                                                                                          m_eOpcode(in_eIROpcode){};
+    
     virtual ~cpIR()
     {
         if (m_Dst != NULL)
@@ -152,6 +177,11 @@ class cpIR
             ret += " ";
             ret += m_SrcB->toString();
         }
+        if (m_SrcC != NULL)
+        {
+            ret += " ";
+            ret += m_SrcC->toString();
+        }
         return ret;
     };
     cpIRRegister *getSrcA() { return m_SrcA; }
@@ -159,10 +189,12 @@ class cpIR
     void setDst(cpIRRegister *in_Dst) { m_Dst = in_Dst; }
     cpIRRegister *getDst() { return m_Dst; }
     ecpIROpcode getOpCode() { return m_eOpcode; }
+    void setOpCode(ecpIROpcode in_eIROpcode) { m_eOpcode = in_eIROpcode; }
 
   protected:
     cpIRRegister *m_SrcA;
     cpIRRegister *m_SrcB;
+    cpIRRegister *m_SrcC;
     cpIRRegister *m_Dst;
     ecpIROpcode m_eOpcode;
 };
