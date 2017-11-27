@@ -36,7 +36,6 @@ enum ecpIROpcode
     ecpIR_LRP,
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
-    ecpIR_EPD, // Expand an field to all fieds. x -> xxxx
     ecpIR_Count
 };
 

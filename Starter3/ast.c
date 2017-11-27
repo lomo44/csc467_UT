@@ -379,10 +379,10 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
     }
 
     if(m_pChildNodes[0]->getIROutput()->hasMasks()){
-        srcA = in_IRList.insert(new cpIR(ecpIR_EPD,srcA,NULL));
+        srcA = in_IRList.insert(new cpIR(ecpIR_POW,srcA,NULL));
     }
     if(m_pChildNodes[1]->getIROutput()->hasMasks()){
-        srcB = in_IRList.insert(new cpIR(ecpIR_EPD,srcB,NULL));
+        srcB = in_IRList.insert(new cpIR(ecpIR_POW,srcB,NULL));
     }
     if(targetOpcode == ecpIR_EQ)
     {
@@ -640,7 +640,7 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     ecpIROpcode targetOpcode;
     cpIRRegister* reg = NULL;
     if(m_pChildNodes[0]->getIROutput()->hasMasks())
-        reg = in_IRList.insert(new cpIR(ecpIR_EPD,m_pChildNodes[0]->getIROutput(),NULL));
+        reg = in_IRList.insert(new cpIR(ecpIR_POW,m_pChildNodes[0]->getIROutput(),NULL));
     else 
         reg = new cpIRRegister(*(m_pChildNodes[0]->getIROutput()));
     switch(m_eOperand){
@@ -706,7 +706,7 @@ void cpAssignmentNode::generateIR(cpIRList& in_IRList){
             cpIRRegister* masked_src = in_IRList.insert(new cpIR(ecpIR_MUL,src_mask->getDst(),src));
             masked_src = new cpIRRegister(*masked_src);
             masked_src->copyMasks(src);
-            src = in_IRList.insert(new cpIR(ecpIR_EPD,masked_src,NULL));
+            src = in_IRList.insert(new cpIR(ecpIR_POW,masked_src,NULL));
         }
         if(dst->hasMasks()){
             cpIR_CONST_I* inv_mask = cpIR_CONST_I::generateInvMaskIR(dst); 
