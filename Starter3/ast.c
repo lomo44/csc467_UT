@@ -356,15 +356,18 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[1]->generateIR(in_IRList);
     cpIR* newIR = NULL;
     ecpIROpcode targetOpcode;
+    cpIRRegister* srcA = m_pChildNodes[0]->getIROutput();
+    cpIRRegister* srcB = m_pChildNodes[1]->getIROutput();
+    cpIRRegister* srcC = NULL;
     switch(m_eOperand){
         case ecpOperand_B_AND:{targetOpcode=ecpIR_AND;break;}
         case ecpOperand_B_OR:{targetOpcode=ecpIR_OR;break;}
         case ecpOperand_B_EQ:{targetOpcode=ecpIR_EQ;break;}
         case ecpOperand_B_NEQ:{targetOpcode=ecpIR_NEQ;break;}
         case ecpOperand_B_LEQ:{targetOpcode=ecpIR_LEQ;break;}
-        case ecpOperand_B_LT:{targetOpcode=ecpIR_LEQ;break;}
+        case ecpOperand_B_LT:{targetOpcode=ecpIR_SLT;break;}
         case ecpOperand_B_GT:{targetOpcode=ecpIR_GT;break;}
-        case ecpOperand_B_GEQ:{targetOpcode=ecpIR_GEQ;break;}
+        case ecpOperand_B_GEQ:{targetOpcode=ecpIR_SGE;break;}
         case ecpOperand_B_PLUS:{targetOpcode=ecpIR_ADD;break;}
         case ecpOperand_B_MINUS:{targetOpcode=ecpIR_SUB;break;}
         case ecpOperand_B_MUL:{targetOpcode=ecpIR_MUL;break;}
@@ -374,15 +377,87 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
             break;
         }
     }
-    cpIRRegister* srcA = m_pChildNodes[0]->getIROutput();
-    cpIRRegister* srcB = m_pChildNodes[1]->getIROutput();
+
     if(m_pChildNodes[0]->getIROutput()->hasMasks()){
         srcA = in_IRList.insert(new cpIR(ecpIR_EPD,srcA,NULL));
     }
     if(m_pChildNodes[1]->getIROutput()->hasMasks()){
         srcB = in_IRList.insert(new cpIR(ecpIR_EPD,srcB,NULL));
     }
-    newIR = new cpIR(targetOpcode,srcA,srcB);
+    if(targetOpcode == ecpIR_EQ)
+    {
+        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
+        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
+        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
+        srcA=temp_a;
+        srcB=temp_b;
+        targetOpcode = ecpIR_MUL;
+    }
+    if(targetOpcode == ecpIR_NEQ)
+    {
+        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
+        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
+        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
+        cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
+        /*************************! srcA == SrcB******************************/
+        equal->not_();
+        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
+        bool0->setScalar(0);
+        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
+        bool1->setScalar(1);
+        srcA = equal;
+        srcB = in_IRList.insert(bool0);
+        srcC = in_IRList.insert(bool1);   
+        targetOpcode = ecpIR_LRP; 
+    }
+    if(targetOpcode == ecpIR_LEQ)
+    {
+        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
+        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
+        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
+        cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
+        /************************srcA<srcB || srcA == SrcB********************/
+        cpIRRegister* lt = in_IRList.insert(new cpIR(ecpIR_SLT,srcA,srcB));
+        srcA = equal;
+        srcB = lt;
+        targetOpcode = ecpIR_ADD;
+    }
+    if(targetOpcode == ecpIR_GT)
+    {
+        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
+        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
+        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
+        cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
+        /*******************srcA < SrcB && srcA == SrcB************************/
+        cpIRRegister* lt = in_IRList.insert(new cpIR(ecpIR_SLT,srcA,srcB));
+        cpIRRegister* leq = in_IRList.insert(new cpIR(ecpIR_ADD,equal,lt));
+        /*******************! srcA <= srcB************************************/
+        leq->not_();
+        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
+        bool0->setScalar(0);
+        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
+        bool1->setScalar(1);
+        srcA = leq;
+        srcB = in_IRList.insert(bool0);
+        srcC = in_IRList.insert(bool1);   
+        targetOpcode = ecpIR_LRP; 
+    }
+    if(targetOpcode == ecpIR_AND)
+        targetOpcode = ecpIR_MUL;
+    if(targetOpcode == ecpIR_OR)
+    {
+        cpIRRegister* add = in_IRList.insert(new cpIR(ecpIR_ADD,srcA,srcB));
+        cpIRRegister* mul = in_IRList.insert(new cpIR(ecpIR_MUL,srcA,srcB));
+        srcA = add;
+        srcB = mul;
+        targetOpcode = ecpIR_SUB;
+    }
+    if(targetOpcode == ecpIR_DIV)
+    {
+        srcB = in_IRList.insert(new cpIR(ecpIR_RSQ,srcB,NULL));
+        targetOpcode = ecpIR_MUL;
+    }
+    newIR = new cpIR(targetOpcode,srcA,srcB,srcC);
     m_pIROutput = in_IRList.insert(newIR);
 }
 
@@ -563,7 +638,11 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     cpIR* ret = NULL;
     ecpIROpcode targetOpcode;
-    cpIRRegister* reg = new cpIRRegister(*(m_pChildNodes[0]->getIROutput()));
+    cpIRRegister* reg = NULL;
+    if(m_pChildNodes[0]->getIROutput()->hasMasks())
+        reg = in_IRList.insert(new cpIR(ecpIR_EPD,m_pChildNodes[0]->getIROutput(),NULL));
+    else 
+        reg = new cpIRRegister(*(m_pChildNodes[0]->getIROutput()));
     switch(m_eOperand){
         case ecpOperand_U_NEG:{
             targetOpcode = ecpIR_NEG;
