@@ -28,7 +28,7 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "DP3",
     "LRP",
     "SCOPE_START",
-    "SCOPE_END",
+    "SCOPE_END"
 };
 
 

@@ -540,75 +540,37 @@ void cpDeclarationNode::generateIR(cpIRList& in_IRList){
     
     cpAssignmentNode* node = getAssignmentNode();
     cpIRRegister* out = NULL;
-    if(node!=NULL){
-        node->getExpression()->generateIR(in_IRList);
-        out = node->getExpression()->getIROutput();
-        if(node->getExpression()->getNodeKind()==IDENT_NODE){
-            cpIR* ret = NULL;
-            switch(m_eTargetType){
-                case ecpTerminalType_bool1:
-                case ecpTerminalType_bool2:
-                case ecpTerminalType_bool3:
-                case ecpTerminalType_bool4:{
-                    ret = new cpIR_CONST_B();
-                    break;
-                }
-                case ecpTerminalType_float1:
-                case ecpTerminalType_float2:
-                case ecpTerminalType_float3:
-                case ecpTerminalType_float4:{
-                    ret = new cpIR_CONST_F();
-                    break;
-                }
-                case ecpTerminalType_int1:
-                case ecpTerminalType_int2:
-                case ecpTerminalType_int3:
-                case ecpTerminalType_int4:{
-                    ret = new cpIR_CONST_I();
-                    break;
-                }
-                default:{
-                    break;
-                }
-            }
-            cpIRRegister* new_var = in_IRList.insert(ret);
-            in_IRList.insert(new cpIR(ecpIR_MOVE,new_var,out));
-            out = new_var;
+    cpIR* ret = NULL;
+    switch(m_eTargetType){
+        case ecpTerminalType_bool1:
+        case ecpTerminalType_bool2:
+        case ecpTerminalType_bool3:
+        case ecpTerminalType_bool4:{
+        ret = new cpIR_CONST_B();
+        break;
+        }
+        case ecpTerminalType_float1:
+        case ecpTerminalType_float2:
+        case ecpTerminalType_float3:
+        case ecpTerminalType_float4:{
+        ret = new cpIR_CONST_F();
+        break;
+        }
+        case ecpTerminalType_int1:
+        case ecpTerminalType_int2:
+        case ecpTerminalType_int3:
+        case ecpTerminalType_int4:{
+        ret = new cpIR_CONST_I();
+        break;
+        }
+        default:{
+            break;
         }
     }
-    else{
-        cpIR* ret = NULL;
-        switch(m_eTargetType){
-            case ecpTerminalType_bool1:
-            case ecpTerminalType_bool2:
-            case ecpTerminalType_bool3:
-            case ecpTerminalType_bool4:{
-                ret = new cpIR_CONST_B();
-                break;
-            }
-            case ecpTerminalType_float1:
-            case ecpTerminalType_float2:
-            case ecpTerminalType_float3:
-            case ecpTerminalType_float4:{
-                ret = new cpIR_CONST_F();
-                break;
-            }
-            case ecpTerminalType_int1:
-            case ecpTerminalType_int2:
-            case ecpTerminalType_int3:
-            case ecpTerminalType_int4:{
-                ret = new cpIR_CONST_I();
-                break;
-            }
-            default:{
-                break;
-            }
-        }
-        out = in_IRList.insert(ret);
-    }
-    
+    out=in_IRList.insert(ret);
     gSymbolIRLookUpTable[m_sIdentifierName] = out;
-    m_pIROutput = out;
+    m_pIROutput = out;  
+    if(node!=NULL) node->generateIR(in_IRList);    
 }
 
 void cpUnaryExpressionNode::printSelf()

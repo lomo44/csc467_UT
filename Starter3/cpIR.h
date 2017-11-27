@@ -37,7 +37,7 @@ enum ecpIROpcode
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
     ecpIR_Count
-};
+    };
 
 enum ecpRegisterScalar
 {
