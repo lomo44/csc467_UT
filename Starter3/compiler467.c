@@ -99,6 +99,9 @@ int main (int argc, char *argv[]) {
     cpIRList irlist;
     cpInitSymbolIRLookUpTable();
     gAST->generateIR(irlist);
+    irlist.genDependency();
+    irlist.color_ordering();
+    irlist.regRename();
     irlist.print();
   }
    // genCode(ast);
