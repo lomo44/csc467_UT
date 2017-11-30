@@ -193,7 +193,7 @@ void cpIRList::registerMapping(){
         // Iterate through the entire inteference set and find all the interferences
         while(start!=end){
             int color = (*start)->m_iColor;
-            if(color > 0 && current_set.find(color) == current_set.end()){
+            if(color >= 0 && current_set.find(color) == current_set.end()){
                 // new interference color, insert
                 current_set.insert(color);
             }
@@ -211,6 +211,7 @@ void cpIRList::registerMapping(){
             assigned_color = chromatic_number;
             chromatic_number++;
         }
+        current_r->m_iColor = assigned_color;
         current_set.clear();
     }
     /*************************some test**************************

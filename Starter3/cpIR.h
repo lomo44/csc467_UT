@@ -86,25 +86,11 @@ class cpIRRegister
     std::string toString()
     {
         std::string ret = std::to_string(m_iIRID);
-        // if(m_bMasks[0]||m_bMasks[1]||m_bMasks[2]||m_bMasks[3]){
-        //     ret+=".";
-        //     if(m_bMasks[0]){
-        //         ret+="x";
-        //     }
-        //     if(m_bMasks[1]){
-        //         ret+="y";
-        //     }
-        //     if(m_bMasks[2]){
-        //         ret+="z";
-        //     }
-        //     if(m_bMasks[3]){
-        //         ret+="w";        m_iIRID = m_iIRID;
-        //     }
-        // }
         return ret;
     }
     bool isPredifined(){return m_iIRID < 0;}
     void updateInterferenceSet(cpRegisterSet& in_rLiveSet);
+    std::string getInterferenceSet(){return m_InterferenceSet.toString();}
     cpIRID m_iIRID;
     cpRegisterSet m_InterferenceSet;
     int m_iColor;
@@ -143,7 +129,7 @@ class cpIR
     };
     virtual std::string toIRString()
     {
-        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode);
+        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "->" + std::to_string(m_Dst->m_iColor)+"] " + toString(m_eOpcode);
         if (m_Dst != NULL)
         {
             ret += " ";
@@ -173,8 +159,10 @@ class cpIR
                 ret += toString(m_eSrcCMask);
             }
         }
-        ret += " ";
+        ret += " L:";
         ret += m_LiveSet.toString();
+        ret += " I:";
+        ret += m_Dst->getInterferenceSet();
         return ret;
     };
     cpIRRegister *          getSrcA() { return m_SrcA; }
@@ -222,10 +210,12 @@ class cpIR_CONST_F : public cpIR_CONST
     virtual ~cpIR_CONST_F(){};
     virtual std::string toIRString()
     {
-        std::string ret= "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_fx) + "," +
+        std::string ret= "[" + std::to_string(m_Dst->m_iIRID)+ "->" + std::to_string(m_Dst->m_iColor) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_fx) + "," +
                           std::to_string(m_fy) + "," +
                           std::to_string(m_fz) + "," +
-                          std::to_string(m_fw) + ")" + m_LiveSet.toString();
+                          std::to_string(m_fw) + ")" +
+                          " L:"+m_LiveSet.toString() +
+                          " I:"+m_Dst->getInterferenceSet();
         //   if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){
@@ -261,10 +251,12 @@ class cpIR_CONST_I : public cpIR_CONST
     virtual ~cpIR_CONST_I(){};
     virtual std::string toIRString()
     {
-        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_ix) + "," +
+        std::string ret = "[" + std::to_string(m_Dst->m_iIRID)+ "->" + std::to_string(m_Dst->m_iColor) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_ix) + "," +
                             std::to_string(m_iy) + "," +
                             std::to_string(m_iz) + "," +
-                            std::to_string(m_iw) + ")" + m_LiveSet.toString();
+                            std::to_string(m_iw) + ")" + 
+                            " L:"+m_LiveSet.toString() +
+                            " I:"+m_Dst->getInterferenceSet();
         //  if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){
@@ -318,10 +310,12 @@ class cpIR_CONST_B : public cpIR_CONST
     virtual ~cpIR_CONST_B(){};
     virtual std::string toIRString()
     {
-        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_bx) + "," +
+        std::string ret = "[" + std::to_string(m_Dst->m_iIRID)+ "->" + std::to_string(m_Dst->m_iColor) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_bx) + "," +
                             std::to_string(m_by) + "," +
                             std::to_string(m_bz) + "," +
-                            std::to_string(m_bw) + ")" + m_LiveSet.toString();
+                            std::to_string(m_bw) + ")" + 
+                            " L:"+m_LiveSet.toString() +
+                            " I:"+m_Dst->getInterferenceSet();
         //  if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){

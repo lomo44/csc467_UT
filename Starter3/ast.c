@@ -202,8 +202,10 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
         if(currentArgument->getNodeKind() == IDENT_NODE){
             cpIdentifierNode* identifier_node = (cpIdentifierNode*)currentArgument;
             if(identifier_node->isIndexEnable()){
-                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),NULL);
+                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),in_IRList.getConst(1));
+                expand_src->setSrcBMask(ecpRegister_X);                
                 expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
+
                 tempList.push_back(in_IRList.insert(expand_src));
             }
             else{
@@ -265,7 +267,8 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
         if(currentArgument->getNodeKind() == IDENT_NODE){
             cpIdentifierNode* identifier_node = (cpIdentifierNode*)currentArgument;
             if(identifier_node->isIndexEnable()){
-                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),NULL);
+                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),in_IRList.getConst(1));
+                expand_src->setSrcBMask(ecpRegister_X);                
                 expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
                 temp_list.push_back(in_IRList.insert(expand_src));
             }
@@ -415,8 +418,9 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         cpIdentifierNode* lhs = (cpIdentifierNode*)(m_pChildNodes[0]);
         if(lhs->isIndexEnable()){
             // index is enable, we need to expand the field;
-            cpIR* lhs_expanded = new cpIR(ecpIR_POW,srcA,NULL);
+            cpIR* lhs_expanded = new cpIR(ecpIR_POW,srcA,in_IRList.getConst(1));
             lhs_expanded->setSrcAMask((ecpRegisterMask)lhs->getAccessIndex());
+            lhs_expanded->setSrcBMask(ecpRegister_X);
             srcA = in_IRList.insert(lhs_expanded);
         }
     }
@@ -425,8 +429,9 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         cpIdentifierNode* rhs = (cpIdentifierNode*)(m_pChildNodes[1]);
         if(rhs->isIndexEnable()){
             // index is enable, we need to expand the field;
-            cpIR* rhs_expanded = new cpIR(ecpIR_POW,srcB,NULL);
+            cpIR* rhs_expanded = new cpIR(ecpIR_POW,srcB,in_IRList.getConst(1));
             rhs_expanded->setSrcAMask((ecpRegisterMask)rhs->getAccessIndex());
+            rhs_expanded->setSrcBMask(ecpRegister_X);
             srcB = in_IRList.insert(rhs_expanded);
         }
     }
@@ -483,6 +488,14 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         reciprocal->setSrcAMask(ecpRegister_X);
         srcB = in_IRList.insert(reciprocal);
         targetOpcode = ecpIR_MUL;
+    }
+    if(targetOpcode == ecpIR_POW)
+    {
+        cpIR* power = new cpIR(ecpIR_POW,srcA,srcB);
+        power->setSrcAMask(ecpRegister_X);
+        power->setSrcBMask(ecpRegister_X);
+        m_pIROutput = in_IRList.insert(power);
+        return ;
     }
     newIR = new cpIR(targetOpcode,srcA,srcB,srcC);
     m_pIROutput = in_IRList.insert(newIR);
@@ -630,8 +643,9 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     if(m_pChildNodes[0]->getNodeKind() == IDENT_NODE){
         cpIdentifierNode* node = (cpIdentifierNode*)(m_pChildNodes[0]);
         if(node->isIndexEnable()){
-            cpIR* extend_src = new cpIR(ecpIR_POW, node->getIROutput(),NULL);
+            cpIR* extend_src = new cpIR(ecpIR_POW, node->getIROutput(),in_IRList.getConst(1));
             extend_src->setSrcAMask((ecpRegisterMask)node->getAccessIndex());
+            extend_src->setSrcBMask(ecpRegister_X);
             reg = in_IRList.insert(extend_src);
         }
     }
@@ -681,8 +695,9 @@ void cpAssignmentNode::generateIR(cpIRList& in_IRList){
     if(m_pChildNodes[1]->getNodeKind() == IDENT_NODE){
         cpIdentifierNode* src_node = (cpIdentifierNode*)m_pChildNodes[1];
         if(src_node->isIndexEnable()){
-            cpIR* expand_src = new cpIR(ecpIR_POW,src,NULL);
+            cpIR* expand_src = new cpIR(ecpIR_POW,src,in_IRList.getConst(1));
             expand_src->setSrcAMask((ecpRegisterMask)src_node->getAccessIndex());
+            expand_src->setSrcBMask(ecpRegister_X);
             src = in_IRList.insert(expand_src);
         }
     }
