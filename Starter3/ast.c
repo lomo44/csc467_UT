@@ -93,6 +93,10 @@ std::string toString(ecpFunctionType in_eFunctionType){
     return gFunctionTypeToStringMap[in_eFunctionType];
 }
 
+std::string toString(ecpPredefinedVariable in_eVariableID){
+    return gPredefinedVariableString[in_eVariableID];
+}
+
 void cpNormalNode::initChildNodes(int in_iNumOfNodes)
 {
     if (in_iNumOfNodes > 0 && m_pChildNodes == NULL)

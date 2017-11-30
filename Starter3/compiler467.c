@@ -101,7 +101,8 @@ int main (int argc, char *argv[]) {
     gAST->generateIR(irlist);
     irlist.generateDependency();
     irlist.registerMapping();
-    irlist.print();
+    //irlist.printIR();
+    irlist.printRI(outputFile);
   }
    // genCode(ast);
     ;

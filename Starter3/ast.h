@@ -135,6 +135,7 @@ std::string toString(ecpFunctionQualifier in_eQualifier);
 std::string toString(ecpTerminalType in_eTerminalType);
 std::string toString(ecpOperand in_eOperand);
 std::string toString(ecpFunctionType in_eFuncType);
+std::string toString(ecpPredefinedVariable in_eVariableID);
 
 class cpBaseNode
 {

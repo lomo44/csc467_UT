@@ -165,6 +165,7 @@ class cpIR
         ret += m_Dst->getInterferenceSet();
         return ret;
     };
+    virtual std::string     toRIString(std::vector<std::string>& in_vRegisterMap);
     cpIRRegister *          getSrcA() { return m_SrcA; }
     cpIRRegister *          getSrcB() { return m_SrcB; }
     void                    setDst(cpIRRegister *in_Dst) { m_Dst = in_Dst; }
@@ -216,14 +217,14 @@ class cpIR_CONST_F : public cpIR_CONST
                           std::to_string(m_fw) + ")" +
                           " L:"+m_LiveSet.toString() +
                           " I:"+m_Dst->getInterferenceSet();
-        //   if (!m_Dependencylist.empty()){
-        //     ret += " {";
-        //     for (int i = 0; i < m_Dependencylist.size(); i++){
-        //         ret += " ";
-        //         ret += std::to_string(m_Dependencylist[i]);
-        //     }
-        //     ret +=" }";
-        //     }
+        return ret;
+    }
+    virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
+        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+                                                    std::to_string(m_fx)+","+
+                                                    std::to_string(m_fy)+","+
+                                                    std::to_string(m_fz)+","+
+                                                    std::to_string(m_fw)+"}";
         return ret;
     }
     virtual void setScalar(float in_fValue)
@@ -257,14 +258,14 @@ class cpIR_CONST_I : public cpIR_CONST
                             std::to_string(m_iw) + ")" + 
                             " L:"+m_LiveSet.toString() +
                             " I:"+m_Dst->getInterferenceSet();
-        //  if (!m_Dependencylist.empty()){
-        //     ret += " {";
-        //     for (int i = 0; i < m_Dependencylist.size(); i++){
-        //         ret+= " ";
-        //         ret += std::to_string(m_Dependencylist[i]);
-        //     }
-        //     ret +=" }";
-        //}
+        return ret;
+    }
+    virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
+        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+                                                    std::to_string(m_ix)+","+
+                                                    std::to_string(m_iy)+","+
+                                                    std::to_string(m_iz)+","+
+                                                    std::to_string(m_iw)+"}";
         return ret;
     }
     virtual void setScalar(int in_iValue)
@@ -326,6 +327,14 @@ class cpIR_CONST_B : public cpIR_CONST
         // }
         return ret;
     }
+    virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
+        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+                                                    std::to_string(m_bx)+","+
+                                                    std::to_string(m_by)+","+
+                                                    std::to_string(m_bz)+","+
+                                                    std::to_string(m_bw)+"}";
+        return ret;
+    }
     virtual void setScalar(bool in_bValue)
     {
         m_bw = in_bValue;
@@ -348,11 +357,14 @@ typedef cpConstFloatMap::iterator cpConstFloatMapItor;
 class cpIRList
 {
   public:
-    cpIRList(){};
+    cpIRList(){
+        m_iChromaticNumber = 0;
+    };
     virtual ~cpIRList();
     int size() { return m_vIRList.size(); }
     cpIR *&operator[](int in_iIndex) { return m_vIRList[in_iIndex]; }
-    void print();
+    void printIR();
+    void printRI(FILE* in_pOutput);
     cpIRRegister *insert(cpIR *in_pIR);
     void pushIfCondition(cpIRRegister *in_pCondition);
     void popIfCondition();
@@ -365,6 +377,7 @@ class cpIRList
     std::stack<cpIRRegister *> m_IfConditionStack;
     cpConstIntMap m_ConstIntMap;
     cpConstFloatMap m_ConstFloatMap;
+    int m_iChromaticNumber;
 };
 
 

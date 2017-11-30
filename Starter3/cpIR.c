@@ -1,6 +1,7 @@
 #include "cpIR.h"
 #include <cstdio>
 #include <limits>
+#include "ast.h"
 
 std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "CONST_FLOAT",
@@ -77,7 +78,7 @@ std::string cpRegisterSet::toString(){
     return ret;
 }
 
-void cpIRList::print(){
+void cpIRList::printIR(){
     int size = m_vIRList.size();
     for(int i = 0 ; i < size; i++){
         printf("%s\n",m_vIRList[i]->toIRString().c_str());
@@ -177,7 +178,7 @@ void cpIRList::registerMapping(){
     int IR_Count = m_vIRList.size();
     int current_number = 0;
     for(int i = 0; i < IR_Count; i++){
-        current_number = m_vIRList[i]->getDst()->m_InterferenceSet.size(); 
+        current_number = m_vIRList[i]->getLiveSet().size(); 
         if(current_number > chromatic_number){
             chromatic_number = current_number;
         }
@@ -214,12 +215,81 @@ void cpIRList::registerMapping(){
         current_r->m_iColor = assigned_color;
         current_set.clear();
     }
-    /*************************some test**************************
-    printf("order of coloring:");
-    for (int i = 0; i<m_coloringOrder.size(); i++)
-        printf(" %d:%d",m_coloringOrder[i],m_vIRList[m_coloringOrder[i]]->getDst()->m_realID);
-    printf("\n");
-    *************************************************************/
+    m_iChromaticNumber = chromatic_number;
+}
+
+std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
+    std::string ret = "";
+    ret += toString(m_eOpcode);
+    if(m_eOpcode!=ecpIR_MOVE){
+        ret += " ";
+        ret += in_vRegisterMap[m_Dst->m_iColor];
+    }
+    if(m_SrcA!=NULL){
+        ret += " ";
+        if(m_SrcA->m_iIRID>=0){
+            ret += in_vRegisterMap[m_SrcA->m_iColor];
+        }
+        else{
+            ret += toString((ecpPredefinedVariable)(-m_SrcA->m_iIRID));
+        }
+        if(m_eSrcAMask!=ecpRegister_None){
+            ret += toString(m_eSrcAMask);
+        }
+    }
+    if(m_SrcB!=NULL){
+        ret += " ";
+        if(m_SrcB->m_iIRID>=0){
+            ret += in_vRegisterMap[m_SrcB->m_iColor];
+        }
+        else{
+            ret += toString((ecpPredefinedVariable)(-m_SrcB->m_iIRID));
+        }
+        if(m_eSrcBMask!=ecpRegister_None){
+            ret += toString(m_eSrcBMask);
+        }
+    }
+    if(m_SrcC!=NULL){
+        ret += " ";
+        if(m_SrcC->m_iIRID>=0){
+            ret += in_vRegisterMap[m_SrcC->m_iColor];
+        }
+        else{
+            ret += toString((ecpPredefinedVariable)(-m_SrcC->m_iIRID));
+        }
+        if(m_eSrcCMask!=ecpRegister_None){
+            ret += toString(m_eSrcCMask);
+        }
+    }
+    return ret;
+}
+
+void cpIRList::printRI(FILE* in_pOutput){
+    // Pipe the output to the corresponding output file
+    if(in_pOutput!=NULL){
+        // Creating chromatic mapping table
+        std::vector<std::string> register_map;
+        for(int i = 0; i < m_iChromaticNumber; i++){
+            register_map.push_back("reg"+std::to_string(i));
+        }
+        // Intialize all of the temprary registers
+        if(!register_map.empty()){
+            std::string temp_reg = "TEMP";
+            temp_reg += " ";
+            temp_reg += register_map[0];
+            int register_map_size = register_map.size();
+            for(int i = 1; i < register_map_size;i++){
+                temp_reg += ", ";
+                temp_reg += register_map[i];
+            }
+            fprintf(in_pOutput,"%s\n", temp_reg.c_str());
+        }
+        // Iterate through all of the instruction
+        int IR_Count = m_vIRList.size();
+        for(int i = 0; i < IR_Count;i++){
+            fprintf(in_pOutput,"%s\n", m_vIRList[i]->toRIString(register_map).c_str());
+        } 
+    }
 }
 
 void cpIR::generateLiveSet(cpIR* in_pPreviousIR){
