@@ -696,17 +696,13 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
                     }
                     current_node = current_node->getParentNode();
                 }
+                break;
                 // Keek checking assignment correctness, should not break if the it is not within an if statement
             }
             case ecpFunctionQualifier_Const:{
                 if(in_pNode->getParentNode()->getNodeKind() == DECLARATION_NODE){
                     // Declaration node, allow const assign if 
-                    if(expression->getNodeType()!= ecpBaseNodeType_Leaf){
-                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
-                        in_pNode->setTerminalType(ecpTerminalType_Unknown);
-                        return;
-                    }
-                    else{
+                    if(expression->getNodeType() == ecpBaseNodeType_Leaf || expression->getNodeKind() == CONSTRUCTOR_NODE){
                         if(expression->getNodeKind()==IDENT_NODE){
                             cpSymbolAttribute* expression_attribute = lookupSymbolTable(((cpIdentifierNode*)expression)->m_value, expression);
                             if(expression_attribute->m_eQualifier!=ecpFunctionQualifier_Uniform){
@@ -715,6 +711,11 @@ void cpCheckNode(cpAssignmentNode* in_pNode,cpSymbolTableNode* in_pTable,cpSeman
                                 return;
                             }
                         }
+                    }
+                    else{
+                        io_SemanticError.setError(ecpSemanticErrorType_Invalid_Assignment, in_pNode);
+                        in_pNode->setTerminalType(ecpTerminalType_Unknown);
+                        return;
                     }
                 }
                 else{

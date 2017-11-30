@@ -48,7 +48,8 @@ enum ecpRegisterMask
     ecpRegister_Y = 1,
     ecpRegister_Z = 2,
     ecpRegister_W = 3,
-    ecpRegister_Count
+    ecpRegister_Count,
+    ecpRegister_None
 };
 // Class for IR
 /**
@@ -58,10 +59,17 @@ extern int* reg_neighbouring;
 
 class cpIRRegister;
 
-typedef std::tr1::unordered_set<cpIRRegister*> cpRegisterSet;
+class cpRegisterSet : public std::tr1::unordered_set<cpIRRegister*>{
+public:
+    std::string toString();
+};
+
+
+//typedef std::tr1::unordered_set<cpIRRegister*> cpRegisterSet;
 typedef cpRegisterSet::iterator cpRegisterSetItor;
 
 std::string toString(ecpIROpcode in_eIROpcode);
+std::string toString(ecpRegisterMask in_eRegisterMask);
 class cpIRRegister
 {
   public:
@@ -107,16 +115,22 @@ typedef std::vector<cpIRRegister *> cpIRRegisterList;
 class cpIR
 {
   public:
-    cpIR();
+    cpIR(){};
     cpIR(ecpIROpcode in_eIROpcode, cpIRRegister *in_SrcA, cpIRRegister *in_SrcB) : m_SrcA(in_SrcA),
                                                                                    m_SrcB(in_SrcB),
                                                                                    m_SrcC(NULL),
                                                                                    m_Dst(NULL),
+                                                                                   m_eSrcAMask(ecpRegister_None),
+                                                                                   m_eSrcBMask(ecpRegister_None),
+                                                                                   m_eSrcCMask(ecpRegister_None),
                                                                                    m_eOpcode(in_eIROpcode){};
     cpIR(ecpIROpcode in_eIROpcode, cpIRRegister *in_SrcA, cpIRRegister *in_SrcB, cpIRRegister *in_SrcC) : m_SrcA(in_SrcA),
                                                                                                           m_SrcB(in_SrcB),
                                                                                                           m_SrcC(in_SrcC),
                                                                                                           m_Dst(NULL),
+                                                                                                          m_eSrcAMask(ecpRegister_None),
+                                                                                                          m_eSrcBMask(ecpRegister_None),
+                                                                                                          m_eSrcCMask(ecpRegister_None),
                                                                                                           m_eOpcode(in_eIROpcode){};
     
     virtual ~cpIR()
@@ -139,25 +153,28 @@ class cpIR
         {
             ret += " ";
             ret += m_SrcA->toString();
+            if(m_eSrcAMask!=ecpRegister_None){
+                ret += toString(m_eSrcAMask);
+            }
         }
         if (m_SrcB != NULL)
         {
             ret += " ";
             ret += m_SrcB->toString();
+            if(m_eSrcBMask!=ecpRegister_None){
+                ret += toString(m_eSrcBMask);
+            }
         }
         if (m_SrcC != NULL)
         {
             ret += " ";
             ret += m_SrcC->toString();
+            if(m_eSrcCMask!=ecpRegister_None){
+                ret += toString(m_eSrcCMask);
+            }
         }
-        // if (!m_Dependencylist.empty()){
-        //     ret += " {";
-        //     for (int i = 0; i < m_Dependencylist.size(); i++){
-        //         ret+= " ";
-        //         ret += std::to_string(m_Dependencylist[i]);
-        //     }
-        //     ret +=" }";
-        // }
+        ret += " ";
+        ret += m_LiveSet.toString();
         return ret;
     };
     cpIRRegister *          getSrcA() { return m_SrcA; }
@@ -196,14 +213,19 @@ class cpIR_CONST : public cpIR
 class cpIR_CONST_F : public cpIR_CONST
 {
   public:
-    cpIR_CONST_F() : cpIR_CONST(ecpIR_CONST_F){};
+    cpIR_CONST_F() : cpIR_CONST(ecpIR_CONST_F){
+        m_fx = 0.0;
+        m_fy = 0.0;
+        m_fz = 0.0;
+        m_fw = 0.0;
+    };
     virtual ~cpIR_CONST_F(){};
     virtual std::string toIRString()
     {
-         std::string ret= "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_fx) + "," +
+        std::string ret= "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_fx) + "," +
                           std::to_string(m_fy) + "," +
                           std::to_string(m_fz) + "," +
-                          std::to_string(m_fw) + ")";
+                          std::to_string(m_fw) + ")" + m_LiveSet.toString();
         //   if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){
@@ -212,7 +234,7 @@ class cpIR_CONST_F : public cpIR_CONST
         //     }
         //     ret +=" }";
         //     }
-            return ret;
+        return ret;
     }
     virtual void setScalar(float in_fValue)
     {
@@ -230,14 +252,19 @@ class cpIR_CONST_F : public cpIR_CONST
 class cpIR_CONST_I : public cpIR_CONST
 {
   public:
-    cpIR_CONST_I() : cpIR_CONST(ecpIR_CONST_I){};
+    cpIR_CONST_I() : cpIR_CONST(ecpIR_CONST_I){
+        m_ix = 0;
+        m_iy = 0;
+        m_iz = 0;
+        m_iw = 0;
+    };
     virtual ~cpIR_CONST_I(){};
     virtual std::string toIRString()
     {
         std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_ix) + "," +
                             std::to_string(m_iy) + "," +
                             std::to_string(m_iz) + "," +
-                            std::to_string(m_iw) + ")";
+                            std::to_string(m_iw) + ")" + m_LiveSet.toString();
         //  if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){
@@ -282,14 +309,19 @@ class cpIR_CONST_I : public cpIR_CONST
 class cpIR_CONST_B : public cpIR_CONST
 {
   public:
-    cpIR_CONST_B() : cpIR_CONST(ecpIR_CONST_B){};
+    cpIR_CONST_B() : cpIR_CONST(ecpIR_CONST_B){
+        m_bx = 0;
+        m_by = 0;
+        m_bz = 0;
+        m_bw = 0;
+    };
     virtual ~cpIR_CONST_B(){};
     virtual std::string toIRString()
     {
         std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + "(" + std::to_string(m_bx) + "," +
                             std::to_string(m_by) + "," +
                             std::to_string(m_bz) + "," +
-                            std::to_string(m_bw) + ")";
+                            std::to_string(m_bw) + ")" + m_LiveSet.toString();
         //  if (!m_Dependencylist.empty()){
         //     ret += " {";
         //     for (int i = 0; i < m_Dependencylist.size(); i++){

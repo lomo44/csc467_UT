@@ -206,6 +206,9 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
                 expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
                 tempList.push_back(in_IRList.insert(expand_src));
             }
+            else{
+                tempList.push_back(currentArgument->getIROutput());
+            }
         }
         else{
             tempList.push_back(currentArgument->getIROutput());
@@ -265,6 +268,9 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
                 cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),NULL);
                 expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
                 temp_list.push_back(in_IRList.insert(expand_src));
+            }
+            else{
+                temp_list.push_back(currentArgument->getIROutput());
             }
         }
         else{
@@ -705,9 +711,10 @@ void cpAssignmentNode::generateIR(cpIRList& in_IRList){
         if(dst_node->isIndexEnable()){
             // Inverse masked the source so we have a hole in the vector
             cpIR_CONST_I* inv_Mask = cpIR_CONST_I::generateInvMaskIR((ecpRegisterMask)dst_node->getAccessIndex());
-            dst = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(inv_Mask),dst));
+            cpIRRegister* inv_dst = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(inv_Mask),dst));
             cpIR_CONST_I* new_mask = cpIR_CONST_I::generateMaskIR((ecpRegisterMask)dst_node->getAccessIndex());
             src = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(new_mask),src));
+            src = in_IRList.insert(new cpIR(ecpIR_ADD,src,inv_dst));
         }
     }
     in_IRList.insert(new cpIR(ecpIR_MOVE,dst,src));  

@@ -33,10 +33,19 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "CMP"
 };
 
-
+std::string gRegisterMaskToString[ecpRegister_Count] = {
+    ".x",
+    ".y",
+    ".z",
+    ".w"
+};
 
 std::string toString(ecpIROpcode in_eOpcode){
     return gIROpcodeToStringMap[in_eOpcode];
+}
+
+std::string toString(ecpRegisterMask in_eMask){
+    return gRegisterMaskToString[in_eMask];
 }
 
 
@@ -52,10 +61,26 @@ void cpIRRegister::updateInterferenceSet(cpRegisterSet& in_rLiveSet){
     }
 }
 
+std::string cpRegisterSet::toString(){
+    std::string ret = "{";
+    if(!empty()){
+        auto itor = begin();
+        ret += std::to_string((*itor)->m_iIRID);
+        ++itor;
+        while(itor!=end()){
+            ret += ",";
+            ret += std::to_string((*itor)->m_iIRID);
+            ++itor;    
+        }
+    }
+    ret+="}";
+    return ret;
+}
+
 void cpIRList::print(){
     int size = m_vIRList.size();
     for(int i = 0 ; i < size; i++){
-        printf("%s",m_vIRList[i]->toIRString().c_str());
+        printf("%s\n",m_vIRList[i]->toIRString().c_str());
         // std::string ret = " {";
         // for (int j = 0; j < m_vIRList[i]->getDlist().size(); j++){
         //         ret+= " ";
@@ -137,6 +162,7 @@ void cpIRList::generateDependency(){
             (*itor)->updateInterferenceSet(m_vIRList[start_index]->getLiveSet());
             ++itor;
         }
+        previous = m_vIRList[start_index];
         start_index--;
     }
     /*****************some test******************************
