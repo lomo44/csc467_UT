@@ -260,3 +260,23 @@ void cpIR::generateLiveSet(cpIR* in_pPreviousIR){
         m_LiveSet.insert(m_SrcC);
     }
 }
+
+cpIRRegister* cpIRList::getConst(float in_fIn){
+    if(m_ConstFloatMap.find(in_fIn)==m_ConstFloatMap.end()){
+        cpIR_CONST_F* in_const = new cpIR_CONST_F();
+        in_const->setScalar(in_fIn);
+        insert(in_const);
+        m_ConstFloatMap[in_fIn] = in_const->getDst();
+    }
+    return m_ConstFloatMap[in_fIn];
+}
+
+cpIRRegister* cpIRList::getConst(int in_iIn){
+    if(m_ConstIntMap.find(in_iIn)==m_ConstIntMap.end()){
+        cpIR_CONST_I* in_const = new cpIR_CONST_I();
+        in_const->setScalar(in_iIn);
+        insert(in_const);
+        m_ConstIntMap[in_iIn] = in_const->getDst();
+    }
+    return m_ConstIntMap[in_iIn];
+}

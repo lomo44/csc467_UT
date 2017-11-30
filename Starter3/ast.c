@@ -730,9 +730,7 @@ void cpFloatNode::initialize(va_list in_pArguments)
 }
 
 void cpFloatNode::generateIR(cpIRList& in_IRList){
-    cpIR_CONST_F* newIR = new cpIR_CONST_F();
-    newIR->setScalar(m_value);
-    m_pIROutput = in_IRList.insert(newIR);
+    m_pIROutput = in_IRList.getConst(m_value);
 }
 
 void cpIdentifierNode::print()
@@ -775,9 +773,7 @@ void cpIntNode::initialize(va_list in_pArguments)
 }
 
 void cpIntNode::generateIR(cpIRList& in_IRList){
-    cpIR_CONST_I* newIR = new cpIR_CONST_I();
-    newIR->setScalar(m_value);
-    m_pIROutput = in_IRList.insert(newIR);
+    m_pIROutput = in_IRList.getConst(m_value);
 }
 
 void cpBoolNode::print()
@@ -791,9 +787,7 @@ void cpBoolNode::initialize(va_list in_pArguments)
 }
 
 void cpBoolNode::generateIR(cpIRList& in_IRList){
-    cpIR_CONST_B* newIR = new cpIR_CONST_B();
-    newIR->setScalar(m_value);
-    m_pIROutput = in_IRList.insert(newIR);
+    m_pIROutput = in_IRList.getConst((int)m_value);
 }
 
 void cpStatementsNode::initialize(va_list in_pArguments)

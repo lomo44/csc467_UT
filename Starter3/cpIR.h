@@ -6,6 +6,7 @@
 #include <stack>
 #include <algorithm>
 #include <tr1/unordered_set>
+#include <tr1/unordered_map>
 // Define some of the opcode of the ir
 typedef int cpIRID;
 
@@ -65,7 +66,6 @@ public:
 };
 
 
-//typedef std::tr1::unordered_set<cpIRRegister*> cpRegisterSet;
 typedef cpRegisterSet::iterator cpRegisterSetItor;
 
 std::string toString(ecpIROpcode in_eIROpcode);
@@ -345,33 +345,11 @@ class cpIR_CONST_B : public cpIR_CONST
     bool m_bz;
 };
 
-class cpIR_Br : public cpIR
-{
-  public:
-    cpIR_Br(int in_iOffset) : cpIR(ecpIR_BR, NULL, NULL)
-    {
-        m_iOffset = in_iOffset;
-    };
-    virtual ~cpIR_Br(){};
-    virtual std::string toIRString()
-    {
-        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + " " + std::to_string(m_iOffset);
-        //  if (!m_Dependencylist.empty()){
-        //     ret += " {";
-        //     for (int i = 0; i < m_Dependencylist.size(); i++){
-        //         ret+= " ";
-        //         ret += std::to_string(m_Dependencylist[i]);
-        //     }
-        //     ret +=" }";
-        // }
-        return ret;
-    }
-    virtual void setOffset(int in_iOffset) { m_iOffset = in_iOffset; }
-    virtual int getOffset() { return m_iOffset; }
+typedef std::tr1::unordered_map<int,cpIRRegister*> cpConstIntMap;
+typedef cpConstIntMap::iterator cpConstIntMapItor;
+typedef std::tr1::unordered_map<float,cpIRRegister*> cpConstFloatMap;
+typedef cpConstFloatMap::iterator cpConstFloatMapItor;
 
-  protected:
-    int m_iOffset;
-};
 
 class cpIRList
 {
@@ -386,10 +364,13 @@ class cpIRList
     void popIfCondition();
     void generateDependency();
     void registerMapping();
-    void regRename();
+    cpIRRegister* getConst(float in_fIn);
+    cpIRRegister* getConst(int in_iIn);
   private:
     std::vector<cpIR *> m_vIRList;
     std::stack<cpIRRegister *> m_IfConditionStack;
+    cpConstIntMap m_ConstIntMap;
+    cpConstFloatMap m_ConstFloatMap;
 };
 
 
