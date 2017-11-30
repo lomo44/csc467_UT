@@ -40,6 +40,7 @@ enum ecpIROpcode
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
     ecpIR_CMP,
+    ecpIR_ReserveRegister,
     ecpIR_Count
     };
 
@@ -78,15 +79,22 @@ class cpIRRegister
     {
         m_iIRID = in_iID;
         m_iColor = -1;
+        m_bIsConstant = false;
     };
     cpIRRegister(const cpIRRegister& rhs){
         m_iIRID = rhs.m_iIRID;
         m_iColor = rhs.m_iColor;
+        m_bIsConstant = false;
     };
     std::string toString()
     {
-        std::string ret = std::to_string(m_iIRID);
-        return ret;
+        if(m_bIsConstant){
+            std::string ret = "const_" + std::to_string(m_iIRID);
+            return ret; 
+        }
+        else{
+            return std::to_string(m_iIRID);
+        }
     }
     bool isPredifined(){return m_iIRID < 0;}
     void updateInterferenceSet(cpRegisterSet& in_rLiveSet);
@@ -94,6 +102,7 @@ class cpIRRegister
     cpIRID m_iIRID;
     cpRegisterSet m_InterferenceSet;
     int m_iColor;
+    bool m_bIsConstant;
 };
 typedef std::vector<cpIRRegister *> cpIRRegisterList;
 
@@ -197,6 +206,7 @@ class cpIR_CONST : public cpIR
   public:
     cpIR_CONST(ecpIROpcode in_eIROpcode) : cpIR(in_eIROpcode, NULL, NULL){};
     virtual ~cpIR_CONST(){};
+    virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){return "";}
 };
 
 class cpIR_CONST_F : public cpIR_CONST
@@ -220,7 +230,7 @@ class cpIR_CONST_F : public cpIR_CONST
         return ret;
     }
     virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
-        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+        std::string ret = "PARAM "+m_Dst->toString()+" = "+"{"+
                                                     std::to_string(m_fx)+","+
                                                     std::to_string(m_fy)+","+
                                                     std::to_string(m_fz)+","+
@@ -261,7 +271,7 @@ class cpIR_CONST_I : public cpIR_CONST
         return ret;
     }
     virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
-        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+        std::string ret = "PARAM "+m_Dst->toString()+" = "+"{"+
                                                     std::to_string(m_ix)+","+
                                                     std::to_string(m_iy)+","+
                                                     std::to_string(m_iz)+","+
@@ -328,7 +338,7 @@ class cpIR_CONST_B : public cpIR_CONST
         return ret;
     }
     virtual std::string toRIString(std::vector<std::string>& in_vRegisterMap){
-        std::string ret = "PARAM "+in_vRegisterMap[m_Dst->m_iColor]+" = "+"{"+
+        std::string ret = "PARAM "+m_Dst->toString()+" = "+"{"+
                                                     std::to_string(m_bx)+","+
                                                     std::to_string(m_by)+","+
                                                     std::to_string(m_bz)+","+

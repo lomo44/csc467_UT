@@ -31,7 +31,8 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "LRP",
     "SCOPE_START",
     "SCOPE_END",
-    "CMP"
+    "CMP",
+    ""
 };
 
 std::string gRegisterMaskToString[ecpRegister_Count] = {
@@ -114,9 +115,11 @@ cpIRRegister* cpIRList::insert(cpIR* in_pIR){
             return output->getDst();
         }
     }
-    if (in_pIR->getOpCode() == ecpIR_NEG) 
-        in_pIR->setOpCode(ecpIR_MOVE);
     in_pIR->setDst(new cpIRRegister(m_vIRList.size()));
+    ecpIROpcode opcode = in_pIR->getOpCode();
+    if(opcode == ecpIR_CONST_I || opcode == ecpIR_CONST_F || opcode == ecpIR_CONST_B){
+        in_pIR->getDst()->m_bIsConstant = true;
+    }
     m_vIRList.push_back(in_pIR);
     return in_pIR->getDst();
 }
@@ -189,31 +192,33 @@ void cpIRList::registerMapping(){
     cpIRRegister* current_r;
     for(int i = 0; i < IR_Count;i++){
         current_r = m_vIRList[i]->getDst();
-        cpRegisterSetItor start = current_r->m_InterferenceSet.begin();
-        cpRegisterSetItor end = current_r->m_InterferenceSet.end();
-        // Iterate through the entire inteference set and find all the interferences
-        while(start!=end){
-            int color = (*start)->m_iColor;
-            if(color >= 0 && current_set.find(color) == current_set.end()){
-                // new interference color, insert
-                current_set.insert(color);
+        if(!current_r->m_bIsConstant){
+            cpRegisterSetItor start = current_r->m_InterferenceSet.begin();
+            cpRegisterSetItor end = current_r->m_InterferenceSet.end();
+            // Iterate through the entire inteference set and find all the interferences
+            while(start!=end){
+                int color = (*start)->m_iColor;
+                if(color >= 0 && current_set.find(color) == current_set.end()){
+                    // new interference color, insert
+                    current_set.insert(color);
+                }
+                ++start;
             }
-            ++start;
-        }
-        int assigned_color = -1;
-        for(int j = 0; j < chromatic_number; j++){
-            if(current_set.find(j)==current_set.end()){
-                assigned_color = j;
-                break;
+            int assigned_color = -1;
+            for(int j = 0; j < chromatic_number; j++){
+                if(current_set.find(j)==current_set.end()){
+                    assigned_color = j;
+                    break;
+                }
             }
+            if(assigned_color == -1){
+                // we ran out of chromatic number, need to assign one
+                assigned_color = chromatic_number;
+                chromatic_number++;
+            }
+            current_r->m_iColor = assigned_color;
+            current_set.clear();
         }
-        if(assigned_color == -1){
-            // we ran out of chromatic number, need to assign one
-            assigned_color = chromatic_number;
-            chromatic_number++;
-        }
-        current_r->m_iColor = assigned_color;
-        current_set.clear();
     }
     m_iChromaticNumber = chromatic_number;
 }
@@ -228,7 +233,12 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
     if(m_SrcA!=NULL){
         ret += " ";
         if(m_SrcA->m_iIRID>=0){
-            ret += in_vRegisterMap[m_SrcA->m_iColor];
+            if(m_SrcA->m_iColor != -1){
+                ret += in_vRegisterMap[m_SrcA->m_iColor];
+            }
+            else{
+                ret += m_SrcA->toString();
+            }
         }
         else{
             ret += toString((ecpPredefinedVariable)(-m_SrcA->m_iIRID));
@@ -240,7 +250,12 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
     if(m_SrcB!=NULL){
         ret += " ";
         if(m_SrcB->m_iIRID>=0){
-            ret += in_vRegisterMap[m_SrcB->m_iColor];
+            if(m_SrcB->m_iColor != -1){
+                ret += in_vRegisterMap[m_SrcB->m_iColor];
+            }
+            else{
+                ret += m_SrcB->toString();
+            }
         }
         else{
             ret += toString((ecpPredefinedVariable)(-m_SrcB->m_iIRID));
@@ -252,7 +267,12 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
     if(m_SrcC!=NULL){
         ret += " ";
         if(m_SrcC->m_iIRID>=0){
-            ret += in_vRegisterMap[m_SrcC->m_iColor];
+            if(m_SrcC->m_iColor != -1){
+                ret += in_vRegisterMap[m_SrcC->m_iColor];
+            }
+            else{
+                ret += m_SrcC->toString();
+            }
         }
         else{
             ret += toString((ecpPredefinedVariable)(-m_SrcC->m_iIRID));
@@ -268,6 +288,7 @@ void cpIRList::printRI(FILE* in_pOutput){
     // Pipe the output to the corresponding output file
     if(in_pOutput!=NULL){
         // Creating chromatic mapping table
+        fprintf(in_pOutput,"!!ARBfp1.0\n");
         std::vector<std::string> register_map;
         for(int i = 0; i < m_iChromaticNumber; i++){
             register_map.push_back("reg"+std::to_string(i));
@@ -282,12 +303,15 @@ void cpIRList::printRI(FILE* in_pOutput){
                 temp_reg += ", ";
                 temp_reg += register_map[i];
             }
-            fprintf(in_pOutput,"%s\n", temp_reg.c_str());
+            fprintf(in_pOutput,"%s;\n", temp_reg.c_str());
         }
         // Iterate through all of the instruction
         int IR_Count = m_vIRList.size();
         for(int i = 0; i < IR_Count;i++){
-            fprintf(in_pOutput,"%s\n", m_vIRList[i]->toRIString(register_map).c_str());
+            std::string ristring = m_vIRList[i]->toRIString(register_map);
+            if(ristring!=""){
+                fprintf(in_pOutput,"%s;\n", m_vIRList[i]->toRIString(register_map).c_str());
+            }
         } 
     }
 }
@@ -316,13 +340,13 @@ void cpIR::generateLiveSet(cpIR* in_pPreviousIR){
         m_LiveSet.erase(m_Dst);
     }
     // Add sources to live set
-    if(m_SrcA!=NULL && m_LiveSet.find(m_SrcA)== m_LiveSet.end() && !m_SrcA->isPredifined()){
+    if(m_SrcA!=NULL && m_LiveSet.find(m_SrcA)== m_LiveSet.end() && !m_SrcA->isPredifined() && !m_SrcA->m_bIsConstant){
         m_LiveSet.insert(m_SrcA);
     }
-    if(m_SrcB!=NULL && m_LiveSet.find(m_SrcB)== m_LiveSet.end() && !m_SrcB->isPredifined()){
+    if(m_SrcB!=NULL && m_LiveSet.find(m_SrcB)== m_LiveSet.end() && !m_SrcB->isPredifined() && !m_SrcB->m_bIsConstant){
         m_LiveSet.insert(m_SrcB);
     }
-    if(m_SrcC!=NULL && m_LiveSet.find(m_SrcC)== m_LiveSet.end() && !m_SrcC->isPredifined()){
+    if(m_SrcC!=NULL && m_LiveSet.find(m_SrcC)== m_LiveSet.end() && !m_SrcC->isPredifined() && !m_SrcC->m_bIsConstant){
         m_LiveSet.insert(m_SrcC);
     }
 }
