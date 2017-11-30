@@ -446,37 +446,25 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
         cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
         /*************************! srcA == SrcB******************************/
-        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
-        bool0->setScalar(0);
-        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
-        bool1->setScalar(1);
         srcA = equal;
-        srcB = in_IRList.insert(bool0);
-        srcC = in_IRList.insert(bool1);   
+        srcB = in_IRList.getConst(0);
+        srcC = in_IRList.getConst(0);   
         targetOpcode = ecpIR_LRP; 
     }
     if(targetOpcode == ecpIR_LEQ)
     {
         cpIRRegister* diff = in_IRList.insert(new cpIR(ecpIR_CMP,srcB,srcA));
-        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
-        bool0->setScalar(0);
-        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
-        bool1->setScalar(1);
         srcA = diff;
-        srcB = in_IRList.insert(bool0);
-        srcC = in_IRList.insert(bool1);   
+        srcB = in_IRList.getConst(0);
+        srcC = in_IRList.getConst(1);   
         targetOpcode = ecpIR_CMP; 
     }
     if(targetOpcode == ecpIR_GT)
     {
         cpIRRegister* diff = in_IRList.insert(new cpIR(ecpIR_CMP,srcA,srcB));
-        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
-        bool0->setScalar(0);
-        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
-        bool1->setScalar(1);
         srcA = diff;
-        srcB = in_IRList.insert(bool0);
-        srcC = in_IRList.insert(bool1);   
+        srcB = in_IRList.getConst(0);
+        srcC = in_IRList.getConst(1);   
         targetOpcode = ecpIR_CMP; 
     }
     if(targetOpcode == ecpIR_AND)
@@ -649,17 +637,11 @@ void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     }
     switch(m_eOperand){
         case ecpOperand_U_NEG:{
-            cpIR_CONST_I* neg = new cpIR_CONST_I();
-            neg->setScalar(-1);
-            m_pIROutput = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(neg),reg));
+            m_pIROutput = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.getConst(-1),reg));
             break;
         }
         case ecpOperand_U_NOT:{
-            cpIR_CONST_B* bool0 = new cpIR_CONST_B();
-            bool0->setScalar(0);
-            cpIR_CONST_B* bool1 = new cpIR_CONST_B();
-            bool1->setScalar(1);
-            ret = new cpIR (ecpIR_LRP,reg,in_IRList.insert(bool0),in_IRList.insert(bool1));
+            ret = new cpIR (ecpIR_LRP,reg,in_IRList.getConst(0),in_IRList.getConst(1));
             m_pIROutput = in_IRList.insert(ret);
             break;
         }

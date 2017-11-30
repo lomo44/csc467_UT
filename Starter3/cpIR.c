@@ -99,12 +99,7 @@ cpIRRegister* cpIRList::insert(cpIR* in_pIR){
             cpIRRegister* dst = in_pIR->getSrcA();
             cpIRRegister* src = in_pIR->getSrcB();
             /***********replace not with LRT***************/
-            cpIRRegister * condition =  new cpIRRegister(*currentCondition);
-            cpIR_CONST_B* bool0 = new cpIR_CONST_B();
-            bool0->setScalar(0);
-            cpIR_CONST_B* bool1 = new cpIR_CONST_B();
-            bool1->setScalar(1);
-            cpIR* notCondition = new cpIR(ecpIR_LRP,condition,insert(bool0),insert(bool1));
+            cpIR* notCondition = new cpIR(ecpIR_LRP,currentCondition,getConst(0),getConst(1));
             cpIRRegister* negCon = insert(notCondition);
             /***********************************************/
             cpIR* src_sum = new cpIR(ecpIR_MUL,src,currentCondition);

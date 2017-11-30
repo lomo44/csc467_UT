@@ -13,4 +13,3 @@ else{
   gl_FragColor = temp;
 
 }
-

@@ -12,9 +12,9 @@ typedef int cpIRID;
 
 enum ecpIROpcode
 {
-    ecpIR_CONST_F,
-    ecpIR_CONST_B,
-    ecpIR_CONST_I,
+    ecpIR_CONST_F,              // 0
+    ecpIR_CONST_B,              // 1
+    ecpIR_CONST_I,              // 2 
     ecpIR_MOVE,
     ecpIR_ADD,
     ecpIR_SUB,
