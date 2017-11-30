@@ -194,8 +194,22 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
     cpArgumentsNode* arguments = getArguments();
     arguments->generateIR(in_IRList);
     while(arguments!=NULL){
-        cpNormalNode* currentArgument = arguments->getCurrentArgument();
-        tempList.push_back(currentArgument->getIROutput());
+        cpBaseNode* currentArgument = arguments->getCurrentArgument();
+        /**
+         * Check current argument's type. If current arguments type is identifier
+         * with vector index, the we need to expand it.
+         **/
+        if(currentArgument->getNodeKind() == IDENT_NODE){
+            cpIdentifierNode* identifier_node = (cpIdentifierNode*)currentArgument;
+            if(identifier_node->isIndexEnable()){
+                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),NULL);
+                expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
+                tempList.push_back(in_IRList.insert(expand_src));
+            }
+        }
+        else{
+            tempList.push_back(currentArgument->getIROutput());
+        }
         arguments = arguments->getNextArguments();
     }
     cpIR* ret = NULL;
@@ -242,8 +256,20 @@ void cpConstructorNode::generateIR(cpIRList& in_IRList){
     getArgumentsNode()->generateIR(in_IRList);
     cpIRRegisterList temp_list;
     cpArgumentsNode* node = getArgumentsNode();
+    cpBaseNode* currentArgument = NULL;
     while(node!=NULL){
-        temp_list.push_back(node->getCurrentArgument()->getIROutput());
+        currentArgument = node->getCurrentArgument();
+        if(currentArgument->getNodeKind() == IDENT_NODE){
+            cpIdentifierNode* identifier_node = (cpIdentifierNode*)currentArgument;
+            if(identifier_node->isIndexEnable()){
+                cpIR* expand_src = new cpIR(ecpIR_POW,identifier_node->getIROutput(),NULL);
+                expand_src->setSrcAMask((ecpRegisterMask)identifier_node->getAccessIndex());
+                temp_list.push_back(in_IRList.insert(expand_src));
+            }
+        }
+        else{
+            temp_list.push_back(currentArgument->getIROutput());
+        }
         node = node->getNextArguments();
     }
     cpIRRegister* output = NULL;
@@ -377,12 +403,26 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
             break;
         }
     }
-
-    if(m_pChildNodes[0]->getIROutput()->hasMasks()){
-        srcA = in_IRList.insert(new cpIR(ecpIR_POW,srcA,NULL));
+    // Check if srcs are identifier
+    if(m_pChildNodes[0]->getNodeKind() == IDENT_NODE){
+        // identifier nodes, check if the node is scalr or array with array access
+        cpIdentifierNode* lhs = (cpIdentifierNode*)(m_pChildNodes[0]);
+        if(lhs->isIndexEnable()){
+            // index is enable, we need to expand the field;
+            cpIR* lhs_expanded = new cpIR(ecpIR_POW,srcA,NULL);
+            lhs_expanded->setSrcAMask((ecpRegisterMask)lhs->getAccessIndex());
+            srcA = in_IRList.insert(lhs_expanded);
+        }
     }
-    if(m_pChildNodes[1]->getIROutput()->hasMasks()){
-        srcB = in_IRList.insert(new cpIR(ecpIR_POW,srcB,NULL));
+    if(m_pChildNodes[1]->getNodeKind() == IDENT_NODE){
+        // identifier nodes, check if the node is scalr or array with array access
+        cpIdentifierNode* rhs = (cpIdentifierNode*)(m_pChildNodes[1]);
+        if(rhs->isIndexEnable()){
+            // index is enable, we need to expand the field;
+            cpIR* rhs_expanded = new cpIR(ecpIR_POW,srcB,NULL);
+            rhs_expanded->setSrcAMask((ecpRegisterMask)rhs->getAccessIndex());
+            srcB = in_IRList.insert(rhs_expanded);
+        }
     }
     if(targetOpcode == ecpIR_EQ)
     {
@@ -400,7 +440,6 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
         cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
         cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
         /*************************! srcA == SrcB******************************/
-        equal->not_();
         cpIR_CONST_B* bool0 = new cpIR_CONST_B();
         bool0->setScalar(0);
         cpIR_CONST_B* bool1 = new cpIR_CONST_B();
@@ -412,35 +451,27 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
     }
     if(targetOpcode == ecpIR_LEQ)
     {
-        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
-        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
-        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
-        cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
-        /************************srcA<srcB || srcA == SrcB********************/
-        cpIRRegister* lt = in_IRList.insert(new cpIR(ecpIR_SLT,srcA,srcB));
-        srcA = equal;
-        srcB = lt;
-        targetOpcode = ecpIR_ADD;
-    }
-    if(targetOpcode == ecpIR_GT)
-    {
-        /**********srcA >= srcB and srcB >= srcA ----> srcA == SrcB***********/
-        cpIRRegister* temp_a = in_IRList.insert(new cpIR(ecpIR_SGE,srcA,srcB));
-        cpIRRegister* temp_b = in_IRList.insert(new cpIR(ecpIR_SGE,srcB,srcA));
-        cpIRRegister* equal = in_IRList.insert(new cpIR(ecpIR_MUL,temp_a,temp_b));
-        /*******************srcA < SrcB && srcA == SrcB************************/
-        cpIRRegister* lt = in_IRList.insert(new cpIR(ecpIR_SLT,srcA,srcB));
-        cpIRRegister* leq = in_IRList.insert(new cpIR(ecpIR_ADD,equal,lt));
-        /*******************! srcA <= srcB************************************/
-        leq->not_();
+        cpIRRegister* diff = in_IRList.insert(new cpIR(ecpIR_CMP,srcB,srcA));
         cpIR_CONST_B* bool0 = new cpIR_CONST_B();
         bool0->setScalar(0);
         cpIR_CONST_B* bool1 = new cpIR_CONST_B();
         bool1->setScalar(1);
-        srcA = leq;
+        srcA = diff;
         srcB = in_IRList.insert(bool0);
         srcC = in_IRList.insert(bool1);   
-        targetOpcode = ecpIR_LRP; 
+        targetOpcode = ecpIR_CMP; 
+    }
+    if(targetOpcode == ecpIR_GT)
+    {
+        cpIRRegister* diff = in_IRList.insert(new cpIR(ecpIR_CMP,srcA,srcB));
+        cpIR_CONST_B* bool0 = new cpIR_CONST_B();
+        bool0->setScalar(0);
+        cpIR_CONST_B* bool1 = new cpIR_CONST_B();
+        bool1->setScalar(1);
+        srcA = diff;
+        srcB = in_IRList.insert(bool0);
+        srcC = in_IRList.insert(bool1);   
+        targetOpcode = ecpIR_CMP; 
     }
     if(targetOpcode == ecpIR_AND)
         targetOpcode = ecpIR_MUL;
@@ -454,7 +485,9 @@ void cpBinaryExpressionNode::generateIR(cpIRList& in_IRList){
     }
     if(targetOpcode == ecpIR_DIV)
     {
-        srcB = in_IRList.insert(new cpIR(ecpIR_RSQ,srcB,NULL));
+        cpIR* reciprocal = new cpIR(ecpIR_RSQ,srcB,NULL);
+        reciprocal->setSrcAMask(ecpRegister_X);
+        srcB = in_IRList.insert(reciprocal);
         targetOpcode = ecpIR_MUL;
     }
     newIR = new cpIR(targetOpcode,srcA,srcB,srcC);
@@ -599,23 +632,23 @@ void cpUnaryExpressionNode::initialize(va_list in_pArguments)
 void cpUnaryExpressionNode::generateIR(cpIRList& in_IRList){
     m_pChildNodes[0]->generateIR(in_IRList);
     cpIR* ret = NULL;
-    ecpIROpcode targetOpcode;
     cpIRRegister* reg = NULL;
-    if(m_pChildNodes[0]->getIROutput()->hasMasks())
-        reg = in_IRList.insert(new cpIR(ecpIR_POW,m_pChildNodes[0]->getIROutput(),NULL));
-    else 
-        reg = new cpIRRegister(*(m_pChildNodes[0]->getIROutput()));
+    if(m_pChildNodes[0]->getNodeKind() == IDENT_NODE){
+        cpIdentifierNode* node = (cpIdentifierNode*)(m_pChildNodes[0]);
+        if(node->isIndexEnable()){
+            cpIR* extend_src = new cpIR(ecpIR_POW, node->getIROutput(),NULL);
+            extend_src->setSrcAMask((ecpRegisterMask)node->getAccessIndex());
+            reg = in_IRList.insert(extend_src);
+        }
+    }
     switch(m_eOperand){
         case ecpOperand_U_NEG:{
-            targetOpcode = ecpIR_NEG;
-            reg->negate();
-            ret = new cpIR(targetOpcode,reg,NULL);
-            m_pIROutput = in_IRList.insert(ret);
+            cpIR_CONST_I* neg = new cpIR_CONST_I();
+            neg->setScalar(-1);
+            m_pIROutput = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(neg),reg));
             break;
         }
         case ecpOperand_U_NOT:{
-            targetOpcode = ecpIR_NOT;
-            reg->not_();
             cpIR_CONST_B* bool0 = new cpIR_CONST_B();
             bool0->setScalar(0);
             cpIR_CONST_B* bool1 = new cpIR_CONST_B();
@@ -656,28 +689,25 @@ void cpAssignmentNode::generateIR(cpIRList& in_IRList){
     // Getting output registerss
     cpIRRegister* dst = m_pChildNodes[0]->getIROutput();
     cpIRRegister* src = m_pChildNodes[1]->getIROutput();
-    /**
-     * Check if any of the instruction has an array index, if yes
-     * then we need to expand it and mask it to the correct location
-     **/
-    if(dst->hasMasks() || src->hasMasks()){
-        // Generate inverse masks for src
-        if(src->hasMasks()){
-            cpIR_CONST_I* src_mask = cpIR_CONST_I::generateMaskIR(src);
-            in_IRList.insert(src_mask);
-            cpIRRegister* masked_src = in_IRList.insert(new cpIR(ecpIR_MUL,src_mask->getDst(),src));
-            masked_src = new cpIRRegister(*masked_src);
-            masked_src->copyMasks(src);
-            src = in_IRList.insert(new cpIR(ecpIR_POW,masked_src,NULL));
+    // if src is a vector with access index , then we need to expand it
+    if(m_pChildNodes[1]->getNodeKind() == IDENT_NODE){
+        cpIdentifierNode* src_node = (cpIdentifierNode*)m_pChildNodes[1];
+        if(src_node->isIndexEnable()){
+            cpIR* expand_src = new cpIR(ecpIR_POW,src,NULL);
+            expand_src->setSrcAMask((ecpRegisterMask)src_node->getAccessIndex());
+            src = in_IRList.insert(expand_src);
         }
-        if(dst->hasMasks()){
-            cpIR_CONST_I* inv_mask = cpIR_CONST_I::generateInvMaskIR(dst); 
-            in_IRList.insert(inv_mask);
-            cpIRRegister* pre_dst = in_IRList.insert(new cpIR(ecpIR_MUL,inv_mask->getDst(),dst));
-            cpIR_CONST_I* dst_mask = cpIR_CONST_I::generateMaskIR(dst);
-            in_IRList.insert(dst_mask);
-            cpIR* final_v = new cpIR(ecpIR_MUL,src,dst_mask->getDst());
-            src = in_IRList.insert(new cpIR(ecpIR_ADD,in_IRList.insert(final_v),pre_dst));
+    }
+
+    // check if dest is also a vecter with index
+    if(m_pChildNodes[0]->getNodeKind() == IDENT_NODE){
+        cpIdentifierNode* dst_node = (cpIdentifierNode*)m_pChildNodes[0];
+        if(dst_node->isIndexEnable()){
+            // Inverse masked the source so we have a hole in the vector
+            cpIR_CONST_I* inv_Mask = cpIR_CONST_I::generateInvMaskIR((ecpRegisterMask)dst_node->getAccessIndex());
+            dst = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(inv_Mask),dst));
+            cpIR_CONST_I* new_mask = cpIR_CONST_I::generateMaskIR((ecpRegisterMask)dst_node->getAccessIndex());
+            src = in_IRList.insert(new cpIR(ecpIR_MUL,in_IRList.insert(new_mask),src));
         }
     }
     in_IRList.insert(new cpIR(ecpIR_MOVE,dst,src));  
@@ -721,11 +751,7 @@ void cpIdentifierNode::generateIR(cpIRList& in_IRList){
     cpSymbolIRLookUpTableItor itor = gSymbolIRLookUpTable.find(m_value);
     if(itor!=gSymbolIRLookUpTable.end()){
         // Found entry
-        cpIRRegister* ir = itor->second;
-        m_pIROutput = new cpIRRegister(ir->m_iIRID);
-        if(m_bEnableIndex){
-            m_pIROutput->m_bMasks[m_iAccessIndex] = true;
-        }
+        m_pIROutput = itor->second;
     }
     else{
         printf("Undefined identifier\n");

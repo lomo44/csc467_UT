@@ -29,7 +29,8 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "DP3",
     "LRP",
     "SCOPE_START",
-    "SCOPE_END"
+    "SCOPE_END",
+    "CMP"
 };
 
 
@@ -38,17 +39,30 @@ std::string toString(ecpIROpcode in_eOpcode){
     return gIROpcodeToStringMap[in_eOpcode];
 }
 
+
+void cpIRRegister::updateInterferenceSet(cpRegisterSet& in_rLiveSet){
+    /** Check the live set, and move any unique register into the live set
+     **/
+    cpRegisterSetItor itor = in_rLiveSet.begin();
+    while(itor != in_rLiveSet.end()){
+        if(*itor != this && m_InterferenceSet.find(*itor)==m_InterferenceSet.end()){
+            m_InterferenceSet.insert(*itor);
+        }
+        ++itor;
+    }
+}
+
 void cpIRList::print(){
     int size = m_vIRList.size();
     for(int i = 0 ; i < size; i++){
         printf("%s",m_vIRList[i]->toIRString().c_str());
-        std::string ret = " {";
-        for (int j = 0; j < m_vIRList[i]->getDlist().size(); j++){
-                ret+= " ";
-                ret += std::to_string(m_vIRList[m_vIRList[i]->getDlist()[j]]->getDst()->m_realID);
-        }
-        ret +=" }";
-        printf("%s\n", ret.c_str());
+        // std::string ret = " {";
+        // for (int j = 0; j < m_vIRList[i]->getDlist().size(); j++){
+        //         ret+= " ";
+        //         ret += std::to_string(m_vIRList[m_vIRList[i]->getDlist()[j]]->getDst()->m_realID);
+        // }
+        // ret +=" }";
+        // printf("%s\n", ret.c_str());
     }
 }
 
@@ -61,7 +75,6 @@ cpIRRegister* cpIRList::insert(cpIR* in_pIR){
             cpIRRegister* src = in_pIR->getSrcB();
             /***********replace not with LRT***************/
             cpIRRegister * condition =  new cpIRRegister(*currentCondition);
-            condition->not_();
             cpIR_CONST_B* bool0 = new cpIR_CONST_B();
             bool0->setScalar(0);
             cpIR_CONST_B* bool1 = new cpIR_CONST_B();
@@ -112,36 +125,19 @@ void cpIRList::popIfCondition(){
 }
 
 
-void cpIRList::genDependency(){
-    int size = m_vIRList.size()-1;
-    reg_neighbouring = new int[size+1]();
-    cpDependencylist live;
-    live.push_back(m_vIRList[size]->getDst()->m_iIRID);
-    for(int i = size ; i >= 0; i--){
-        if (m_vIRList[i]->getOpCode() == ecpIR_MOVE) 
-        {
-            reg_neighbouring[i]=-1;
+void cpIRList::generateDependency(){
+    int start_index = m_vIRList.size()-1;
+    cpIR* previous = NULL;
+
+    while(start_index>=0){
+        m_vIRList[start_index]->generateLiveSet(previous);
+        cpRegisterSetItor itor = m_vIRList[start_index]->getLiveSet().begin();
+        cpRegisterSetItor end = m_vIRList[start_index]->getLiveSet().end();
+        while(itor!=end){
+            (*itor)->updateInterferenceSet(m_vIRList[start_index]->getLiveSet());
+            ++itor;
         }
-        live = m_vIRList[i]->generateLiveset(live);
-        for(int j = 0; j<live.size();j++)
-        {
-            cpIRRegister* curr_v = m_vIRList[live[j]]->getDst();
-            for(int k = j+1; k < live.size();k++)
-            {
-                cpIRRegister* neighbour_v = m_vIRList[live[k]]->getDst();
-                neighbour_v->m_neighbours.push_back(live[j]);
-                curr_v->m_neighbours.push_back(live[k]);
-            }
-        }
-        
-    }
-    for(int i = size ; i >= 0; i--){
-        if (reg_neighbouring[i]!=-1){
-            cpDependencylist* temp = &(m_vIRList[i]->getDst()->m_neighbours);
-            std::sort(temp->begin(),temp->end());
-            temp->erase(std::unique(temp->begin(),temp->end()),temp->end());
-            reg_neighbouring[i]+=temp->size();
-        }
+        start_index--;
     }
     /*****************some test******************************
     for(int i =0;i<=size;i++) {
@@ -149,43 +145,52 @@ void cpIRList::genDependency(){
     *********************************************************/
 }
 
-void cpIRList::color_ordering(){
-    int size = m_vIRList.size();
-    cpIRID min_v;
-    cpDependencylist adj_list;
-    int min_edge; std::numeric_limits<int>::max();
-    int curr_edge;
-    bool find_min; 
-    while (true){
-        min_edge = std::numeric_limits<int>::max();
-        find_min = false;
-        for (int i = 0; i<size; i++)
-        {
-            curr_edge = reg_neighbouring[i];
-            if((curr_edge > 0) && (curr_edge < min_edge)){
-                min_v = i;
-                min_edge = curr_edge;
-                find_min = true;
+void cpIRList::registerMapping(){
+    /**
+     * Since we do not do any re ordering, we'll to the register remapping in the 
+     * most minimal listic way
+     */ 
+
+    // Finding the chromatic number by iterate through every instruction's output register
+    int chromatic_number = -1;
+    int IR_Count = m_vIRList.size();
+    int current_number = 0;
+    for(int i = 0; i < IR_Count; i++){
+        current_number = m_vIRList[i]->getDst()->m_InterferenceSet.size(); 
+        if(current_number > chromatic_number){
+            chromatic_number = current_number;
+        }
+    }
+
+    // Work our way up from here
+    std::tr1::unordered_set<int> current_set;
+    cpIRRegister* current_r;
+    for(int i = 0; i < IR_Count;i++){
+        current_r = m_vIRList[i]->getDst();
+        cpRegisterSetItor start = current_r->m_InterferenceSet.begin();
+        cpRegisterSetItor end = current_r->m_InterferenceSet.end();
+        // Iterate through the entire inteference set and find all the interferences
+        while(start!=end){
+            int color = (*start)->m_iColor;
+            if(color > 0 && current_set.find(color) == current_set.end()){
+                // new interference color, insert
+                current_set.insert(color);
+            }
+            ++start;
+        }
+        int assigned_color = -1;
+        for(int j = 0; j < chromatic_number; j++){
+            if(current_set.find(j)==current_set.end()){
+                assigned_color = j;
+                break;
             }
         }
-        if(find_min){
-            m_coloringOrder.push_back(min_v);
-            m_vIRList[min_v]->getDst()->m_realID = -1;
-            reg_neighbouring[min_v]=-1;
-            adj_list = m_vIRList[min_v]->getDst()->m_neighbours;
-            for (int j = 0; j<adj_list.size(); j++){
-                cpIRID adj_v = adj_list[j];
-                if (reg_neighbouring[adj_v] != -1 )
-                    reg_neighbouring[adj_v] -= 1;
-                if (reg_neighbouring[adj_v] == 0) {
-                    m_coloringOrder.push_back(adj_v);
-                    m_vIRList[adj_v]->getDst()->m_realID = -1;
-                    reg_neighbouring[adj_v]=-1;
-                }
-                else if (reg_neighbouring[adj_v] < -1) printf("Error on color-ordering");
-            }
+        if(assigned_color == -1){
+            // we ran out of chromatic number, need to assign one
+            assigned_color = chromatic_number;
+            chromatic_number++;
         }
-        else break;
+        current_set.clear();
     }
     /*************************some test**************************
     printf("order of coloring:");
@@ -195,47 +200,37 @@ void cpIRList::color_ordering(){
     *************************************************************/
 }
 
-void cpIRList::regRename(){
-    cpIRID cur_vid;
-    cpIRID neighbour_vid;
-    cpIRRegister* cur_v;
-    cpIRRegister* neighbour_v;
-    cpIRID maxid; 
-    for (int i = m_coloringOrder.size()-1; i>=0; i--){
-        cur_vid = m_coloringOrder[i];
-        maxid = -1;
-        cur_v = m_vIRList[cur_vid]->getDst();
-        for(int j = 0; j<cur_v->m_neighbours.size(); j++)
-        {
-            neighbour_vid = cur_v->m_neighbours[j];
-            neighbour_v = m_vIRList[neighbour_vid]->getDst();
-            if (neighbour_v->m_realID > maxid) maxid = neighbour_v->m_realID;
-        }
-        //we can refine it not to assign max reg name +1 everytime by using reg mapping instead
-        maxid += 1;
-        cur_v->m_realID = maxid;
-    }
-    printf("after coloring:");
-    for (int i = 0; i<m_coloringOrder.size(); i++)
-        printf(" %d:%d",m_coloringOrder[i],m_vIRList[m_coloringOrder[i]]->getDst()->m_realID);
-    printf("\n");
-
-}
-
-
-cpDependencylist cpIR::generateLiveset(cpDependencylist liveset){
-    int def = m_Dst->m_iIRID;
-    liveset.erase(std::remove(liveset.begin(), liveset.end(), def), liveset.end());
-    if (m_SrcA != NULL) {m_Dependencylist.push_back(m_SrcA->m_iIRID);}
-    if (m_SrcB != NULL) {m_Dependencylist.push_back(m_SrcB->m_iIRID);}
-    if (m_SrcC != NULL) {m_Dependencylist.push_back(m_SrcC->m_iIRID);}
-    if(!liveset.empty()){
-        for (int i = 0 ; i < liveset.size(); i++) 
-        {
-            m_Dependencylist.push_back(liveset[i]);
+void cpIR::generateLiveSet(cpIR* in_pPreviousIR){
+    if(in_pPreviousIR!=NULL){
+        /**
+         * If previous IR has an live set, then propagate the live set
+         * */
+        cpRegisterSetItor itor = in_pPreviousIR->getLiveSet().begin();
+        cpRegisterSetItor end = in_pPreviousIR->getLiveSet().end();
+        while(itor != end){
+            if(m_LiveSet.find(*itor)==m_LiveSet.end()){
+                /**
+                 * Item is not in the current live set, insert it.
+                 **/
+                m_LiveSet.insert(*itor);
+            }
+            ++itor;
         }
     }
-    std::sort(m_Dependencylist.begin(),m_Dependencylist.end());
-    m_Dependencylist.erase(std::unique(m_Dependencylist.begin(),m_Dependencylist.end()),m_Dependencylist.end());
-    return m_Dependencylist;
+    // remove genset
+    if(m_LiveSet.find(m_Dst)!=m_LiveSet.end() && !m_Dst->isPredifined()){
+        /** output is in the current live set, remove it
+         **/
+        m_LiveSet.erase(m_Dst);
+    }
+    // Add sources to live set
+    if(m_SrcA!=NULL && m_LiveSet.find(m_SrcA)== m_LiveSet.end() && !m_SrcA->isPredifined()){
+        m_LiveSet.insert(m_SrcA);
+    }
+    if(m_SrcB!=NULL && m_LiveSet.find(m_SrcB)== m_LiveSet.end() && !m_SrcB->isPredifined()){
+        m_LiveSet.insert(m_SrcB);
+    }
+    if(m_SrcC!=NULL && m_LiveSet.find(m_SrcC)== m_LiveSet.end() && !m_SrcC->isPredifined()){
+        m_LiveSet.insert(m_SrcC);
+    }
 }

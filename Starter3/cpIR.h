@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stack>
 #include <algorithm>
+#include <tr1/unordered_set>
 // Define some of the opcode of the ir
 typedef int cpIRID;
 
@@ -37,15 +38,16 @@ enum ecpIROpcode
     ecpIR_LRP,
     ecpIR_SCOPE_START,
     ecpIR_SCOPE_END,
+    ecpIR_CMP,
     ecpIR_Count
     };
 
-enum ecpRegisterScalar
+enum ecpRegisterMask
 {
-    ecpRegister_W,
-    ecpRegister_X,
-    ecpRegister_Y,
-    ecpRegister_Z,
+    ecpRegister_X = 0,
+    ecpRegister_Y = 1,
+    ecpRegister_Z = 2,
+    ecpRegister_W = 3,
     ecpRegister_Count
 };
 // Class for IR
@@ -54,57 +56,25 @@ enum ecpRegisterScalar
  * */
 extern int* reg_neighbouring;
 
-typedef std::vector<cpIRID> cpDependencylist;
+class cpIRRegister;
+
+typedef std::tr1::unordered_set<cpIRRegister*> cpRegisterSet;
+typedef cpRegisterSet::iterator cpRegisterSetItor;
 
 std::string toString(ecpIROpcode in_eIROpcode);
 class cpIRRegister
 {
   public:
     cpIRRegister();
-    cpIRRegister(cpIRID in_iID, bool in_bX, bool in_bY, bool in_bZ, bool in_bW)
-    {
-        m_iIRID = in_iID;
-        m_bMasks[0] = in_bX;
-        m_bMasks[1] = in_bY;
-        m_bMasks[2] = in_bZ;
-        m_bMasks[3] = in_bW;
-        m_isNeg = false;
-    };
     cpIRRegister(cpIRID in_iID)
     {
         m_iIRID = in_iID;
-        m_bMasks[0] = false;
-        m_bMasks[1] = false;
-        m_bMasks[2] = false;
-        m_bMasks[3] = false;
-        m_isNeg = false;
-    }
+        m_iColor = -1;
+    };
     cpIRRegister(const cpIRRegister& rhs){
         m_iIRID = rhs.m_iIRID;
-        m_bMasks[0] = rhs.m_bMasks[0];
-        m_bMasks[1] = rhs.m_bMasks[1];
-        m_bMasks[2] = rhs.m_bMasks[2];
-        m_bMasks[3] = rhs.m_bMasks[3];
-        m_isNeg = false;
-    }
-
-    void negate(){
-        m_bMasks[0]= - m_bMasks[0];
-        m_bMasks[1]= - m_bMasks[1];
-        m_bMasks[2]= - m_bMasks[2];
-        m_bMasks[3]= - m_bMasks[3];
-        m_isNeg = true;
-
-    }
-
-     void not_(){
-        m_bMasks[0]= ! m_bMasks[0];
-        m_bMasks[1]= ! m_bMasks[1];
-        m_bMasks[2]= ! m_bMasks[2];
-        m_bMasks[3]= ! m_bMasks[3];
-        m_isNeg = false;
-    }
-
+        m_iColor = rhs.m_iColor;
+    };
     std::string toString()
     {
         std::string ret = std::to_string(m_iIRID);
@@ -125,22 +95,11 @@ class cpIRRegister
         // }
         return ret;
     }
-    bool hasMasks()
-    {
-        return m_bMasks[0] || m_bMasks[1] || m_bMasks[2] || m_bMasks[3];
-    }
-    void copyMasks(cpIRRegister *in_pRegister)
-    {
-        m_bMasks[0] = in_pRegister->m_bMasks[0];
-        m_bMasks[1] = in_pRegister->m_bMasks[1];
-        m_bMasks[2] = in_pRegister->m_bMasks[2];
-        m_bMasks[3] = in_pRegister->m_bMasks[3];
-    }
+    bool isPredifined(){return m_iIRID < 0;}
+    void updateInterferenceSet(cpRegisterSet& in_rLiveSet);
     cpIRID m_iIRID;
-    bool m_bMasks[ecpRegister_Count];
-    bool m_isNeg;
-    cpDependencylist m_neighbours;
-    cpIRID m_realID;
+    cpRegisterSet m_InterferenceSet;
+    int m_iColor;
 };
 typedef std::vector<cpIRRegister *> cpIRRegisterList;
 
@@ -191,33 +150,38 @@ class cpIR
             ret += " ";
             ret += m_SrcC->toString();
         }
-        if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret+= " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-        }
+        // if (!m_Dependencylist.empty()){
+        //     ret += " {";
+        //     for (int i = 0; i < m_Dependencylist.size(); i++){
+        //         ret+= " ";
+        //         ret += std::to_string(m_Dependencylist[i]);
+        //     }
+        //     ret +=" }";
+        // }
         return ret;
     };
-    cpIRRegister *getSrcA() { return m_SrcA; }
-    cpIRRegister *getSrcB() { return m_SrcB; }
-    void setDst(cpIRRegister *in_Dst) { m_Dst = in_Dst; }
-    cpIRRegister *getDst() { return m_Dst; }
-    ecpIROpcode getOpCode() { return m_eOpcode; }
-    void setOpCode(ecpIROpcode in_eIROpcode) { m_eOpcode = in_eIROpcode; }
-    cpDependencylist getDlist() { return m_Dependencylist;}
-    cpDependencylist generateLiveset(cpDependencylist liveset);
-
+    cpIRRegister *          getSrcA() { return m_SrcA; }
+    cpIRRegister *          getSrcB() { return m_SrcB; }
+    void                    setDst(cpIRRegister *in_Dst) { m_Dst = in_Dst; }
+    cpIRRegister *          getDst() { return m_Dst; }
+    ecpIROpcode             getOpCode() { return m_eOpcode; }
+    void                    setOpCode(ecpIROpcode in_eIROpcode) { m_eOpcode = in_eIROpcode; }
+    cpRegisterSet&          getLiveSet(){return m_LiveSet;}
+    void                    generateLiveSet(cpIR* in_pPreviousIR);
+    void                    setSrcAMask(ecpRegisterMask in_eRegisterMask){m_eSrcAMask = in_eRegisterMask;}
+    void                    setSrcBMask(ecpRegisterMask in_eRegisterMask){m_eSrcBMask = in_eRegisterMask;}
+    void                    setSrcCMask(ecpRegisterMask in_eRegisterMask){m_eSrcCMask = in_eRegisterMask;}
 
   protected:
     cpIRRegister *m_SrcA;
     cpIRRegister *m_SrcB;
     cpIRRegister *m_SrcC;
     cpIRRegister *m_Dst;
+    ecpRegisterMask m_eSrcAMask;
+    ecpRegisterMask m_eSrcBMask;
+    ecpRegisterMask m_eSrcCMask;
     ecpIROpcode m_eOpcode;
-    cpDependencylist m_Dependencylist;
+    cpRegisterSet m_LiveSet;
 };
 
 
@@ -240,14 +204,14 @@ class cpIR_CONST_F : public cpIR_CONST
                           std::to_string(m_fy) + "," +
                           std::to_string(m_fz) + "," +
                           std::to_string(m_fw) + ")";
-          if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret += " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-            }
+        //   if (!m_Dependencylist.empty()){
+        //     ret += " {";
+        //     for (int i = 0; i < m_Dependencylist.size(); i++){
+        //         ret += " ";
+        //         ret += std::to_string(m_Dependencylist[i]);
+        //     }
+        //     ret +=" }";
+        //     }
             return ret;
     }
     virtual void setScalar(float in_fValue)
@@ -274,14 +238,14 @@ class cpIR_CONST_I : public cpIR_CONST
                             std::to_string(m_iy) + "," +
                             std::to_string(m_iz) + "," +
                             std::to_string(m_iw) + ")";
-         if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret+= " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-        }
+        //  if (!m_Dependencylist.empty()){
+        //     ret += " {";
+        //     for (int i = 0; i < m_Dependencylist.size(); i++){
+        //         ret+= " ";
+        //         ret += std::to_string(m_Dependencylist[i]);
+        //     }
+        //     ret +=" }";
+        //}
         return ret;
     }
     virtual void setScalar(int in_iValue)
@@ -291,22 +255,22 @@ class cpIR_CONST_I : public cpIR_CONST
         m_iy = in_iValue;
         m_iz = in_iValue;
     }
-    static cpIR_CONST_I *generateMaskIR(cpIRRegister* in_pIn)
+    static cpIR_CONST_I *generateMaskIR(ecpRegisterMask in_eMask)
     {
         cpIR_CONST_I *newIR = new cpIR_CONST_I();
-        newIR->m_ix = (in_pIn->m_bMasks[0] == true);
-        newIR->m_iy = (in_pIn->m_bMasks[1] == true);
-        newIR->m_iz = (in_pIn->m_bMasks[2] == true);
-        newIR->m_iw = (in_pIn->m_bMasks[3] == true);
+        newIR->m_ix = (in_eMask == ecpRegister_X);
+        newIR->m_iy = (in_eMask == ecpRegister_Y);
+        newIR->m_iz = (in_eMask == ecpRegister_Z);
+        newIR->m_iw = (in_eMask == ecpRegister_W);
         return newIR;
     }
-    static cpIR_CONST_I *generateInvMaskIR(cpIRRegister* in_pIn)
+    static cpIR_CONST_I *generateInvMaskIR(ecpRegisterMask in_eMask)
     {
         cpIR_CONST_I *newIR = new cpIR_CONST_I();
-        newIR->m_ix = (in_pIn->m_bMasks[0] == false);
-        newIR->m_iy = (in_pIn->m_bMasks[1] == false);
-        newIR->m_iz = (in_pIn->m_bMasks[2] == false);
-        newIR->m_iw = (in_pIn->m_bMasks[3] == false);
+        newIR->m_ix = (in_eMask != ecpRegister_X);
+        newIR->m_iy = (in_eMask != ecpRegister_Y);
+        newIR->m_iz = (in_eMask != ecpRegister_Z);
+        newIR->m_iw = (in_eMask != ecpRegister_W);
         return newIR;
     }
     int m_iw;
@@ -326,14 +290,14 @@ class cpIR_CONST_B : public cpIR_CONST
                             std::to_string(m_by) + "," +
                             std::to_string(m_bz) + "," +
                             std::to_string(m_bw) + ")";
-         if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret+= " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-        }
+        //  if (!m_Dependencylist.empty()){
+        //     ret += " {";
+        //     for (int i = 0; i < m_Dependencylist.size(); i++){
+        //         ret+= " ";
+        //         ret += std::to_string(m_Dependencylist[i]);
+        //     }
+        //     ret +=" }";
+        // }
         return ret;
     }
     virtual void setScalar(bool in_bValue)
@@ -360,14 +324,14 @@ class cpIR_Br : public cpIR
     virtual std::string toIRString()
     {
         std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + " " + std::to_string(m_iOffset);
-         if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret+= " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-        }
+        //  if (!m_Dependencylist.empty()){
+        //     ret += " {";
+        //     for (int i = 0; i < m_Dependencylist.size(); i++){
+        //         ret+= " ";
+        //         ret += std::to_string(m_Dependencylist[i]);
+        //     }
+        //     ret +=" }";
+        // }
         return ret;
     }
     virtual void setOffset(int in_iOffset) { m_iOffset = in_iOffset; }
@@ -375,30 +339,6 @@ class cpIR_Br : public cpIR
 
   protected:
     int m_iOffset;
-};
-
-class cpIR_Brz : public cpIR_Br
-{
-  public:
-    cpIR_Brz(int in_iOffset, cpIRRegister *in_pSrcA) : cpIR_Br(in_iOffset)
-    {
-        m_SrcA = in_pSrcA;
-        m_eOpcode = ecpIR_BRZ;
-    }
-    virtual ~cpIR_Brz(){};
-    virtual std::string toIRString()
-    {
-        std::string ret = "[" + std::to_string(m_Dst->m_iIRID) + "] " + toString(m_eOpcode) + " " + m_SrcA->toString() + " " + std::to_string(m_iOffset);
-         if (!m_Dependencylist.empty()){
-            ret += " {";
-            for (int i = 0; i < m_Dependencylist.size(); i++){
-                ret+= " ";
-                ret += std::to_string(m_Dependencylist[i]);
-            }
-            ret +=" }";
-        }
-        return ret;
-    }
 };
 
 class cpIRList
@@ -412,14 +352,12 @@ class cpIRList
     cpIRRegister *insert(cpIR *in_pIR);
     void pushIfCondition(cpIRRegister *in_pCondition);
     void popIfCondition();
-    void genDependency();
-    int* reg_neighbouring = NULL;
-    void color_ordering();
+    void generateDependency();
+    void registerMapping();
     void regRename();
   private:
     std::vector<cpIR *> m_vIRList;
     std::stack<cpIRRegister *> m_IfConditionStack;
-    cpDependencylist m_coloringOrder;
 };
 
 

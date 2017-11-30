@@ -333,7 +333,7 @@ class cpArgumentsNode : public cpNormalNode
     void setNextArguments(cpArgumentsNode* in_pArguments){setChildNodes(in_pArguments,0);}
     void setCurrentArgument(cpNormalNode* in_pArgument){setChildNodes(in_pArgument,1);}
     cpArgumentsNode* getNextArguments(){return (cpArgumentsNode*)m_pChildNodes[0];}
-    cpNormalNode* getCurrentArgument(){return (cpNormalNode*)m_pChildNodes[1];}
+    cpBaseNode* getCurrentArgument(){return m_pChildNodes[1];}
 };
 
 class cpConstructorNode : public cpNormalNode

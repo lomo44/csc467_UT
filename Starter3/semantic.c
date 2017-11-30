@@ -492,7 +492,7 @@ void cpCheckNode(cpConstructorNode *in_pNode, cpSymbolTableNode *in_pTable,cpSem
 {
     cpArgumentsNode *argument_terminal_typess_node  = (cpArgumentsNode *)in_pNode->getChildNode(0);
     
-    cpNormalNode *argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
+    cpBaseNode *argument_terminal_types = argument_terminal_typess_node->getCurrentArgument();
     cpArgumentsNode* next_arguments = argument_terminal_typess_node->getNextArguments();
     //Asume type node type stored in m.value
     ecpTerminalType type = in_pNode->getConstructorType();
