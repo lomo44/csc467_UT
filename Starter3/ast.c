@@ -578,6 +578,10 @@ void cpIfStatementNode::generateIR(cpIRList& in_IRList){
     in_IRList.pushIfCondition(expression_reg);
     if_statements->generateIR(in_IRList);
     if(else_statements!=NULL){
+        in_IRList.popIfCondition();
+        // Generate negative expression
+        cpIR* neg_expression = new cpIR(ecpIR_LRP,expression_reg,in_IRList.getConst(0),in_IRList.getConst(1));
+        in_IRList.pushIfCondition(in_IRList.insert(neg_expression));
         else_statements->generateIR(in_IRList);
     }
     in_IRList.popIfCondition();
