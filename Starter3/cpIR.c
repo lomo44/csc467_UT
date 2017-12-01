@@ -7,7 +7,7 @@ std::string gIROpcodeToStringMap[ecpIR_Count] = {
     "CONST_FLOAT",
     "CONST_BOOL",
     "CONST_INT",
-    "MOVE",
+    "MOV",
     "ADD",
     "SUB",
     "MUL",
@@ -229,6 +229,7 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
     if(m_eOpcode!=ecpIR_MOVE){
         ret += " ";
         ret += in_vRegisterMap[m_Dst->m_iColor];
+        ret += ",";
     }
     if(m_SrcA!=NULL){
         ret += " ";
@@ -248,7 +249,7 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
         }
     }
     if(m_SrcB!=NULL){
-        ret += " ";
+        ret += ", ";
         if(m_SrcB->m_iIRID>=0){
             if(m_SrcB->m_iColor != -1){
                 ret += in_vRegisterMap[m_SrcB->m_iColor];
@@ -265,7 +266,7 @@ std::string cpIR::toRIString(std::vector<std::string>& in_vRegisterMap){
         }
     }
     if(m_SrcC!=NULL){
-        ret += " ";
+        ret += ", ";
         if(m_SrcC->m_iIRID>=0){
             if(m_SrcC->m_iColor != -1){
                 ret += in_vRegisterMap[m_SrcC->m_iColor];
@@ -312,7 +313,8 @@ void cpIRList::printRI(FILE* in_pOutput){
             if(ristring!=""){
                 fprintf(in_pOutput,"%s;\n", m_vIRList[i]->toRIString(register_map).c_str());
             }
-        } 
+        }
+        fprintf(in_pOutput,"END\n"); 
     }
 }
 

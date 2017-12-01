@@ -75,6 +75,22 @@ std::string gPredefinedVariableString[ecpPredifinedVariable_Count] = {
     "env3",
 };
 
+std::string gPredefinedVariableARBName[ecpPredifinedVariable_Count] = {
+    "",
+    "result.color",
+    "result.depth",
+    "fragment.position",
+    "fragment.texcord",
+    "fragment.color",
+    "fragment.color.secondary",
+    "fragment.fogcoord",
+    "state.light[0].half",
+    "state.lightmodel.ambient",
+    "state.material.shininess",
+    "program.env[1]",
+    "program.env[2]",
+    "program.env[3]"
+};
 
 
 std::string toString(ecpFunctionQualifier in_eQualifier)
@@ -94,7 +110,7 @@ std::string toString(ecpFunctionType in_eFunctionType){
 }
 
 std::string toString(ecpPredefinedVariable in_eVariableID){
-    return gPredefinedVariableString[in_eVariableID];
+    return gPredefinedVariableARBName[in_eVariableID];
 }
 
 void cpNormalNode::initChildNodes(int in_iNumOfNodes)
