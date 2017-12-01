@@ -9,3 +9,5 @@ parser.tab.h
 parser.c
 Starter3/.vscode/
 Starter3/.vscode/
+Starter3/frag.txt
+Starter3/demos/Demo1/*.txt
