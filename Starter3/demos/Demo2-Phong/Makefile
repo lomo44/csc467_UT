@@ -23,5 +23,6 @@ $(TARGET): $(TARGET).c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(TARGET).c $(OBJS) $(LDFLAGS) $(GLIBS)
 
 clean:
-	/bin/rm -f *.o $(TARGET)
+	rm -f $(TARGET)
+	rm -f ../util/*.o $(TARGET)
 

@@ -80,7 +80,7 @@ std::string gPredefinedVariableARBName[ecpPredifinedVariable_Count] = {
     "result.color",
     "result.depth",
     "fragment.position",
-    "fragment.texcord",
+    "fragment.texcoord",
     "fragment.color",
     "fragment.color.secondary",
     "fragment.fogcoord",
@@ -249,6 +249,7 @@ void cpFunctionNode::generateIR(cpIRList& in_IRList){
         }
         case ecpFunctionType_rsq:{
             ret = new cpIR(ecpIR_RSQ,tempList[0],NULL);
+            ret->setSrcAMask(ecpRegister_X);
             break;
         }
         default:{
